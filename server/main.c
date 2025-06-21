@@ -1,13 +1,8 @@
-#include "pico/stdlib.h"
-#include "hardware/uart.h"
-#include "hardware/gpio.h"
-#include <string.h>
-
-#include "functions.h"
-
 #include <stdio.h>
 #include <stdint.h>
 #include <stdbool.h>
+
+#include "functions.h"
 
 #define TIMEOUT_MS 250
 

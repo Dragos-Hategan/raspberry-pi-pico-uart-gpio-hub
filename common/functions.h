@@ -2,6 +2,8 @@
 #define FUNCTIONS_H
 
 #include "pico/stdlib.h"
+#include "hardware/uart.h"
+#include "hardware/gpio.h"
 #include "config.h"
 
 int pico_led_init(void);
