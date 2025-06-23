@@ -1,0 +1,12 @@
+{
+    "files.associations": {
+        "string.h": "c",
+        "functions.h": "c",
+        "stdio.h": "c",
+        "config.h": "c",
+        "chrono": "c",
+        "ranges": "c",
+        "filesystem": "c",
+        "xlocale": "c"
+    }
+}
