@@ -6,6 +6,9 @@ add_executable(client
     main.c
 )
 
+pico_enable_stdio_usb(client 1)
+pico_enable_stdio_uart(client 0)
+
 target_include_directories(client PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/../include
     ${CMAKE_CURRENT_SOURCE_DIR}/../common

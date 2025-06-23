@@ -6,6 +6,9 @@ add_executable(server
     main.c
 )
 
+pico_enable_stdio_usb(server 1)
+pico_enable_stdio_uart(server 0)
+
 target_include_directories(server PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/../include
     ${CMAKE_CURRENT_SOURCE_DIR}/../common
@@ -15,7 +18,7 @@ target_link_libraries(server
     pico_stdlib
     hardware_uart
     hardware_gpio
-    common
+    common           
 )
 
 if(PICO_CYW43_SUPPORTED)

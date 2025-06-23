@@ -1,6 +1,6 @@
 add_library(common
     functions.c
-    config.c
+    types.c
 )
 
 target_include_directories(common PRIVATE

@@ -13,8 +13,8 @@
 #define CONNECTION_ACCEPTED_MESSAGE "Connection Accepted"
 #endif
 
-#ifndef MAX_CONNECTIONS
-#define MAX_CONNECTIONS 5
+#ifndef MAX_SERVER_CONNECTIONS
+#define MAX_SERVER_CONNECTIONS 5
 #endif
 
 #ifndef LED_DELAY_MS
@@ -29,12 +29,9 @@
 #define PIN_PAIRS_UART1_LEN 2
 #endif
 
-typedef struct{
-    int tx;
-    int rx;
-}uart_pin_pair_t;
+#ifndef MS_TO_US_MULTIPLIER
+#define MS_TO_US_MULTIPLIER 1000
+#endif
 
-extern const uart_pin_pair_t pin_pairs_uart0[PIN_PAIRS_UART0_LEN];
-extern const uart_pin_pair_t pin_pairs_uart1[PIN_PAIRS_UART1_LEN];
 
 #endif
