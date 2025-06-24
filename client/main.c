@@ -1,3 +1,11 @@
+/**
+ * @file main.c
+ * @brief UART client application for Raspberry Pi Pico.
+ *
+ * Attempts to detect a valid UART connection by scanning through known TX/RX pin pairs.
+ * Once a handshake with the server is established, the connection is stored.
+ */
+
 #include <stdio.h>
 #include <stdint.h>
 #include <stdbool.h>
@@ -5,25 +13,31 @@
 #include "functions.h"
 #include "config.h"
 
-#define TIMEOUT_MS 50
+// START
+
+
+#define CLIENT_TIMEOUT_MS 50
 
 static uart_connection_t active_uart_client_connection;
 
 /**
- * @brief Tests a UART pin pair by attempting a handshake.
+ * @brief Tests a UART pin pair by attempting a handshake with the server.
  *
  * Sends a predefined connection request message over the specified UART
- * and waits for an expected response within a timeout.
+ * and waits for a valid echo response within the specified timeout.
  *
- * @param pin_pair UART TX/RX pin pair to test.
- * @param uart_instance Pointer to the UART instance (uart0 or uart1).
- * @return true if handshake was successful, false otherwise.
+ * @param pin_pair The TX/RX pin pair to test.
+ * @param uart_instance Pointer to the UART peripheral (uart0 or uart1).
+ * @return true if a valid response is received, false otherwise.
  */
 bool test_uart_pair(uart_pin_pair_t pin_pair, uart_inst_t * uart_instance) {
     uart_init_with_pins(uart_instance, pin_pair, DEFAULT_BAUDRATE);
-    sleep_ms(10);
-    uart_puts(uart_instance, CONNECTION_REQUEST_MESSAGE);
-    return uart_read_until_match(uart_instance, CONNECTION_ACCEPTED_MESSAGE, TIMEOUT_MS);
+    char message_with_pin_pair[32];
+    snprintf(message_with_pin_pair, sizeof(message_with_pin_pair), "%s-[%d,%d]", CONNECTION_REQUEST_MESSAGE, pin_pair.tx, pin_pair.rx);
+    printf("Sending:\n'%s'\n", message_with_pin_pair);
+    uart_puts(uart_instance, message_with_pin_pair);
+
+    return uart_client_read(uart_instance, pin_pair, CLIENT_TIMEOUT_MS);
 }
 
 /**
@@ -77,16 +91,16 @@ static bool find_connection_for_uart1_instance(){
  *
  * Displays the successful TX/RX pins and UART instance.
  */
-static inline void print_active_connection(){
+static inline void print_active_client_connection(){
+    // printf("\033[2J");    // delete screen
+    // printf("\033[H");     // move cursor to upper left screen
     printf("This is the active connection:\n");
-
     printf("Pair=[%d,%d]. Instance=uart%d.\n", \
         active_uart_client_connection.pin_pair.tx, \
         active_uart_client_connection.pin_pair.rx, \
         UART_NUM(active_uart_client_connection.uart_instance) \
     ); 
-
-    printf("\n");
+    printf("\n\n");
 }
 
 /**
@@ -94,19 +108,17 @@ static inline void print_active_connection(){
  *
  * Once found, it prints connection info and activates a visual indicator (onboard LED).
  */
-static void detect_uart_connection(){
+static bool detect_uart_connection(){
     bool connection_found = false;
-    while (!connection_found){
-        connection_found = find_connection_for_uart0_instance();
-        if (!connection_found){
-            connection_found = find_connection_for_uart1_instance();
-        }
+    connection_found = find_connection_for_uart0_instance();
+    if (!connection_found){
+        connection_found = find_connection_for_uart1_instance();
     }
-
     if (connection_found){
-        print_active_connection();
         blink_onboard_led();
     }
+
+    return connection_found;
 }
 
 /**
@@ -115,11 +127,23 @@ static void detect_uart_connection(){
  * Initializes UART communication detection and enters an infinite loop.
  */
 int main(){
-    //stdio_usb_init();
-    //sleep_ms(10);
+    stdio_usb_init();
+    sleep_ms(10000);
+    pico_led_init();
+    pico_set_led(true);
 
-    detect_uart_connection();
+    printf("\nStarted client application, entering !detect_uart_connection() loop:\n");
+    while(!detect_uart_connection()){
+        printf("Nothing found yet\n");
+        //sleep_ms(500);
+    }
+    
+    while(true){
+        print_active_client_connection();
+        sleep_ms(1000);
+    }
+    
 
-    while(true){tight_loop_contents();}
+    //while(true){tight_loop_contents();}
 }
 

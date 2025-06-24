@@ -7,6 +7,9 @@
         "chrono": "c",
         "ranges": "c",
         "filesystem": "c",
-        "xlocale": "c"
+        "xlocale": "c",
+        "stdbool.h": "c",
+        "regex": "c",
+        "sstream": "c"
     }
 }
