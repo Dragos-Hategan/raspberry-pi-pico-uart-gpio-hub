@@ -14,5 +14,9 @@ void uart_init_with_pins(uart_inst_t*, uart_pin_pair_t, uint32_t);
 bool uart_client_read(uart_inst_t*, uart_pin_pair_t, uint32_t);
 bool uart_server_read(uart_inst_t*, const char*, uint32_t);
 
+static inline void reset_gpio_pins(uart_pin_pair_t pin_pair){
+    gpio_set_function(pin_pair.tx, GPIO_FUNC_SIO);
+    gpio_set_function(pin_pair.rx, GPIO_FUNC_SIO);
+}
 
 #endif

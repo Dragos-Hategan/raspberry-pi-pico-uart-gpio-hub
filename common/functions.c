@@ -86,7 +86,6 @@ void get_uart_buffer(uart_inst_t* uart, char* buf, uint8_t buffer_size, uint8_t 
             if (idx >= expected_size) break;
         }
     }
-    printf("BUFFER: '%s'\n", buf);
     buf[idx] = '\0';  
 }
 

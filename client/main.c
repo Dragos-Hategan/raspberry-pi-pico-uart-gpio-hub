@@ -13,9 +13,6 @@
 #include "functions.h"
 #include "config.h"
 
-// START
-
-
 #define CLIENT_TIMEOUT_MS 50
 
 static uart_connection_t active_uart_client_connection;
@@ -32,9 +29,11 @@ static uart_connection_t active_uart_client_connection;
  */
 bool test_uart_pair(uart_pin_pair_t pin_pair, uart_inst_t * uart_instance) {
     uart_init_with_pins(uart_instance, pin_pair, DEFAULT_BAUDRATE);
+
     char message_with_pin_pair[32];
     snprintf(message_with_pin_pair, sizeof(message_with_pin_pair), "%s-[%d,%d]", CONNECTION_REQUEST_MESSAGE, pin_pair.tx, pin_pair.rx);
     printf("Sending:\n'%s'\n", message_with_pin_pair);
+
     uart_puts(uart_instance, message_with_pin_pair);
 
     return uart_client_read(uart_instance, pin_pair, CLIENT_TIMEOUT_MS);
@@ -63,6 +62,8 @@ static bool find_connection_for_uart0_instance(){
         if(test_uart_pair(pin_pairs_uart0[index], uart0)){
             add_client_connection(pin_pairs_uart0[index], uart0);
             return true;
+        }else{
+            reset_gpio_pins(pin_pairs_uart0[index]);
         }
     }
     return false;
@@ -80,6 +81,8 @@ static bool find_connection_for_uart1_instance(){
         if(test_uart_pair(pin_pairs_uart1[index], uart1)){
             add_client_connection(pin_pairs_uart1[index], uart1);
             return true;
+        }else{
+            reset_gpio_pins(pin_pairs_uart1[index]);
         }
     }
     return false;

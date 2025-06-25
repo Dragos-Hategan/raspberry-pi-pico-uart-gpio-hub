@@ -65,6 +65,9 @@ static void check_connections_for_uart0_instance(){
             printf("ADDING PAIR [%d,%d]\n", pin_pairs_uart0[index].tx,pin_pairs_uart0[index].rx);
             add_active_pair(pin_pairs_uart0[index], uart0);
         }
+        else{
+            reset_gpio_pins(pin_pairs_uart0[index]);
+        }
     }
 }
 
@@ -80,6 +83,9 @@ static void check_connections_for_uart1_instance(){
         if(check_pin_pair(pin_pairs_uart1[index], uart1)){
             printf("ADDING PAIR [%d,%d]\n", pin_pairs_uart1[index].tx,pin_pairs_uart1[index].rx);
             add_active_pair(pin_pairs_uart1[index], uart1);
+        }
+        else{
+            reset_gpio_pins(pin_pairs_uart1[index]);
         }
     }
 }
