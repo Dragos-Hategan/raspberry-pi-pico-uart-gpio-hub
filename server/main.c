@@ -14,7 +14,8 @@
 #include "functions.h"
 #include "config.h"
 
-#define SERVER_TIMEOUT_MS 250
+// works from at least 300ms, 500 for robustness
+#define SERVER_TIMEOUT_MS 500
 
 int point = 0;
 
@@ -32,7 +33,7 @@ static uint8_t active_server_connections_number = 0;
  */
 static inline bool check_pin_pair(uart_pin_pair_t pin_pair, uart_inst_t * uart_instance){
     uart_init_with_pins(uart_instance, pin_pair, DEFAULT_BAUDRATE);
-    return uart_server_read(uart_instance, CONNECTION_REQUEST_MESSAGE, SERVER_TIMEOUT_MS);
+    return uart_server_read(uart_instance, SERVER_TIMEOUT_MS);
 }
 
 /**
@@ -60,14 +61,11 @@ static inline void add_active_pair(uart_pin_pair_t pin_pair, uart_inst_t * uart_
  */
 static void check_connections_for_uart0_instance(){
     for (uint8_t index = 0; index < PIN_PAIRS_UART0_LEN; index++){
-        printf("Checking connections for uart0 instance, INDEX = %d, pin pair {%d,%d}\n", index, pin_pairs_uart0[index].tx, pin_pairs_uart0[index].rx);
         if(check_pin_pair(pin_pairs_uart0[index], uart0)){
-            printf("ADDING PAIR [%d,%d]\n", pin_pairs_uart0[index].tx,pin_pairs_uart0[index].rx);
             add_active_pair(pin_pairs_uart0[index], uart0);
+            sleep_ms(20);
         }
-        else{
-            reset_gpio_pins(pin_pairs_uart0[index]);
-        }
+        reset_gpio_pins(pin_pairs_uart0[index]);
     }
 }
 
@@ -79,14 +77,11 @@ static void check_connections_for_uart0_instance(){
  */
 static void check_connections_for_uart1_instance(){
     for (uint8_t index = 0; index < PIN_PAIRS_UART1_LEN; index++){
-        printf("Checking connections for uart1 instance, INDEX = %d, pin pair {%d,%d}\n", index, pin_pairs_uart1[index].tx, pin_pairs_uart1[index].rx);
         if(check_pin_pair(pin_pairs_uart1[index], uart1)){
-            printf("ADDING PAIR [%d,%d]\n", pin_pairs_uart1[index].tx,pin_pairs_uart1[index].rx);
             add_active_pair(pin_pairs_uart1[index], uart1);
+            sleep_ms(20);
         }
-        else{
-            reset_gpio_pins(pin_pairs_uart1[index]);
-        }
+        reset_gpio_pins(pin_pairs_uart1[index]);
     }
 }
 
@@ -106,8 +101,8 @@ static void find_connections(){
  * Displays the list of successfully connected pin pairs with their corresponding UART instance.
  */
 static inline void print_active_connections(){
-    //printf("\033[2J");    // delete screen
-    //printf("\033[H");     // move cursor to upper left screen
+    printf("\033[2J");    // delete screen
+    printf("\033[H");     // move cursor to upper left screen
     printf("These are the active connections:\n");
     for (uint8_t index = 1; index <= active_server_connections_number; index++){
         printf("%d. Pair=[%d,%d]. Instance=uart%d.\n", index, 
@@ -126,30 +121,27 @@ static inline void print_active_connections(){
  */
 int main(){
     stdio_usb_init();
-    sleep_ms(10000);
     pico_led_init();
     pico_set_led(true);
 
-    printf("\nStarted server application, entering find_connections()\n");
-    find_connections();
+    bool connections_found = false;
+
+    while(!connections_found){
+        find_connections();
+        connections_found = true;
+    }
+    
+    if (connections_found){
+        blink_onboard_led();
+    }
 
     // Create the bidirectional comuncation routine
-    // Maybe a small protocol (ex: START_BYTE + LENGTH + CMD + PAYLOAD + CRC)
-
-    if (active_server_connections_number){
-        int blink_iterations = 5;
-            while (blink_iterations--){
-                pico_set_led(true);
-                sleep_ms(LED_DELAY_MS);
-                pico_set_led(false);
-                sleep_ms(LED_DELAY_MS);
-            }
-    }
 
     while(true){
         print_active_connections();
         sleep_ms(1000);
     }
+
 
     //while(true){tight_loop_contents();}
 }

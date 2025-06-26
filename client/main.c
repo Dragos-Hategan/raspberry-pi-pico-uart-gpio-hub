@@ -29,13 +29,13 @@ static uart_connection_t active_uart_client_connection;
  */
 bool test_uart_pair(uart_pin_pair_t pin_pair, uart_inst_t * uart_instance) {
     uart_init_with_pins(uart_instance, pin_pair, DEFAULT_BAUDRATE);
+    sleep_ms(10);
 
     char message_with_pin_pair[32];
     snprintf(message_with_pin_pair, sizeof(message_with_pin_pair), "%s-[%d,%d]", CONNECTION_REQUEST_MESSAGE, pin_pair.tx, pin_pair.rx);
-    printf("Sending:\n'%s'\n", message_with_pin_pair);
-
     uart_puts(uart_instance, message_with_pin_pair);
-
+    
+    sleep_ms(10);
     return uart_client_read(uart_instance, pin_pair, CLIENT_TIMEOUT_MS);
 }
 
@@ -95,8 +95,8 @@ static bool find_connection_for_uart1_instance(){
  * Displays the successful TX/RX pins and UART instance.
  */
 static inline void print_active_client_connection(){
-    // printf("\033[2J");    // delete screen
-    // printf("\033[H");     // move cursor to upper left screen
+    printf("\033[2J");    // delete screen
+    printf("\033[H");     // move cursor to upper left screen
     printf("This is the active connection:\n");
     printf("Pair=[%d,%d]. Instance=uart%d.\n", \
         active_uart_client_connection.pin_pair.tx, \
@@ -131,14 +131,11 @@ static bool detect_uart_connection(){
  */
 int main(){
     stdio_usb_init();
-    sleep_ms(10000);
     pico_led_init();
     pico_set_led(true);
 
-    printf("\nStarted client application, entering !detect_uart_connection() loop:\n");
     while(!detect_uart_connection()){
-        printf("Nothing found yet\n");
-        //sleep_ms(500);
+        tight_loop_contents();
     }
     
     while(true){
@@ -146,7 +143,6 @@ int main(){
         sleep_ms(1000);
     }
     
-
     //while(true){tight_loop_contents();}
 }
 
