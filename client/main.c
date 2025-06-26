@@ -2,8 +2,10 @@
  * @file main.c
  * @brief UART client application for Raspberry Pi Pico.
  *
- * Attempts to detect a valid UART connection by scanning through known TX/RX pin pairs.
- * Once a handshake with the server is established, the connection is stored.
+ * This application runs on a Raspberry Pi Pico acting as a UART client.
+ * It scans all known TX/RX pin combinations for both UART0 and UART1 to identify a valid
+ * UART connection with a server. Once a handshake is successfully established,
+ * the client stores the connection for future use.
  */
 
 #include <stdio.h>
@@ -13,19 +15,23 @@
 #include "functions.h"
 #include "config.h"
 
+/// Timeout in milliseconds used when waiting for UART responses from the server.
 #define CLIENT_TIMEOUT_MS 50
 
 static uart_connection_t active_uart_client_connection;
 
 /**
- * @brief Tests a UART pin pair by attempting a handshake with the server.
+ * @brief Attempts to establish a handshake over a given UART pin pair.
  *
- * Sends a predefined connection request message over the specified UART
- * and waits for a valid echo response within the specified timeout.
+ * This function:
+ * - Initializes UART with the specified TX/RX pins.
+ * - Sends a connection request message to the server.
+ * - Waits for the server to echo the pin pair.
+ * - Validates the echo response.
  *
  * @param pin_pair The TX/RX pin pair to test.
- * @param uart_instance Pointer to the UART peripheral (uart0 or uart1).
- * @return true if a valid response is received, false otherwise.
+ * @param uart_instance Pointer to the UART peripheral (e.g., uart0 or uart1).
+ * @return true if the handshake is successful, false otherwise.
  */
 bool test_uart_pair(uart_pin_pair_t pin_pair, uart_inst_t * uart_instance) {
     uart_init_with_pins(uart_instance, pin_pair, DEFAULT_BAUDRATE);
@@ -51,9 +57,9 @@ static inline void add_client_connection(uart_pin_pair_t pin_pair, uart_inst_t *
 }
 
 /**
- * @brief Attempts to find a working UART0 pin pair for communication.
+ * @brief Searches UART0 pin pairs for a valid connection with the server.
  *
- * Iterates through all UART0 pin pairs and tests each using `test_uart_pair()`.
+ * Iterates through all configured UART0 TX/RX combinations, testing each one via `test_uart_pair()`.
  *
  * @return true if a valid UART0 connection is found, false otherwise.
  */
@@ -70,9 +76,9 @@ static bool find_connection_for_uart0_instance(){
 }
 
 /**
- * @brief Attempts to find a working UART1 pin pair for communication.
+ * @brief Searches UART1 pin pairs for a valid connection with the server.
  *
- * Iterates through all UART1 pin pairs and tests each using `test_uart_pair()`.
+ * Iterates through all configured UART1 TX/RX combinations, testing each one via `test_uart_pair()`.
  *
  * @return true if a valid UART1 connection is found, false otherwise.
  */
@@ -90,9 +96,9 @@ static bool find_connection_for_uart1_instance(){
 
 
 /**
- * @brief Prints the details of the active UART connection.
+ * @brief Displays the active UART connection on the console.
  *
- * Displays the successful TX/RX pins and UART instance.
+ * Shows the connected TX/RX pin pair and the associated UART peripheral number.
  */
 static inline void print_active_client_connection(){
     printf("\033[2J");    // delete screen
@@ -107,9 +113,12 @@ static inline void print_active_client_connection(){
 }
 
 /**
- * @brief Scans all possible UART0 and UART1 pin pairs until a working connection is found.
+ * @brief Performs a full scan of all available UART pin pairs until a valid connection is found.
  *
- * Once found, it prints connection info and activates a visual indicator (onboard LED).
+ * Tries all UART0 and UART1 pin pair combinations. Once a working connection is found,
+ * the onboard LED blinks to signal success.
+ *
+ * @return true if a valid connection is found, false otherwise.
  */
 static bool detect_uart_connection(){
     bool connection_found = false;
@@ -125,9 +134,11 @@ static bool detect_uart_connection(){
 }
 
 /**
- * @brief Main entry point of the program.
+ * @brief Main entry point of the UART client program.
  *
- * Initializes UART communication detection and enters an infinite loop.
+ * - Initializes USB stdio and onboard LED.
+ * - Enters a loop to detect a valid UART connection.
+ * - Once connected, continuously prints connection info.
  */
 int main(){
     stdio_usb_init();

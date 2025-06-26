@@ -2,9 +2,10 @@
  * @file main.c
  * @brief UART server application for Raspberry Pi Pico.
  *
- * Scans UART0 and UART1 pin pairs to detect connection requests from clients.
- * When a valid TX/RX pair is identified based on an expected request message,
- * the server confirms the connection and stores it in a list of active connections.
+ * This program runs on a Raspberry Pi Pico acting as a UART server.
+ * It scans UART0 and UART1 pin pairs to detect connection requests from clients.
+ * When a valid TX/RX pair is identified and a handshake is successfully completed,
+ * the server stores the connection for further communication.
  */
 
 #include <stdio.h>
@@ -14,22 +15,21 @@
 #include "functions.h"
 #include "config.h"
 
-// works from at least 300ms, 500 for robustness
+/// Timeout in milliseconds for receiving a UART connection request.
+/// Minimum effective value is ~300ms. 500ms provides more robustness.
 #define SERVER_TIMEOUT_MS 500
-
-int point = 0;
 
 static uart_connection_t active_uart_server_connections[MAX_SERVER_CONNECTIONS];
 static uint8_t active_server_connections_number = 0;
 
 /**
- * @brief Initializes UART with specified pin pair and checks for a connection request message.
+ * @brief Initializes UART on the specified pin pair and attempts to detect a connection request.
  *
- * Used by the server to identify if a client is attempting to connect.
+ * This function is used to check whether a client is attempting to connect on the given TX/RX pin pair.
  *
- * @param pin_pair The TX/RX pin pair to initialize.
- * @param uart_instance UART peripheral instance (uart0 or uart1).
- * @return true if a connection request is detected within SERVER_TIMEOUT_MS, false otherwise.
+ * @param pin_pair The TX/RX pin pair to test.
+ * @param uart_instance Pointer to the UART peripheral (e.g., uart0 or uart1).
+ * @return true if a connection request is successfully detected, false otherwise.
  */
 static inline bool check_pin_pair(uart_pin_pair_t pin_pair, uart_inst_t * uart_instance){
     uart_init_with_pins(uart_instance, pin_pair, DEFAULT_BAUDRATE);
@@ -37,12 +37,12 @@ static inline bool check_pin_pair(uart_pin_pair_t pin_pair, uart_inst_t * uart_i
 }
 
 /**
- * @brief Stores a working connection (pin pair + UART instance) into the global list.
+ * @brief Adds a valid UART connection (pin pair + UART instance) to the active connections list.
  *
- * Only adds if the list is not full.
+ * Only adds the connection if there is room in the `active_uart_server_connections` array.
  *
- * @param pin_pair The TX/RX pair that was successfully tested.
- * @param uart_instance The UART peripheral associated with this connection.
+ * @param pin_pair The TX/RX pin pair that was successfully connected.
+ * @param uart_instance Pointer to the UART peripheral associated with the connection.
  */
 static inline void add_active_pair(uart_pin_pair_t pin_pair, uart_inst_t * uart_instance){
     if (active_server_connections_number < MAX_SERVER_CONNECTIONS) {
@@ -53,11 +53,10 @@ static inline void add_active_pair(uart_pin_pair_t pin_pair, uart_inst_t * uart_
 }
 
 /**
-/**
- * @brief Scans all configured UART0 pin pairs for connection requests.
+ * @brief Scans all UART0 pin pairs for active connection requests.
  *
- * For each pair, attempts a handshake with the client. On success, stores
- * the connection and prints debug output.
+ * For each TX/RX pair configured for UART0, this function attempts to perform a handshake.
+ * If the handshake is successful, the connection is stored.
  */
 static void check_connections_for_uart0_instance(){
     for (uint8_t index = 0; index < PIN_PAIRS_UART0_LEN; index++){
@@ -70,10 +69,10 @@ static void check_connections_for_uart0_instance(){
 }
 
 /**
- * @brief Scans all configured UART1 pin pairs for connection requests.
+ * @brief Scans all UART1 pin pairs for active connection requests.
  *
- * For each pair, attempts a handshake with the client. On success, stores
- * the connection and prints debug output.
+ * Similar to UART0 scanning, this function iterates over all UART1 TX/RX pairs
+ * and performs handshake attempts.
  */
 static void check_connections_for_uart1_instance(){
     for (uint8_t index = 0; index < PIN_PAIRS_UART1_LEN; index++){
@@ -86,9 +85,9 @@ static void check_connections_for_uart1_instance(){
 }
 
 /**
- * @brief Attempts to find all valid connections across both UART0 and UART1.
+ * @brief Initiates the scanning process for both UART0 and UART1.
  *
- * Calls scanning functions for each UART instance.
+ * Calls the UART0 and UART1 connection checkers to identify all valid connections.
  */
 static void find_connections(){
     check_connections_for_uart0_instance();
@@ -96,9 +95,9 @@ static void find_connections(){
 }
 
 /**
- * @brief Prints all currently active UART connections.
+ * @brief Prints all currently active UART connections to the console.
  *
- * Displays the list of successfully connected pin pairs with their corresponding UART instance.
+ * Displays each valid UART connection with its associated TX/RX pins and UART instance number.
  */
 static inline void print_active_connections(){
     printf("\033[2J");    // delete screen
@@ -114,10 +113,12 @@ static inline void print_active_connections(){
 }
 
 /**
- * @brief Entry point of the program.
+ * @brief Main entry point of the UART server application.
  *
- * Initializes USB stdio for logging, waits 5 seconds for user setup, then
- * scans for UART connections and continuously prints the results.
+ * Initializes standard USB output and the onboard LED.
+ * Then enters a loop to scan for UART connections.
+ * If any connections are found, a visual LED indicator is triggered and
+ * the program continuously prints the active connection list.
  */
 int main(){
     stdio_usb_init();
@@ -135,13 +136,12 @@ int main(){
         blink_onboard_led();
     }
 
-    // Create the bidirectional comuncation routine
+    // TO DO: establish a bidirectional communication protocol with clients
 
     while(true){
         print_active_connections();
         sleep_ms(1000);
     }
-
 
     //while(true){tight_loop_contents();}
 }

@@ -54,18 +54,17 @@ void blink_onboard_led(void){
 }
 
 /**
- * @brief Reads from UART into a buffer with timeout and optional expected size.
+ * @brief Reads incoming UART data into a buffer with timeout support.
  *
- * This function reads characters from UART until either:
- * - the timeout expires,
- * - the expected number of characters are received,
- * - or the buffer limit is hit.
+ * This function reads characters from the UART until:
+ * - The buffer is full,
+ * - The character ']' is received,
+ * - Or the timeout expires.
  *
  * @param uart UART instance to read from.
- * @param buf Buffer where characters will be stored.
- * @param buffer_size Maximum size of the buffer.
- * @param expected_size Minimum number of characters to wait for.
- * @param timeout_ms Timeout in milliseconds.
+ * @param buf Pointer to the buffer to store the received characters.
+ * @param buffer_size Size of the buffer (must include space for null terminator).
+ * @param timeout_ms Timeout duration in milliseconds.
  */
 void get_uart_buffer(uart_inst_t* uart, char* buf, uint8_t buffer_size, uint32_t timeout_ms) {
     absolute_time_t start_time = get_absolute_time();
@@ -95,6 +94,15 @@ void get_uart_buffer(uart_inst_t* uart, char* buf, uint8_t buffer_size, uint32_t
     buf[idx] = '\0';  
 }
 
+/**
+ * @brief Extracts two decimal numbers from a string of the form "[x,y]".
+ *
+ * This function scans the buffer and parses two integers separated by a comma.
+ * The numbers are written into the provided array.
+ *
+ * @param received_number_pair Pointer to a 2-element array to hold the parsed numbers.
+ * @param buf Input buffer containing the formatted string.
+ */
 void get_number_pair(uint8_t *received_number_pair, char *buf){
     char *p = buf;
     uint8_t number_pair_array_index = 0;
@@ -110,16 +118,15 @@ void get_number_pair(uint8_t *received_number_pair, char *buf){
 }
 
 /**
- * @brief Server reads a connection request and sends an echo back to the client.
+ * @brief Server-side handshake logic: responds to connection requests and validates client ACK.
  *
- * - Matches the message against the expected request format.
- * - Echoes back the pair (e.g., "[4,5]").
- * - Waits for confirmation (CONNECTION_ACCEPTED_MESSAGE).
+ * - Reads a request of the form "Requesting Connection-[tx,rx]".
+ * - Sends back an echo of the pin pair in the format "[tx,rx]".
+ * - Waits for and validates the client's ACK: "[Connection Accepted]".
  *
- * @param uart_instance UART instance used.
- * @param expected Expected prefix message (e.g. "Requesting Connection").
- * @param timeout_ms Timeout in milliseconds.
- * @return true if handshake completed, false otherwise.
+ * @param uart_instance UART interface used for communication.
+ * @param timeout_ms Timeout in milliseconds for each stage.
+ * @return true if a complete and valid handshake occurs, false otherwise.
  */
 bool uart_server_read(uart_inst_t* uart_instance, uint32_t timeout_ms){
     char buf[32] = {0};
@@ -154,15 +161,16 @@ bool uart_server_read(uart_inst_t* uart_instance, uint32_t timeout_ms){
 
 
 /**
- * @brief Client waits for echo from server and validates the pin pair.
+ * @brief Client-side handshake logic: validates server echo and sends ACK.
  *
- * Compares the received echo pair with the one it originally sent. If they match,
- * sends back `CONNECTION_ACCEPTED_MESSAGE`.
+ * - Waits for server to echo the pin pair.
+ * - Compares it to the pin pair originally sent.
+ * - Sends "[Connection Accepted]" if the echo is valid.
  *
- * @param uart_instance UART peripheral in use.
+ * @param uart_instance UART interface used for communication.
  * @param pin_pair The TX/RX pair originally tested.
- * @param timeout_ms Timeout for the response.
- * @return true if the server echo is valid and ACK is sent, false otherwise.
+ * @param timeout_ms Timeout in milliseconds for the response.
+ * @return true if the handshake is successful, false otherwise.
  */
 bool uart_client_read(uart_inst_t* uart_instance, uart_pin_pair_t pin_pair, uint32_t timeout_ms){
     char buf[32] = {0};
@@ -189,11 +197,15 @@ bool uart_client_read(uart_inst_t* uart_instance, uart_pin_pair_t pin_pair, uint
 
 
 /**
- * @brief Initializes UART with given TX/RX pins and baudrate.
- * 
- * @param uart The UART instance (e.g., uart0, uart1).
- * @param pin_pair The TX and RX pin numbers.
- * @param baudrate The baud rate for UART communication.
+ * @brief Initializes UART and configures TX/RX GPIO pins.
+ *
+ * - Deinitializes the UART first to reset state.
+ * - Assigns UART function to the specified TX and RX pins.
+ * - Initializes the UART with the provided baud rate.
+ *
+ * @param uart UART instance (e.g., uart0 or uart1).
+ * @param pin_pair The TX/RX pin pair to configure.
+ * @param baudrate UART baud rate (e.g., 9600, 115200).
  */
 void uart_init_with_pins(uart_inst_t* uart, uart_pin_pair_t pin_pair, uint32_t baudrate){
     uart_deinit(uart);
