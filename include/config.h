@@ -33,5 +33,20 @@
 #define MS_TO_US_MULTIPLIER 1000
 #endif
 
+#ifndef ECHO_MSG_FORMAT_LEN
+#define ECHO_MSG_FORMAT_LEN 6
+#endif
+
+#ifndef MAX_BUF_SIZE
+#define MAX_BUF_SIZE 32
+#endif
+
+#ifndef ECHO_RESPONSE
+#define ECHO_RESPONSE "[t,r]"
+#endif
+
+#ifndef UART_HANDSHAKE_TIMEOUT_MS
+#define UART_HANDSHAKE_TIMEOUT_MS 200
+#endif
 
 #endif
