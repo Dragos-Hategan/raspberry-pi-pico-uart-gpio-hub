@@ -109,7 +109,7 @@ static inline void print_active_connections(){
             active_uart_server_connections[index - 1].pin_pair.rx,
             UART_NUM(active_uart_server_connections[index - 1].uart_instance));
         }
-    printf("\n\n");
+    printf("\n");
 }
 
 /**
