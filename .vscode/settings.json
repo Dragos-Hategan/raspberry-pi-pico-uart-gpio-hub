@@ -10,6 +10,7 @@
         "xlocale": "c",
         "stdbool.h": "c",
         "regex": "c",
-        "sstream": "c"
+        "sstream": "c",
+        "stdint.h": "c"
     }
 }

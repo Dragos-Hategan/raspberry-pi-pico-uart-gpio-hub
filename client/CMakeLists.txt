@@ -4,6 +4,7 @@ project(client C)
 
 add_executable(client
     main.c
+    client_side_handshake.c
 )
 
 pico_enable_stdio_usb(client 1)
