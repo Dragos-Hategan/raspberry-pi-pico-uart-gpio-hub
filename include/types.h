@@ -2,6 +2,7 @@
 #define TYPES_H
 
 #include "hardware/uart.h"
+#include "config.h"
 
 typedef struct{
     int tx;
