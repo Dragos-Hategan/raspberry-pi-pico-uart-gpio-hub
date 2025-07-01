@@ -48,10 +48,8 @@ int main(){
     pico_set_led(true);
 
     bool connections_found = false;
-
     while(!connections_found){
-        server_find_connections();
-        connections_found = true;
+        connections_found = server_find_connections();
     }
     
     if (connections_found){
