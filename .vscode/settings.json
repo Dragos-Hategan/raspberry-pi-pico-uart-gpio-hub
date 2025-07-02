@@ -11,6 +11,9 @@
         "stdbool.h": "c",
         "regex": "c",
         "sstream": "c",
-        "stdint.h": "c"
+        "stdint.h": "c",
+        "server.h": "c",
+        "random": "c",
+        "types.h": "c"
     }
 }

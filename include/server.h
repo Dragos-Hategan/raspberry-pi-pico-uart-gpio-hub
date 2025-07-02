@@ -10,5 +10,6 @@ extern uint8_t active_server_connections_number;
 
 bool server_find_connections();
 bool server_uart_read(uart_inst_t*, uint32_t);
+void server_listen_for_commands();
 
 #endif
