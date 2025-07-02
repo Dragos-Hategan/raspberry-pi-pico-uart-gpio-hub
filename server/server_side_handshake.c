@@ -12,7 +12,7 @@
 #define SERVER_TIMEOUT_MS 500
 
 uart_connection_t active_uart_server_connections[MAX_SERVER_CONNECTIONS];
-uint8_t active_server_connections_number;
+uint8_t active_server_connections_number = 0;
 
 /**
  * @brief Server-side handshake logic: responds to connection requests and validates client ACK.
@@ -122,7 +122,11 @@ static void server_check_connections_for_uart1_instance(){
  *
  * Calls the UART0 and UART1 connection checkers to identify all valid connections.
  */
-void server_find_connections(){
+bool server_find_connections(){
     server_check_connections_for_uart0_instance();
     server_check_connections_for_uart1_instance();
+
+    if (active_server_connections_number) return true;
+
+    return false;
 }

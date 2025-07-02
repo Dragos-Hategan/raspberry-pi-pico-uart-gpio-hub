@@ -17,24 +17,6 @@
 #include "server.h"
 
 /**
- * @brief Prints all currently active UART connections to the console.
- *
- * Displays each valid UART connection with its associated TX/RX pins and UART instance number.
- */
-static inline void print_active_connections(){
-    printf("\033[2J");    // delete screen
-    printf("\033[H");     // move cursor to upper left screen
-    printf("These are the active connections:\n");
-    for (uint8_t index = 1; index <= active_server_connections_number; index++){
-        printf("%d. Pair=[%d,%d]. Instance=uart%d.\n", index, 
-            active_uart_server_connections[index - 1].pin_pair.tx,
-            active_uart_server_connections[index - 1].pin_pair.rx,
-            UART_NUM(active_uart_server_connections[index - 1].uart_instance));
-        }
-    printf("\n");
-}
-
-/**
  * @brief Main entry point of the UART server application.
  *
  * Initializes standard USB output and the onboard LED.
@@ -48,22 +30,13 @@ int main(){
     pico_set_led(true);
 
     bool connections_found = false;
-
     while(!connections_found){
-        server_find_connections();
-        connections_found = true;
+        connections_found = server_find_connections();
     }
     
     if (connections_found){
         blink_onboard_led();
     }
 
-    // TO DO: establish a bidirectional communication protocol with clients
-
-    while(true){
-        print_active_connections();
-        sleep_ms(1000);
-    }
-
-    //while(true){tight_loop_contents();}
+    server_listen_for_commands();
 }
