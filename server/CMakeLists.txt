@@ -9,8 +9,6 @@ add_executable(server
     state_handling.c
 )
 
-#target_compile_options(server PRIVATE -g0 -fno-asynchronous-unwind-tables -fno-dwarf2-cfi-asm)
-
 pico_enable_stdio_usb(server 1)
 pico_enable_stdio_uart(server 0)
 
@@ -23,6 +21,7 @@ target_link_libraries(server
     pico_stdlib
     hardware_uart
     hardware_gpio
+    hardware_sync
     common           
 )
 

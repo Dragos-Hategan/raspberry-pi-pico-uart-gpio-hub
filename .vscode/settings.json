@@ -15,6 +15,8 @@
         "server.h": "c",
         "random": "c",
         "types.h": "c",
-        "client.h": "c"
+        "client.h": "c",
+        "stdlib.h": "c",
+        "sync.h": "c"
     }
 }

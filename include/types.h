@@ -19,7 +19,6 @@ typedef struct{
 
 typedef struct{
     uint8_t gpio_number;
-    bool is_connected;
     bool is_on;
 }device_t;
 
@@ -28,10 +27,9 @@ typedef struct{
 }client_state_t;
 
 typedef struct{
-    client_state_t active_client_state;
+    client_state_t running_client_state;
     client_state_t preset_configs[NUMBER_OF_POSSIBLE_PRESETS];
-    uart_connection_t uart_connection_pins;
-    bool is_active;
+    uart_connection_t uart_connection;
 }client_t;
 
 #endif

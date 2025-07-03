@@ -8,12 +8,8 @@
  * the server stores the connection for further communication.
  */
 
-#include <stdio.h>
-#include <stdint.h>
 #include <stdbool.h>
-
 #include "functions.h"
-#include "config.h"
 #include "server.h"
 
 /**
@@ -36,6 +32,7 @@ int main(){
     
     if (connections_found){
         blink_onboard_led();
+        server_load_running_states_to_active_clients();
     }
 
     server_listen_for_commands();

@@ -57,22 +57,52 @@ static inline void print_active_connections(){
     printf("\n");
 }
 
+static void server_add_device_to_client(){
+
+}
+
+static void server_remove_device_from_client(){
+    
+}
+
+static void server_set_device(){
+    
+}
+
+static void server_toggle_device(){
+    
+}
+
+static void server_load_configuration(){
+
+}
+
+static void server_save_configuration(){
+    
+}
+
 static void server_select_action(){
     switch (choice){
         case 1:
             print_active_connections();
             break;
         case 2:
+            server_add_device_to_client();
             break;
         case 3:
+            server_remove_device_from_client();
             break;
         case 4:
+            server_set_device();
             break;
         case 5:
+            server_toggle_device();
             break;
         case 6:
+            server_load_configuration();
             break;
         case 7:
+            server_save_configuration();
             break;
         default:
             printf("Out of range. Try again.\n");
@@ -86,7 +116,7 @@ static void server_read_choice(){
     uint32_t len = 0;
 
     printf("\n> ");
-    fflush(stdout); // asigură afișarea promptului
+    fflush(stdout);
 
     while (len < sizeof(buffer) - 1) {
         int ch = getchar();
@@ -113,8 +143,8 @@ void server_display_menu(){
         "1. Display clients\n"
         "2. Add device to client\n"
         "3. Remove device from client\n"
-        "4. Set client's device state\n"
-        "5. Toggle client's device state\n"
+        "4. Set client's device\n"
+        "5. Toggle client's device\n"
         "6. Load configuration\n"
         "7. Save configuration\n"
     );

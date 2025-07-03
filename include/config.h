@@ -37,6 +37,10 @@
 #define MAX_NUMBER_OF_ACTIVE_DEVICES 24
 #endif
 
+#ifndef EMPTY_MEMORY_MESSAGE
+#define EMPTY_MEMORY_MESSAGE "Empty"
+#endif
+
 #define NUMBER_OF_POSSIBLE_PRESETS 5
 
 #endif
