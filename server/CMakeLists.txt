@@ -6,7 +6,10 @@ add_executable(server
     main.c
     server_side_handshake.c
     send_commands.c
+    state_handling.c
 )
+
+#target_compile_options(server PRIVATE -g0 -fno-asynchronous-unwind-tables -fno-dwarf2-cfi-asm)
 
 pico_enable_stdio_usb(server 1)
 pico_enable_stdio_uart(server 0)

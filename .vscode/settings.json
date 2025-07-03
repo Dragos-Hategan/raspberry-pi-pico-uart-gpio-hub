@@ -14,6 +14,7 @@
         "stdint.h": "c",
         "server.h": "c",
         "random": "c",
-        "types.h": "c"
+        "types.h": "c",
+        "client.h": "c"
     }
 }

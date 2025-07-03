@@ -12,4 +12,9 @@ bool server_find_connections();
 bool server_uart_read(uart_inst_t*, uint32_t);
 void server_listen_for_commands();
 
+typedef struct {
+    client_t clients[MAX_SERVER_CONNECTIONS];
+    uint32_t crc;
+} server_persistent_state_t;
+
 #endif

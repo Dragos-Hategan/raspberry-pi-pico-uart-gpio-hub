@@ -3,6 +3,7 @@
 
 #include "config.h"
 #include "hardware/uart.h"
+#include "types.h"
 
 extern uart_connection_t active_uart_client_connection;
 
