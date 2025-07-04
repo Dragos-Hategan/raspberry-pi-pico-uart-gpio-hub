@@ -23,13 +23,14 @@ typedef struct{
 }device_t;
 
 typedef struct{
-    device_t devices[MAX_NUMBER_OF_ACTIVE_DEVICES];
+    device_t devices[MAX_NUMBER_OF_GPIOS];
 }client_state_t;
 
 typedef struct{
     client_state_t running_client_state;
     client_state_t preset_configs[NUMBER_OF_POSSIBLE_PRESETS];
     uart_connection_t uart_connection;
+    bool is_active;
 }client_t;
 
 #endif
