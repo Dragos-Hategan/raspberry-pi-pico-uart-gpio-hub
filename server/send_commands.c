@@ -57,8 +57,43 @@ static inline void server_display_active_clients(){
     printf("\n");
 }
 
-static void server_set_device(){
+static uint32_t read_client_index(){
+    char buffer[1];
+    uint32_t len = 0;
+
+    printf("\n> ");
+    fflush(stdout);
+
+    while (len < sizeof(buffer)) {
+        int ch = getchar();
+        buffer[len++] = (char)ch;
+    }
+    buffer[len] = '\0';
+
+    return string_to_uint32(buffer, &choice);
+}
+
+static void server_set_device(){ //uint8_t gpio_number, bool state
+    uint32_t client_index;
+
+    printf("What device index do you waht to access?\n");
+    for (uint8_t index = 0; index < active_server_connections_number; index++){
+        printf("Device index = %d, connected to pins [%d,%d]\n", index + 1, active_uart_server_connections[index].pin_pair.tx, active_uart_server_connections[index].pin_pair.rx);
+    }
+
+    client_index = read_client_index();
+
+    printf("%u\n", client_index);
     
+    //uart_init_with_pins(uart, pin_pair, DEFAULT_BAUDRATE);
+
+    // char msg[8];
+    // snprintf(msg, sizeof(msg), "[%d,%d]", gpio_number, state);
+    // uart_puts(uart, msg);
+    // printf("Sent: %s\n", msg);
+    // sleep_ms(10);
+
+    // reset_gpio_pins(pin_pair);
 }
 
 static void server_toggle_device(){
@@ -98,17 +133,14 @@ static void server_select_action(){
 }
 
 static void server_read_choice(){
-    char buffer[32];
+    char buffer[1];
     uint32_t len = 0;
 
     printf("\n> ");
     fflush(stdout);
 
-    while (len < sizeof(buffer) - 1) {
+    while (len < sizeof(buffer)) {
         int ch = getchar();
-        if (ch == '\r' || ch == '\n') {
-            break;
-        }
         buffer[len++] = (char)ch;
     }
     buffer[len] = '\0';
@@ -138,7 +170,7 @@ void server_display_menu(){
 }
 
 void server_listen_for_commands(){
-    sleep_ms(8000);
+    sleep_ms(2000);
     
     server_display_active_clients();
 

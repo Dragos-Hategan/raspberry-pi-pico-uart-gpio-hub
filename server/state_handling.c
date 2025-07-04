@@ -105,13 +105,10 @@ void server_configure_persistent_state(server_persistent_state_t *server_persist
 static void server_send_client_state(uart_pin_pair_t pin_pair, uart_inst_t* uart, const client_state_t* state){
     uart_init_with_pins(uart, pin_pair, DEFAULT_BAUDRATE);
     for (uint8_t i = 0; i < MAX_NUMBER_OF_GPIOS; i++) {
-        //if (state->devices[i].is_on){
-            char msg[8];
-            snprintf(msg, sizeof(msg), "[%d,%d]", state->devices[i].gpio_number, state->devices[i].is_on);
-            uart_puts(uart, msg);
-            printf("Sent: %s\n", msg);
-            sleep_ms(10);
-        //}
+        char msg[8];
+        snprintf(msg, sizeof(msg), "[%d,%d]", state->devices[i].gpio_number, state->devices[i].is_on);
+        uart_puts(uart, msg);
+        sleep_ms(10);
     }
     reset_gpio_pins(pin_pair);
 }
@@ -176,9 +173,5 @@ void server_load_running_states_to_active_clients() {
     } else {
         printf("LOADING ATTEMPT FAILED! Initializing Configuration\n");
         server_configure_persistent_state(&server_persistent_state);
-    }
-
-    while (true){
-        sleep_ms(1000);
     }
 }

@@ -22,8 +22,8 @@ static inline void client_print_active_connection(){
 }
 
 static void apply_command(uint8_t *received_number_pair){
-    gpio_init(received_number_pair[0]);           // Initialize GPIO
-    gpio_set_dir(received_number_pair[0], GPIO_OUT);  // Set direction: output
+    gpio_init(received_number_pair[0]);
+    gpio_set_dir(received_number_pair[0], GPIO_OUT); 
     gpio_put(received_number_pair[0], received_number_pair[1]);
 }
 
@@ -35,10 +35,11 @@ void client_listen_for_commands(){
         get_uart_buffer(active_uart_client_connection.uart_instance, buf, sizeof(buf), CLIENT_TIMEOUT_MS);
         get_number_pair(received_number_pair, buf);
 
-        if (buf){
-            printf("[%d,%d]\n", received_number_pair[0], received_number_pair[1]);
+        if (buf[0] != '\0'){
             apply_command(received_number_pair);
         }
+
+        
         //client_print_active_connection();
     }
 }
