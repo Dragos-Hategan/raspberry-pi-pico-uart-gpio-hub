@@ -40,7 +40,7 @@ static bool string_to_uint32(const char *str, uint32_t *out) {
  *
  * Displays each valid UART connection with its associated TX/RX pins and UART instance number.
  */
-static inline void print_active_connections(){
+static inline void server_display_active_clients(){
     if (first_display){ 
         printf("\033[2J");    // delete screen
         printf("\033[H");     // move cursor to upper left screen
@@ -55,14 +55,6 @@ static inline void print_active_connections(){
             UART_NUM(active_uart_server_connections[index - 1].uart_instance));
         }
     printf("\n");
-}
-
-static void server_add_device_to_client(){
-
-}
-
-static void server_remove_device_from_client(){
-    
 }
 
 static void server_set_device(){
@@ -84,24 +76,18 @@ static void server_save_configuration(){
 static void server_select_action(){
     switch (choice){
         case 1:
-            print_active_connections();
+            server_display_active_clients();
             break;
         case 2:
-            server_add_device_to_client();
-            break;
-        case 3:
-            server_remove_device_from_client();
-            break;
-        case 4:
             server_set_device();
             break;
-        case 5:
+        case 3:
             server_toggle_device();
             break;
-        case 6:
+        case 4:
             server_load_configuration();
             break;
-        case 7:
+        case 5:
             server_save_configuration();
             break;
         default:
@@ -141,12 +127,10 @@ static void server_read_choice(){
 void server_display_menu(){
     printf(
         "1. Display clients\n"
-        "2. Add device to client\n"
-        "3. Remove device from client\n"
-        "4. Set client's device\n"
-        "5. Toggle client's device\n"
-        "6. Load configuration\n"
-        "7. Save configuration\n"
+        "2. Set client's device\n"
+        "3. Toggle client's device\n"
+        "4. Load configuration\n"
+        "5. Save configuration\n"
     );
         
     printf("\nPick an option");
@@ -156,7 +140,7 @@ void server_display_menu(){
 void server_listen_for_commands(){
     sleep_ms(8000);
     
-    print_active_connections();
+    server_display_active_clients();
 
     while(true){
         server_display_menu();

@@ -60,20 +60,6 @@ bool load_server_state(server_persistent_state_t *out_state) {
     return (saved_crc == computed_crc);
 }
 
-static void send_client_state(uart_pin_pair_t pin_pair, uart_inst_t* uart, const client_state_t* state){
-    uart_init_with_pins(uart, pin_pair, DEFAULT_BAUDRATE);
-    for (uint8_t i = 0; i < MAX_NUMBER_OF_GPIOS; i++) {
-        if (state->devices[i].is_on){
-            char msg[8];
-            snprintf(msg, sizeof(msg), "[%d,%d]", state->devices[i].gpio_number, state->devices[i].is_on);
-            uart_puts(uart, msg);
-            printf("Sent: %s\n", msg);
-            sleep_ms(5);
-        }
-    }
-    reset_gpio_pins(pin_pair);
-}
-
 static void configure_running_state(uart_pin_pair_t uart_pin_pair, uint8_t client_list_index, server_persistent_state_t *server_persistent_state){
     for (uint8_t index = 0; index < MAX_NUMBER_OF_GPIOS; index++){
         server_persistent_state->clients[client_list_index].running_client_state.devices[index].gpio_number = index + ((index / 23) * 3);
@@ -116,6 +102,20 @@ void server_configure_persistent_state(server_persistent_state_t *server_persist
     save_server_state(server_persistent_state);
 }
 
+static void server_send_client_state(uart_pin_pair_t pin_pair, uart_inst_t* uart, const client_state_t* state){
+    uart_init_with_pins(uart, pin_pair, DEFAULT_BAUDRATE);
+    for (uint8_t i = 0; i < MAX_NUMBER_OF_GPIOS; i++) {
+        //if (state->devices[i].is_on){
+            char msg[8];
+            snprintf(msg, sizeof(msg), "[%d,%d]", state->devices[i].gpio_number, state->devices[i].is_on);
+            uart_puts(uart, msg);
+            printf("Sent: %s\n", msg);
+            sleep_ms(10);
+        //}
+    }
+    reset_gpio_pins(pin_pair);
+}
+
 static void server_load_client_state(uart_connection_t uart_connection, server_persistent_state_t *server_persistent_state) {
     for (uint8_t i = 0; i < MAX_SERVER_CONNECTIONS; i++) {
         client_t *saved_client = &server_persistent_state->clients[i];
@@ -124,10 +124,44 @@ static void server_load_client_state(uart_connection_t uart_connection, server_p
             saved_client->uart_connection.pin_pair.rx == uart_connection.pin_pair.rx &&
             saved_client->uart_connection.uart_instance == uart_connection.uart_instance) {
 
-            send_client_state(uart_connection.pin_pair, uart_connection.uart_instance, &saved_client->running_client_state);
+            server_send_client_state(uart_connection.pin_pair, uart_connection.uart_instance, &saved_client->running_client_state);
             return;
         }
     }
+}
+
+static void print_server_persistent_state(server_persistent_state_t *server_persistent_state){
+    for (uint8_t index = 0; index < MAX_SERVER_CONNECTIONS; index++){
+        client_t *client = &server_persistent_state->clients[index];
+        printf("Client[%u]:\n", index + 1);
+
+        printf("\nRunning Client State:\n");
+        client_state_t *running_client_state = &client->running_client_state;
+        for (uint8_t index2 = 0; index2 < MAX_NUMBER_OF_GPIOS; index2++){
+            printf("Device[%u]: gpio_number:%u is_on:%u\n", index2, running_client_state->devices[index2].gpio_number, running_client_state->devices[index2].is_on);
+        }
+
+        for (uint8_t index3 = 0; index3 < NUMBER_OF_POSSIBLE_PRESETS; index3++){
+            client_state_t *preset_config = &client->preset_configs[index3];
+            printf("\nPreset Config[%u]:\n", index3 + 1);
+            for (uint8_t index4 = 0; index4 < MAX_NUMBER_OF_GPIOS; index4++){
+                printf("Device[%u]: gpio_number:%u is_on:%u\n", index4, preset_config->devices[index4].gpio_number, preset_config->devices[index4].is_on);
+            }
+        }
+
+        printf("\nUart connection:\nPin TX: %u, Pin RX: %u, Uart Instance Number: %u\n", client->uart_connection.pin_pair.tx, client->uart_connection.pin_pair.rx, UART_NUM(client->uart_connection.uart_instance));
+        
+        printf("\n\n");
+    }
+
+    printf("CRC: %u\n", server_persistent_state->crc);
+
+    printf("\n\n");
+
+    _Static_assert(sizeof(server_persistent_state_t) <= 4096, "Struct too large for one flash sector!");
+    printf("sizeof(server_persistent_state_t): %u\n", sizeof(server_persistent_state_t));   
+    printf("sizeOf server_persistent_state_t: %d", sizeof(server_persistent_state_t));
+    printf("\n\n\n\n");
 }
 
 void server_load_running_states_to_active_clients() {

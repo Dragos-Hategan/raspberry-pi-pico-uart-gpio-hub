@@ -7,9 +7,6 @@
 #include "config.h"
 #include "client.h"
 
-/// Timeout in milliseconds used when waiting for UART responses from the server.
-#define CLIENT_TIMEOUT_MS 50
-
 uart_connection_t active_uart_client_connection;
 
 /**
