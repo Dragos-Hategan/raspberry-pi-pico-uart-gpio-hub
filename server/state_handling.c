@@ -8,11 +8,6 @@
 #include "hardware/sync.h"
 #include "functions.h"
 
-#define SERVER_SECTOR_SIZE    4096
-#define SERVER_PAGE_SIZE      256
-#define SERVER_FLASH_OFFSET   (PICO_FLASH_SIZE_BYTES - SERVER_SECTOR_SIZE)
-#define SERVER_FLASH_ADDR     (XIP_BASE + SERVER_FLASH_OFFSET)
-
 uint32_t compute_crc32(const void *data, uint32_t length) {
     const uint8_t *bytes = (const uint8_t *)data;
     uint32_t crc = 0xFFFFFFFF;
@@ -66,8 +61,8 @@ static void configure_running_state(uart_pin_pair_t uart_pin_pair, uint8_t clien
         server_persistent_state->clients[client_list_index].running_client_state.devices[index].is_on = false;
     }
 
-    server_persistent_state->clients[client_list_index].running_client_state.devices[uart_pin_pair.tx].gpio_number = OCCUPIED_BY_UART_WARNING_NUMBER;
-    server_persistent_state->clients[client_list_index].running_client_state.devices[uart_pin_pair.rx].gpio_number = OCCUPIED_BY_UART_WARNING_NUMBER;
+    server_persistent_state->clients[client_list_index].running_client_state.devices[uart_pin_pair.tx].gpio_number = UART_CONNECTION_FLAG_NUMBER;
+    server_persistent_state->clients[client_list_index].running_client_state.devices[uart_pin_pair.rx].gpio_number = UART_CONNECTION_FLAG_NUMBER;
 }
 
 static void configure_preset_configs(uart_pin_pair_t uart_pin_pair, uint8_t client_list_index, server_persistent_state_t *server_persistent_state){
@@ -76,8 +71,8 @@ static void configure_preset_configs(uart_pin_pair_t uart_pin_pair, uint8_t clie
             server_persistent_state->clients[client_list_index].preset_configs[config_index].devices[gpio_index].gpio_number = gpio_index + ((gpio_index / 23) * 3);
             server_persistent_state->clients[client_list_index].preset_configs[config_index].devices[gpio_index].is_on = false;
         }
-        server_persistent_state->clients[client_list_index].preset_configs[config_index].devices[uart_pin_pair.tx].gpio_number = OCCUPIED_BY_UART_WARNING_NUMBER;
-        server_persistent_state->clients[client_list_index].preset_configs[config_index].devices[uart_pin_pair.rx].gpio_number = OCCUPIED_BY_UART_WARNING_NUMBER;
+        server_persistent_state->clients[client_list_index].preset_configs[config_index].devices[uart_pin_pair.tx].gpio_number = UART_CONNECTION_FLAG_NUMBER;
+        server_persistent_state->clients[client_list_index].preset_configs[config_index].devices[uart_pin_pair.rx].gpio_number = UART_CONNECTION_FLAG_NUMBER;
     }
 }
 
@@ -127,23 +122,39 @@ static void server_load_client_state(uart_connection_t uart_connection, server_p
     }
 }
 
-static void print_server_persistent_state(server_persistent_state_t *server_persistent_state){
-    for (uint8_t index = 0; index < MAX_SERVER_CONNECTIONS; index++){
-        client_t *client = &server_persistent_state->clients[index];
-        printf("Client[%u]:\n", index + 1);
+static inline void server_print_gpio_state(uint8_t gpio_index, client_state_t *client_state){
+    if (client_state->devices[gpio_index].gpio_number == UART_CONNECTION_FLAG_NUMBER){
+        printf("UART connection. gpio_number:%u\n", client_state->devices[gpio_index].gpio_number);
+    }else{
+        printf("Device[%u]: gpio_number:%u is_on:%u\n", gpio_index, client_state->devices[gpio_index].gpio_number, client_state->devices[gpio_index].is_on);
+    }
+}
 
-        printf("\nRunning Client State:\n");
-        client_state_t *running_client_state = &client->running_client_state;
-        for (uint8_t index2 = 0; index2 < MAX_NUMBER_OF_GPIOS; index2++){
-            printf("Device[%u]: gpio_number:%u is_on:%u\n", index2, running_client_state->devices[index2].gpio_number, running_client_state->devices[index2].is_on);
-        }
+void server_print_running_client_state(client_t *client){
+    printf("\nRunning Client State:\n");
+    client_state_t *running_client_state = &client->running_client_state;
+    for (uint8_t gpio_index = 0; gpio_index < MAX_NUMBER_OF_GPIOS; gpio_index++){
+        server_print_gpio_state(gpio_index, running_client_state);
+    }
+}
 
-        for (uint8_t index3 = 0; index3 < NUMBER_OF_POSSIBLE_PRESETS; index3++){
-            client_state_t *preset_config = &client->preset_configs[index3];
-            printf("\nPreset Config[%u]:\n", index3 + 1);
-            for (uint8_t index4 = 0; index4 < MAX_NUMBER_OF_GPIOS; index4++){
-                printf("Device[%u]: gpio_number:%u is_on:%u\n", index4, preset_config->devices[index4].gpio_number, preset_config->devices[index4].is_on);
-            }
+void server_print_client_preset_configuration(client_t *client, uint8_t client_preset_index){
+    printf("\nPreset Config[%u]:\n", index + 1);
+    client_state_t *preset_config = &client->preset_configs[client_preset_index];
+    for (uint8_t gpio_index = 0; gpio_index < MAX_NUMBER_OF_GPIOS; gpio_index++){
+        server_print_gpio_state(gpio_index, preset_config);
+    }
+}
+
+static void server_print_persistent_state(server_persistent_state_t *server_persistent_state){
+    for (uint8_t server_connections_index = 0; server_connections_index < MAX_SERVER_CONNECTIONS; server_connections_index++){
+        client_t *client = &server_persistent_state->clients[server_connections_index];
+        printf("Client[%u]:\n", server_connections_index + 1);
+
+        server_print_running_client_state(client);
+
+        for (uint8_t client_preset_index = 0; client_preset_index < NUMBER_OF_POSSIBLE_PRESETS; client_preset_index++){
+            server_print_client_preset_configuration(client, client_preset_index);
         }
 
         printf("\nUart connection:\nPin TX: %u, Pin RX: %u, Uart Instance Number: %u\n", client->uart_connection.pin_pair.tx, client->uart_connection.pin_pair.rx, UART_NUM(client->uart_connection.uart_instance));
@@ -174,4 +185,6 @@ void server_load_running_states_to_active_clients() {
         printf("LOADING ATTEMPT FAILED! Initializing Configuration\n");
         server_configure_persistent_state(&server_persistent_state);
     }
+
+    //server_print_persistent_state(&server_persistent_state);
 }
