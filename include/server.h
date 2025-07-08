@@ -8,10 +8,10 @@
 extern uart_connection_t active_uart_server_connections[MAX_SERVER_CONNECTIONS];
 extern uint8_t active_server_connections_number;
 
-bool server_find_connections();
+bool server_find_connections(void);
 bool server_uart_read(uart_inst_t*, uint32_t);
-void server_listen_for_commands();
-void server_load_running_states_to_active_clients();
+void server_listen_for_commands(void);
+void server_load_running_states_to_active_clients(void);
 void server_print_running_client_state(client_t *);
 void server_print_client_preset_configuration(client_t *, uint8_t);
 

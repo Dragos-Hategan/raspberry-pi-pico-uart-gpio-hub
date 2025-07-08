@@ -206,9 +206,11 @@ void server_display_menu(){
 }
 
 void server_listen_for_commands(){
-    sleep_ms(2000);
-
     while(true){
-        server_display_menu();
+        if (stdio_usb_connected()){
+            server_display_menu();
+        }else{
+            tight_loop_contents();
+        }
     }
 }
