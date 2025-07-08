@@ -3,7 +3,6 @@
 #include "functions.h"
 
 bool first_display = true;
-uint32_t choice = 0;
 
 void server_display_menu(void); 
 
@@ -35,6 +34,41 @@ static bool string_to_uint32(const char *str, uint32_t *out) {
     return true;
 }
 
+static bool read_uint32_line(uint32_t *out){
+    printf("\n> ");
+    fflush(stdout);
+    
+    char buffer[12] = {0};
+    int len = 0;
+
+    while (true){
+        int ch = getchar();
+        if (ch == '\r' || ch == '\n') 
+            break;
+        if (len < (int)(sizeof(buffer) - 1)) {
+            buffer[len++] = (char)ch;
+            putchar(ch);
+        }
+    }
+    putchar('\n');
+    return string_to_uint32(buffer, out);
+}
+
+static bool read_uint32_immediate(uint32_t *out){
+    printf("\n> ");
+    fflush(stdout);
+
+    int ch = getchar();
+    putchar(ch);         
+    putchar('\n');
+
+    if (ch >= '0' && ch <= '9') {
+        *out = ch - '0';
+        return true;
+    }
+    return false;
+}
+
 /**
  * @brief Prints all currently active UART connections to the console.
  *
@@ -50,73 +84,109 @@ static inline void server_display_active_clients(){
         }
 }
 
-static uint32_t client_index_input(){
-    char buffer[1];
-    uint32_t len = 0;
-
-    printf("\n> ");
-    fflush(stdout);
-
-    while (len < sizeof(buffer)) {
-        int ch = getchar();
-        buffer[len++] = (char)ch;
-    }
-    buffer[len] = '\0';
-
-    printf("%s\n", buffer);
-
-    return string_to_uint32(buffer, &choice);
+static inline void server_set_device_state(uart_pin_pair_t pin_pair, uart_inst_t* uart_instance, uint32_t flash_client_index, uint32_t device_index, bool device_state){
+    server_persistent_state_t *flash_state = (server_persistent_state_t *)SERVER_FLASH_ADDR;
+    flash_state->clients[flash_client_index].running_client_state.devices[device_index].is_on = device_state;
+    server_send_client_state(pin_pair, uart_instance, &flash_state->clients[flash_client_index].running_client_state);
+    save_server_state(flash_state);
 }
 
-static inline void server_set_device_state(uart_pin_pair_t pin_pair, uart_inst_t* uart_instance){
-    const server_persistent_state_t *flash_state = (const server_persistent_state_t *)SERVER_FLASH_ADDR;
-    printf("This is the running state of the client:\n");
-    uint8_t client_index;
-    for (client_index = 0; client_index < MAX_SERVER_CONNECTIONS; client_index++){
-        if (pin_pair.tx == flash_state->clients[client_index].uart_connection.pin_pair.tx){
-            client_t client = flash_state->clients[client_index];
-            server_print_running_client_state(&client);
-            break;
-        }   
-    }
-}
-
-static void server_choose_client(){ 
-    
+static bool server_choose_client(uint32_t *client_index){
     if (active_server_connections_number == 1){
-        server_set_device_state(active_uart_server_connections[0].pin_pair, active_uart_server_connections[0].uart_instance);
+        *client_index = 1;
+        return true;
+    }
+       
+    for (uint8_t index = 0; index < active_server_connections_number; index++){
+        printf("Client No. %d, connected to the server's GPIO pins [%d,%d]\n",
+            index + 1,
+            active_uart_server_connections[index].pin_pair.tx,
+            active_uart_server_connections[index].pin_pair.rx);
+    }
+
+    printf("\nWhat client number do you want to access?");
+
+    if (read_uint32_immediate(client_index) && *client_index >= 1 && *client_index <= active_server_connections_number){
+        return true;
+    }
+
+    return false;
+}
+
+static bool server_choose_device(uint32_t *device_index, const client_state_t *running_client_state){  
+    for (uint8_t gpio_index = 0; gpio_index < MAX_NUMBER_OF_GPIOS; gpio_index++){
+        server_print_gpio_state(gpio_index, running_client_state);
+    }
+
+    printf("\nWhat device number do you want to access?");
+
+    if (read_uint32_line(device_index) && *device_index >= 1 && *device_index <= MAX_NUMBER_OF_GPIOS){
+        if (running_client_state->devices[*device_index - 1].gpio_number != UART_CONNECTION_FLAG_NUMBER){
+            return true;
+        }
     }else{
-        while (true){
-            uint32_t client_index;
-    
-            printf("What device number do you waht to access?\n");
-            for (uint8_t index = 0; index < active_server_connections_number; index++){
-                printf("Device No. %d, connected to GPIO pins [%d,%d]\n", index + 1, active_uart_server_connections[index].pin_pair.tx, active_uart_server_connections[index].pin_pair.rx);
-            }
-            
-            if (client_index_input() && choice >= 1 && choice <= active_server_connections_number){
-                server_set_device_state(active_uart_server_connections[choice - 1].pin_pair, active_uart_server_connections[choice - 1].uart_instance);
-                break;
-            }else{
-                printf("Invalid input or overflow. Try again.\n");
-            }
-            
-            printf("\n");
+        printf("Selected device si used as UART connection.\n");
+    }
+
+    return false;
+}
+
+static bool server_choose_state(bool *device_state){
+    uint32_t state_number;
+    printf("\nWhat state?\nON = 1\nOFF = 0");
+
+    if (read_uint32_immediate(&state_number) && state_number >= 0 && state_number <= 1){
+        *device_state = state_number ? true : false;
+        return true;
+    }
+
+    return false;
+}
+
+static inline void print_input_error(){
+    printf("Invalid input or overflow. Try again.\n");
+}
+
+static void server_read_client_and_device_data(){ 
+    const server_persistent_state_t *flash_state = (const server_persistent_state_t *)SERVER_FLASH_ADDR;
+    uint32_t client_index;
+    bool correct_client_input = false;
+    while (!correct_client_input){
+        if (server_choose_client(&client_index)){
+            correct_client_input = true;
+        }else{
+            print_input_error();
         }
     }
 
-    
+    uint32_t flash_client_index;
+    for (uint8_t index = 0; index < MAX_SERVER_CONNECTIONS; index++){
+        if (active_uart_server_connections[client_index - 1].pin_pair.tx == flash_state->clients[index].uart_connection.pin_pair.tx){
+            flash_client_index = index;
+            break;
+        }   
+    }
+    uint32_t device_index;
+    bool correct_device_input = false;
+    while (!correct_device_input){
+        if (server_choose_device(&device_index, &flash_state->clients[flash_client_index].running_client_state)){
+            correct_device_input = true;
+        }else{
+            print_input_error();
+        }
+    }
 
+    bool device_state;
+    bool correct_state_input = false;
+    while (!correct_state_input){
+        if (server_choose_state(&device_state)){
+            correct_state_input = true;
+        }else{
+            print_input_error();
+        }
+    }
 
-    //uart_init_with_pins(uart, pin_pair, DEFAULT_BAUDRATE);
-
-    // char msg[8];
-    // snprintf(msg, sizeof(msg), "[%d,%d]", gpio_number, state);
-    // uart_puts(uart, msg);
-    // printf("Sent: %s\n", msg);
-    // sleep_ms(10);
-
-    // reset_gpio_pins(pin_pair);
+    server_set_device_state(active_uart_server_connections[client_index - 1].pin_pair, active_uart_server_connections[client_index - 1].uart_instance, flash_client_index, device_index, device_state);
 }
 
 static void server_toggle_device(){
@@ -131,13 +201,13 @@ static void server_save_configuration(){
     
 }
 
-static void server_select_action(){
+static void server_select_action(uint32_t choice){
     switch (choice){
         case 1:
             server_display_active_clients();
             break;
         case 2:
-            server_choose_client();
+            server_read_client_and_device_data();
             break;
         case 3:
             server_toggle_device();
@@ -155,25 +225,12 @@ static void server_select_action(){
 }
 
 static void server_read_choice(){
-    char buffer[1];
-    uint32_t len = 0;
-
-    printf("\n> ");
-    fflush(stdout);
-
-    while (len < sizeof(buffer)) {
-        int ch = getchar();
-        buffer[len++] = (char)ch;
-    }
-    buffer[len] = '\0';
-
-    printf("%s\n", buffer);
-
-    if (string_to_uint32(buffer, &choice)){
-        server_select_action();
+    uint32_t choice = 0;
+    if (read_uint32_immediate(&choice)){
+        server_select_action(choice);
     }
     else{
-        printf("Invalid input or overflow. Try again.\n");
+        print_input_error();
     }
 }
 
@@ -192,6 +249,7 @@ void server_display_menu(){
     }
 
     printf(
+        "Options:\n"
         "1. Display clients\n"
         "2. Set client's device\n"
         "3. Toggle client's device\n"
