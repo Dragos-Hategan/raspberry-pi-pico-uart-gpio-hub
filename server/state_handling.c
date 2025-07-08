@@ -124,14 +124,14 @@ static void server_load_client_state(uart_connection_t uart_connection, server_p
 
 static inline void server_print_gpio_state(uint8_t gpio_index, client_state_t *client_state){
     if (client_state->devices[gpio_index].gpio_number == UART_CONNECTION_FLAG_NUMBER){
-        printf("UART connection. gpio_number:%u\n", client_state->devices[gpio_index].gpio_number);
+        printf("Device[%u]: UART connection, no access.\n", gpio_index);
     }else{
         printf("Device[%u]: gpio_number:%u is_on:%u\n", gpio_index, client_state->devices[gpio_index].gpio_number, client_state->devices[gpio_index].is_on);
     }
 }
 
 void server_print_running_client_state(client_t *client){
-    printf("\nRunning Client State:\n");
+    printf("Running Client State:\n");
     client_state_t *running_client_state = &client->running_client_state;
     for (uint8_t gpio_index = 0; gpio_index < MAX_NUMBER_OF_GPIOS; gpio_index++){
         server_print_gpio_state(gpio_index, running_client_state);

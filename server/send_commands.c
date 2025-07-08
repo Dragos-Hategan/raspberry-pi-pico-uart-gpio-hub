@@ -40,13 +40,7 @@ static bool string_to_uint32(const char *str, uint32_t *out) {
  *
  * Displays each valid UART connection with its associated TX/RX pins and UART instance number.
  */
-static inline void server_display_active_clients(){
-    if (first_display){ 
-        printf("\033[2J");    // delete screen
-        printf("\033[H");     // move cursor to upper left screen
-        first_display = false;
-        printf("Welcome!\n");
-    }
+static inline void server_display_active_clients(){    
     printf("These are the active connections:\n");
     for (uint8_t index = 1; index <= active_server_connections_number; index++){
         printf("%d. GPIO Pin Pair=[%d,%d]. UART Instance=uart%d.\n", index, 
@@ -54,7 +48,6 @@ static inline void server_display_active_clients(){
             active_uart_server_connections[index - 1].pin_pair.rx,
             UART_NUM(active_uart_server_connections[index - 1].uart_instance));
         }
-    printf("\n");
 }
 
 static uint32_t client_index_input(){
@@ -93,21 +86,23 @@ static void server_choose_client(){
     if (active_server_connections_number == 1){
         server_set_device_state(active_uart_server_connections[0].pin_pair, active_uart_server_connections[0].uart_instance);
     }else{
-        uint32_t client_index;
-
-        printf("What device number do you waht to access?\n");
-        for (uint8_t index = 0; index < active_server_connections_number; index++){
-            printf("Device No. %d, connected to GPIO pins [%d,%d]\n", index + 1, active_uart_server_connections[index].pin_pair.tx, active_uart_server_connections[index].pin_pair.rx);
+        while (true){
+            uint32_t client_index;
+    
+            printf("What device number do you waht to access?\n");
+            for (uint8_t index = 0; index < active_server_connections_number; index++){
+                printf("Device No. %d, connected to GPIO pins [%d,%d]\n", index + 1, active_uart_server_connections[index].pin_pair.tx, active_uart_server_connections[index].pin_pair.rx);
+            }
+            
+            if (client_index_input() && choice >= 1 && choice <= active_server_connections_number){
+                server_set_device_state(active_uart_server_connections[choice - 1].pin_pair, active_uart_server_connections[choice - 1].uart_instance);
+                break;
+            }else{
+                printf("Invalid input or overflow. Try again.\n");
+            }
+            
+            printf("\n");
         }
-        
-        if (client_index_input() && choice >= 1 && choice <= active_server_connections_number){
-            server_set_device_state(active_uart_server_connections[choice - 1].pin_pair, active_uart_server_connections[choice - 1].uart_instance);
-        }else{
-            printf("Invalid input or overflow. Try again.\n");
-            server_choose_client();
-        }
-        
-        printf("%u\n", choice);
     }
 
     
@@ -155,7 +150,6 @@ static void server_select_action(){
             break;
         default:
             printf("Out of range. Try again.\n");
-            server_display_menu();
             break;
     }
 }
@@ -180,11 +174,23 @@ static void server_read_choice(){
     }
     else{
         printf("Invalid input or overflow. Try again.\n");
-        server_display_menu();
     }
 }
 
 void server_display_menu(){
+    if (first_display){ 
+        printf("\033[2J");    // delete screen
+        printf("\033[H");     // move cursor to upper left screen
+        first_display = false;
+
+        printf("\n****************************************************\n\n");
+
+        printf("Welcome!\n");
+        server_display_active_clients();
+
+        printf("\n");
+    }
+
     printf(
         "1. Display clients\n"
         "2. Set client's device\n"
@@ -195,15 +201,14 @@ void server_display_menu(){
         
     printf("\nPick an option");
     server_read_choice();
+
+    printf("\n****************************************************\n\n");
 }
 
 void server_listen_for_commands(){
     sleep_ms(2000);
-    
-    server_display_active_clients();
 
     while(true){
         server_display_menu();
     }
-    
 }
