@@ -6,6 +6,7 @@ add_executable(server
     main.c
     server_side_handshake.c
     send_commands.c
+    state_handling.c
 )
 
 pico_enable_stdio_usb(server 1)
@@ -20,6 +21,7 @@ target_link_libraries(server
     pico_stdlib
     hardware_uart
     hardware_gpio
+    hardware_sync
     common           
 )
 

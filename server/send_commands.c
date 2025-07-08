@@ -40,59 +40,129 @@ static bool string_to_uint32(const char *str, uint32_t *out) {
  *
  * Displays each valid UART connection with its associated TX/RX pins and UART instance number.
  */
-static inline void print_active_connections(){
-    if (first_display){ 
-        printf("\033[2J");    // delete screen
-        printf("\033[H");     // move cursor to upper left screen
-        first_display = false;
-        printf("Welcome!\n");
-    }
+static inline void server_display_active_clients(){    
     printf("These are the active connections:\n");
     for (uint8_t index = 1; index <= active_server_connections_number; index++){
-        printf("%d. Pair=[%d,%d]. Instance=uart%d.\n", index, 
+        printf("%d. GPIO Pin Pair=[%d,%d]. UART Instance=uart%d.\n", index, 
             active_uart_server_connections[index - 1].pin_pair.tx,
             active_uart_server_connections[index - 1].pin_pair.rx,
             UART_NUM(active_uart_server_connections[index - 1].uart_instance));
         }
-    printf("\n");
+}
+
+static uint32_t client_index_input(){
+    char buffer[1];
+    uint32_t len = 0;
+
+    printf("\n> ");
+    fflush(stdout);
+
+    while (len < sizeof(buffer)) {
+        int ch = getchar();
+        buffer[len++] = (char)ch;
+    }
+    buffer[len] = '\0';
+
+    printf("%s\n", buffer);
+
+    return string_to_uint32(buffer, &choice);
+}
+
+static inline void server_set_device_state(uart_pin_pair_t pin_pair, uart_inst_t* uart_instance){
+    const server_persistent_state_t *flash_state = (const server_persistent_state_t *)SERVER_FLASH_ADDR;
+    printf("This is the running state of the client:\n");
+    uint8_t client_index;
+    for (client_index = 0; client_index < MAX_SERVER_CONNECTIONS; client_index++){
+        if (pin_pair.tx == flash_state->clients[client_index].uart_connection.pin_pair.tx){
+            client_t client = flash_state->clients[client_index];
+            server_print_running_client_state(&client);
+            break;
+        }   
+    }
+}
+
+static void server_choose_client(){ 
+    
+    if (active_server_connections_number == 1){
+        server_set_device_state(active_uart_server_connections[0].pin_pair, active_uart_server_connections[0].uart_instance);
+    }else{
+        while (true){
+            uint32_t client_index;
+    
+            printf("What device number do you waht to access?\n");
+            for (uint8_t index = 0; index < active_server_connections_number; index++){
+                printf("Device No. %d, connected to GPIO pins [%d,%d]\n", index + 1, active_uart_server_connections[index].pin_pair.tx, active_uart_server_connections[index].pin_pair.rx);
+            }
+            
+            if (client_index_input() && choice >= 1 && choice <= active_server_connections_number){
+                server_set_device_state(active_uart_server_connections[choice - 1].pin_pair, active_uart_server_connections[choice - 1].uart_instance);
+                break;
+            }else{
+                printf("Invalid input or overflow. Try again.\n");
+            }
+            
+            printf("\n");
+        }
+    }
+
+    
+
+
+    //uart_init_with_pins(uart, pin_pair, DEFAULT_BAUDRATE);
+
+    // char msg[8];
+    // snprintf(msg, sizeof(msg), "[%d,%d]", gpio_number, state);
+    // uart_puts(uart, msg);
+    // printf("Sent: %s\n", msg);
+    // sleep_ms(10);
+
+    // reset_gpio_pins(pin_pair);
+}
+
+static void server_toggle_device(){
+    
+}
+
+static void server_load_configuration(){
+
+}
+
+static void server_save_configuration(){
+    
 }
 
 static void server_select_action(){
     switch (choice){
         case 1:
-            print_active_connections();
+            server_display_active_clients();
             break;
         case 2:
+            server_choose_client();
             break;
         case 3:
+            server_toggle_device();
             break;
         case 4:
+            server_load_configuration();
             break;
         case 5:
-            break;
-        case 6:
-            break;
-        case 7:
+            server_save_configuration();
             break;
         default:
             printf("Out of range. Try again.\n");
-            server_display_menu();
             break;
     }
 }
 
 static void server_read_choice(){
-    char buffer[32];
+    char buffer[1];
     uint32_t len = 0;
 
     printf("\n> ");
-    fflush(stdout); // asigură afișarea promptului
+    fflush(stdout);
 
-    while (len < sizeof(buffer) - 1) {
+    while (len < sizeof(buffer)) {
         int ch = getchar();
-        if (ch == '\r' || ch == '\n') {
-            break;
-        }
         buffer[len++] = (char)ch;
     }
     buffer[len] = '\0';
@@ -104,32 +174,43 @@ static void server_read_choice(){
     }
     else{
         printf("Invalid input or overflow. Try again.\n");
-        server_display_menu();
     }
 }
 
 void server_display_menu(){
+    if (first_display){ 
+        printf("\033[2J");    // delete screen
+        printf("\033[H");     // move cursor to upper left screen
+        first_display = false;
+
+        printf("\n****************************************************\n\n");
+
+        printf("Welcome!\n");
+        server_display_active_clients();
+
+        printf("\n");
+    }
+
     printf(
         "1. Display clients\n"
-        "2. Add device to client\n"
-        "3. Remove device from client\n"
-        "4. Set client's device state\n"
-        "5. Toggle client's device state\n"
-        "6. Load configuration\n"
-        "7. Save configuration\n"
+        "2. Set client's device\n"
+        "3. Toggle client's device\n"
+        "4. Load configuration\n"
+        "5. Save configuration\n"
     );
         
     printf("\nPick an option");
     server_read_choice();
+
+    printf("\n****************************************************\n\n");
 }
 
 void server_listen_for_commands(){
-    sleep_ms(8000);
-    
-    print_active_connections();
-
     while(true){
-        server_display_menu();
+        if (stdio_usb_connected()){
+            server_display_menu();
+        }else{
+            tight_loop_contents();
+        }
     }
-    
 }
