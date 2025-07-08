@@ -123,9 +123,9 @@ static bool server_choose_device(uint32_t *device_index, const client_state_t *r
     if (read_uint32_line(device_index) && *device_index >= 1 && *device_index <= MAX_NUMBER_OF_GPIOS){
         if (running_client_state->devices[*device_index - 1].gpio_number != UART_CONNECTION_FLAG_NUMBER){
             return true;
+        }else{
+            printf("Selected device is used as UART connection.\n");
         }
-    }else{
-        printf("Selected device si used as UART connection.\n");
     }
 
     return false;
