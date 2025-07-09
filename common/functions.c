@@ -1,7 +1,8 @@
-#include "functions.h"
-#include "config.h"
 #include <stdio.h>
 #include <string.h>
+
+#include "functions.h"
+#include "config.h"
 
 #ifdef CYW43_WL_GPIO_LED_PIN
 #include "pico/cyw43_arch.h"

@@ -5,8 +5,9 @@ project(server C)
 add_executable(server
     main.c
     server_side_handshake.c
-    send_commands.c
     state_handling.c
+    input.c
+    menu.c
 )
 
 pico_enable_stdio_usb(server 1)

@@ -9,6 +9,7 @@
  */
 
 #include <stdbool.h>
+
 #include "client.h"
 #include "functions.h"
 

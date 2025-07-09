@@ -2,6 +2,7 @@
 #define TYPES_H
 
 #include "hardware/uart.h"
+
 #include "config.h"
 
 typedef struct{
@@ -36,7 +37,6 @@ typedef struct{
     client_state_t running_client_state;
     client_state_t preset_configs[NUMBER_OF_POSSIBLE_PRESETS];
     uart_connection_t uart_connection;
-    //uart_connection_t uart_connection_from_client_to_server;
     bool is_active;
 }client_t;
 
