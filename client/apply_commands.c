@@ -25,6 +25,7 @@ static void apply_command(uint8_t *received_number_pair){
     gpio_init(received_number_pair[0]);
     gpio_set_dir(received_number_pair[0], GPIO_OUT); 
     gpio_put(received_number_pair[0], received_number_pair[1]);
+    //printf("[%u,%u]\n", received_number_pair[0], received_number_pair[1]);
 }
 
 void client_listen_for_commands(){

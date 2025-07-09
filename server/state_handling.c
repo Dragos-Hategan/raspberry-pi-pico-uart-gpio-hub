@@ -55,12 +55,48 @@ bool load_server_state(server_persistent_state_t *out_state) {
     return (saved_crc == computed_crc);
 }
 
+void server_send_device_state(uart_pin_pair_t pin_pair, uart_inst_t* uart, uint8_t gpio_number, bool is_on){
+    uart_init_with_pins(uart, pin_pair, DEFAULT_BAUDRATE);
+    char msg[8];
+    snprintf(msg, sizeof(msg), "[%d,%d]", gpio_number, is_on);
+    uart_puts(uart, msg);
+    sleep_ms(10);
+    reset_gpio_pins(pin_pair);
+}
+
+void server_send_client_state(uart_pin_pair_t pin_pair, uart_inst_t* uart, const client_state_t* state){
+    uart_init_with_pins(uart, pin_pair, DEFAULT_BAUDRATE);
+    for (uint8_t i = 0; i < MAX_NUMBER_OF_GPIOS; i++) {
+        char msg[8];
+        snprintf(msg, sizeof(msg), "[%d,%d]", state->devices[i].gpio_number, state->devices[i].is_on);
+        uart_puts(uart, msg);
+        sleep_ms(10);
+    }
+    reset_gpio_pins(pin_pair);
+}
+
+static void server_load_client_state(server_uart_connection_t server_uart_connection, server_persistent_state_t *server_persistent_state) {
+    for (uint8_t i = 0; i < MAX_SERVER_CONNECTIONS; i++) {
+        client_t *saved_client = &server_persistent_state->clients[i];
+
+        if (saved_client->uart_connection.pin_pair.tx == server_uart_connection.pin_pair.tx &&
+            saved_client->uart_connection.pin_pair.rx == server_uart_connection.pin_pair.rx &&
+            saved_client->uart_connection.uart_instance == server_uart_connection.uart_instance) {
+            
+            saved_client->is_active = true;
+            server_send_client_state(server_uart_connection.pin_pair, server_uart_connection.uart_instance, &saved_client->running_client_state);
+            return;
+        }
+    }
+}
+
 static void configure_running_state_uart_connection_pins(uint8_t client_list_index, server_persistent_state_t *server_persistent_state){
     for (uint8_t index = 0; index < active_server_connections_number; index++) {
-        if (active_uart_server_connections[index].pin_pair.tx == server_persistent_state->clients[client_list_index].uart_connection.pin_pair.tx){
-            server_persistent_state->clients[client_list_index].running_client_state.devices[active_uart_server_connections[index].uart_pin_pair_from_client_to_server.tx].gpio_number = UART_CONNECTION_FLAG_NUMBER;
-            server_persistent_state->clients[client_list_index].running_client_state.devices[active_uart_server_connections[index].uart_pin_pair_from_client_to_server.rx].gpio_number = UART_CONNECTION_FLAG_NUMBER;
-            server_persistent_state->clients[client_list_index].is_active = true;
+        client_t *client = &server_persistent_state->clients[client_list_index];
+        if (active_uart_server_connections[index].pin_pair.tx == client->uart_connection.pin_pair.tx){
+            client->running_client_state.devices[active_uart_server_connections[index].uart_pin_pair_from_client_to_server.tx].gpio_number = UART_CONNECTION_FLAG_NUMBER;
+            client->running_client_state.devices[active_uart_server_connections[index].uart_pin_pair_from_client_to_server.rx].gpio_number = UART_CONNECTION_FLAG_NUMBER;
+            client->is_active = true;
         }
     }
 }
@@ -76,9 +112,10 @@ static void configure_running_state(uint8_t client_list_index, server_persistent
 
 static void configure_preset_configs_uart_connection_pins(uint8_t client_list_index, server_persistent_state_t *server_persistent_state, uint8_t config_index){
     for (uint8_t index = 0; index < active_server_connections_number; index++) {
-        if (active_uart_server_connections[index].pin_pair.tx == server_persistent_state->clients[client_list_index].uart_connection.pin_pair.tx){
-            server_persistent_state->clients[client_list_index].preset_configs[config_index].devices[active_uart_server_connections[index].uart_pin_pair_from_client_to_server.tx].gpio_number = UART_CONNECTION_FLAG_NUMBER;
-            server_persistent_state->clients[client_list_index].preset_configs[config_index].devices[active_uart_server_connections[index].uart_pin_pair_from_client_to_server.rx].gpio_number = UART_CONNECTION_FLAG_NUMBER;
+        client_t *client = &server_persistent_state->clients[client_list_index];
+        if (active_uart_server_connections[index].pin_pair.tx == client->uart_connection.pin_pair.tx){
+            client->preset_configs[config_index].devices[active_uart_server_connections[index].uart_pin_pair_from_client_to_server.tx].gpio_number = UART_CONNECTION_FLAG_NUMBER;
+            client->preset_configs[config_index].devices[active_uart_server_connections[index].uart_pin_pair_from_client_to_server.rx].gpio_number = UART_CONNECTION_FLAG_NUMBER;
         }
     }
 }
@@ -114,31 +151,6 @@ void server_configure_persistent_state(server_persistent_state_t *server_persist
         client_list_index++;
     }
     save_server_state(server_persistent_state);
-}
-
-void server_send_client_state(uart_pin_pair_t pin_pair, uart_inst_t* uart, const client_state_t* state){
-    uart_init_with_pins(uart, pin_pair, DEFAULT_BAUDRATE);
-    for (uint8_t i = 0; i < MAX_NUMBER_OF_GPIOS; i++) {
-        char msg[8];
-        snprintf(msg, sizeof(msg), "[%d,%d]", state->devices[i].gpio_number, state->devices[i].is_on);
-        uart_puts(uart, msg);
-        sleep_ms(10);
-    }
-    reset_gpio_pins(pin_pair);
-}
-
-static void server_load_client_state(server_uart_connection_t uart_connection, server_persistent_state_t *server_persistent_state) {
-    for (uint8_t i = 0; i < MAX_SERVER_CONNECTIONS; i++) {
-        client_t *saved_client = &server_persistent_state->clients[i];
-
-        if (saved_client->uart_connection.pin_pair.tx == uart_connection.pin_pair.tx &&
-            saved_client->uart_connection.pin_pair.rx == uart_connection.pin_pair.rx &&
-            saved_client->uart_connection.uart_instance == uart_connection.uart_instance) {
-
-            server_send_client_state(uart_connection.pin_pair, uart_connection.uart_instance, &saved_client->running_client_state);
-            return;
-        }
-    }
 }
 
 void server_print_running_client_state(client_t *client){

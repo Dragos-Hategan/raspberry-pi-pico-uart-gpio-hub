@@ -22,6 +22,7 @@ void server_print_running_client_state(client_t *);
 void server_print_client_preset_configuration(client_t *, uint8_t);
 void __not_in_flash_func(save_server_state)(const server_persistent_state_t *);
 void server_send_client_state(uart_pin_pair_t, uart_inst_t*, const client_state_t*);
+void server_send_device_state(uart_pin_pair_t, uart_inst_t*, uint8_t, bool);
 
 inline void server_print_gpio_state(uint8_t gpio_index, const client_state_t *client_state){
     if (client_state->devices[gpio_index].gpio_number == UART_CONNECTION_FLAG_NUMBER){
