@@ -9,8 +9,10 @@
  */
 
 #include <stdbool.h>
+
 #include "functions.h"
 #include "server.h"
+#include "menu.h"
 
 /**
  * @brief Main entry point of the UART server application.
@@ -35,5 +37,11 @@ int main(){
         server_load_running_states_to_active_clients();
     }
 
-    server_listen_for_commands();
+    while(true){
+        if (stdio_usb_connected()){
+            server_display_menu();
+        }else{
+            tight_loop_contents();
+        }
+    }
 }

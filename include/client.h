@@ -1,11 +1,11 @@
 #ifndef CLIENT_H
 #define CLIENT_H
 
-#include "config.h"
 #include "hardware/uart.h"
+
+#include "config.h"
 #include "types.h"
 
-/// Timeout in milliseconds used when waiting for UART responses from the server.
 #define CLIENT_TIMEOUT_MS 50
 
 extern uart_connection_t active_uart_client_connection;

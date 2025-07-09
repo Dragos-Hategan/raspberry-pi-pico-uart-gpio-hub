@@ -1,11 +1,13 @@
 #include <stdint.h>
 #include <string.h>
 #include <stdio.h>
+
 #include "hardware/flash.h"
 #include "pico/stdlib.h"
+#include "hardware/sync.h"
+
 #include "types.h"
 #include "server.h"
-#include "hardware/sync.h"
 #include "functions.h"
 
 uint32_t compute_crc32(const void *data, uint32_t length) {
@@ -211,4 +213,15 @@ void server_load_running_states_to_active_clients() {
     }
 
     //server_print_persistent_state(&server_persistent_state);
+}
+
+void server_set_device_state_and_update_flash(uart_pin_pair_t pin_pair, uart_inst_t* uart_instance, uint8_t gpio_index, bool device_state, uint32_t flash_client_index){
+    server_send_device_state(pin_pair, uart_instance, gpio_index, device_state);
+    
+    server_persistent_state_t state_copy;
+    memcpy(&state_copy, (const server_persistent_state_t *)SERVER_FLASH_ADDR, sizeof(state_copy));
+    
+    state_copy.clients[flash_client_index].running_client_state.devices[gpio_index > 22 ? (gpio_index - 3) : (gpio_index)].is_on = device_state;
+    
+    save_server_state(&state_copy);
 }

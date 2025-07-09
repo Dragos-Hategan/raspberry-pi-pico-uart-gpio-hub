@@ -1,7 +1,9 @@
 #include <stdio.h>
+
+#include "pico/stdlib.h"
+
 #include "client.h"
 #include "types.h"
-#include "pico/stdlib.h"
 #include "functions.h"
 
 /**
@@ -39,8 +41,5 @@ void client_listen_for_commands(){
         if (buf[0] != '\0'){
             apply_command(received_number_pair);
         }
-
-        
-        //client_print_active_connection();
     }
 }

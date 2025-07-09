@@ -19,6 +19,12 @@
         "stdlib.h": "c",
         "sync.h": "c",
         "iosfwd": "c",
-        "xlocbuf": "c"
+        "xlocbuf": "c",
+        "algorithm": "c",
+        "limits": "c",
+        "utility": "c",
+        "valarray": "c",
+        "xutility": "c",
+        "input.h": "c"
     }
 }
