@@ -1,3 +1,5 @@
+#include <string.h>
+#include "pico/error.h"
 #include "server.h"
 #include <stdio.h>
 #include "functions.h"
@@ -5,6 +7,13 @@
 bool first_display = true;
 
 void server_display_menu(void); 
+
+void flush_stdin(){
+    while (true){
+        int ch = getchar_timeout_us(0);
+        if (ch == PICO_ERROR_TIMEOUT) break;
+    }
+}
 
 static bool string_to_uint32(const char *str, uint32_t *out) {
     uint32_t result = 0;
@@ -35,6 +44,7 @@ static bool string_to_uint32(const char *str, uint32_t *out) {
 }
 
 static bool read_uint32_line(uint32_t *out){
+    flush_stdin();
     printf("\n> ");
     fflush(stdout);
     
@@ -55,6 +65,7 @@ static bool read_uint32_line(uint32_t *out){
 }
 
 static bool read_uint32_immediate(uint32_t *out){
+    flush_stdin();
     printf("\n> ");
     fflush(stdout);
 
@@ -84,11 +95,15 @@ static inline void server_display_active_clients(){
         }
 }
 
-static inline void server_set_device_state(uart_pin_pair_t pin_pair, uart_inst_t* uart_instance, uint32_t flash_client_index, uint32_t device_index, bool device_state){
-    server_persistent_state_t *flash_state = (server_persistent_state_t *)SERVER_FLASH_ADDR;
-    flash_state->clients[flash_client_index].running_client_state.devices[device_index].is_on = device_state;
-    server_send_client_state(pin_pair, uart_instance, &flash_state->clients[flash_client_index].running_client_state);
-    save_server_state(flash_state);
+static inline void server_set_device_state(uart_pin_pair_t pin_pair, uart_inst_t* uart_instance, uint8_t gpio_index, bool device_state, uint32_t flash_client_index){
+    server_send_device_state(pin_pair, uart_instance, gpio_index, device_state);
+    
+    server_persistent_state_t state_copy;
+    memcpy(&state_copy, (const server_persistent_state_t *)SERVER_FLASH_ADDR, sizeof(state_copy));
+    
+    state_copy.clients[flash_client_index].running_client_state.devices[gpio_index > 22 ? (gpio_index - 3) : (gpio_index)].is_on = device_state;
+    
+    save_server_state(&state_copy);
 }
 
 static bool server_choose_client(uint32_t *client_index){
@@ -186,7 +201,11 @@ static void server_read_client_and_device_data(){
         }
     }
 
-    server_set_device_state(active_uart_server_connections[client_index - 1].pin_pair, active_uart_server_connections[client_index - 1].uart_instance, flash_client_index, device_index, device_state);
+    server_set_device_state(active_uart_server_connections[client_index - 1].pin_pair,
+        active_uart_server_connections[client_index - 1].uart_instance,
+        flash_state->clients[flash_client_index].running_client_state.devices[device_index - 1].gpio_number,
+        device_state,
+        flash_client_index);
 }
 
 static void server_toggle_device(){

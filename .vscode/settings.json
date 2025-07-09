@@ -17,6 +17,8 @@
         "types.h": "c",
         "client.h": "c",
         "stdlib.h": "c",
-        "sync.h": "c"
+        "sync.h": "c",
+        "iosfwd": "c",
+        "xlocbuf": "c"
     }
 }
