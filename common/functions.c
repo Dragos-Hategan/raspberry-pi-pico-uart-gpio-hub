@@ -11,7 +11,7 @@
 /**
  * @brief Initializes the onboard LED, depending on available hardware.
  *
- * - If using CYW43 Wi-Fi chip: initializes via `cyw43_arch_init()`.
+ * - If using CYW43 Wi-Fi chip: initializes via `cyw43_arch_init(void)`.
  * - If using default GPIO LED: configures the pin as output.
  *
  * @return int Returns `PICO_OK` on success, or `-1` if no LED config is found.

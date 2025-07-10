@@ -25,6 +25,7 @@
         "utility": "c",
         "valarray": "c",
         "xutility": "c",
-        "input.h": "c"
+        "input.h": "c",
+        "cassert": "cpp"
     }
 }

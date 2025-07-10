@@ -7,6 +7,7 @@
 #include "config.h"
 #include "client.h"
 
+/// @brief Stores the active UART connection established by the client.
 uart_connection_t active_uart_client_connection;
 
 /**
@@ -21,7 +22,7 @@ uart_connection_t active_uart_client_connection;
  * @param timeout_ms Timeout in milliseconds for the response.
  * @return true if the handshake is successful, false otherwise.
  */
-bool client_uart_read(uart_inst_t* uart_instance, uart_pin_pair_t pin_pair, uint32_t timeout_ms){
+static bool client_uart_read(uart_inst_t* uart_instance, uart_pin_pair_t pin_pair, uint32_t timeout_ms){
     char buf[32] = {0};
     uint8_t received_number_pair[2] = {0};
 
@@ -57,7 +58,7 @@ bool client_uart_read(uart_inst_t* uart_instance, uart_pin_pair_t pin_pair, uint
  * @param uart_instance Pointer to the UART peripheral (e.g., uart0 or uart1).
  * @return true if the handshake is successful, false otherwise.
  */
-bool client_test_uart_pair(uart_pin_pair_t pin_pair, uart_inst_t * uart_instance) {
+static bool client_test_uart_pair(uart_pin_pair_t pin_pair, uart_inst_t * uart_instance) {
     uart_init_with_pins(uart_instance, pin_pair, DEFAULT_BAUDRATE);
     sleep_ms(10);
 
@@ -83,11 +84,11 @@ static inline void client_add_connection(uart_pin_pair_t pin_pair, uart_inst_t *
 /**
  * @brief Searches UART0 pin pairs for a valid connection with the server.
  *
- * Iterates through all configured UART0 TX/RX combinations, testing each one via `client_test_uart_pair()`.
+ * Iterates through all configured UART0 TX/RX combinations, testing each one via `client_test_uart_pair(void)`.
  *
  * @return true if a valid UART0 connection is found, false otherwise.
  */
-static bool client_find_connection_for_uart0_instance(){
+static bool client_find_connection_for_uart0_instance(void){
     for (uint8_t index = 0; index < PIN_PAIRS_UART0_LEN; index++){
         if(client_test_uart_pair(pin_pairs_uart0[index], uart0)){
             client_add_connection(pin_pairs_uart0[index], uart0);
@@ -102,11 +103,11 @@ static bool client_find_connection_for_uart0_instance(){
 /**
  * @brief Searches UART1 pin pairs for a valid connection with the server.
  *
- * Iterates through all configured UART1 TX/RX combinations, testing each one via `client_test_uart_pair()`.
+ * Iterates through all configured UART1 TX/RX combinations, testing each one via `client_test_uart_pair(void)`.
  *
  * @return true if a valid UART1 connection is found, false otherwise.
  */
-static bool client_find_connection_for_uart1_instance(){
+static bool client_find_connection_for_uart1_instance(void){
     for (uint8_t index = 0; index < PIN_PAIRS_UART1_LEN; index++){
         if(client_test_uart_pair(pin_pairs_uart1[index], uart1)){
             client_add_connection(pin_pairs_uart1[index], uart1);
@@ -118,15 +119,7 @@ static bool client_find_connection_for_uart1_instance(){
     return false;
 }
 
-/**
- * @brief Performs a full scan of all available UART pin pairs until a valid connection is found.
- *
- * Tries all UART0 and UART1 pin pair combinations. Once a working connection is found,
- * the onboard LED blinks to signal success.
- *
- * @return true if a valid connection is found, false otherwise.
- */
-bool client_detect_uart_connection(){
+bool client_detect_uart_connection(void){
     bool connection_found = false;
     connection_found = client_find_connection_for_uart0_instance();
     if (!connection_found){

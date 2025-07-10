@@ -7,10 +7,6 @@
 #include "config.h"
 #include "server.h"
 
-/// Timeout in milliseconds for receiving a UART connection request.
-/// Minimum effective value is ~300ms. 500ms provides more robustness.
-#define SERVER_TIMEOUT_MS 500
-
 server_uart_connection_t active_uart_server_connections[MAX_SERVER_CONNECTIONS];
 uint8_t active_server_connections_number = 0;
 uart_pin_pair_t actual_client_to_server_pin_pair;
@@ -26,7 +22,7 @@ uart_pin_pair_t actual_client_to_server_pin_pair;
  * @param timeout_ms Timeout in milliseconds for each stage.
  * @return true if a complete and valid handshake occurs, false otherwise.
  */
-bool server_uart_read(uart_inst_t* uart_instance, uint32_t timeout_ms){
+static bool server_uart_read(uart_inst_t* uart_instance, uint32_t timeout_ms){
     char buf[32] = {0};
     uint8_t received_number_pair[2] = {0};
 
@@ -98,7 +94,7 @@ static inline void server_add_active_pair(uart_pin_pair_t pin_pair, uart_inst_t 
  * For each TX/RX pair configured for UART0, this function attempts to perform a handshake.
  * If the handshake is successful, the connection is stored.
  */
-static void server_check_connections_for_uart0_instance(){
+static void server_check_connections_for_uart0_instance(void){
     for (uint8_t index = 0; index < PIN_PAIRS_UART0_LEN; index++){
         if(server_check_pin_pair(pin_pairs_uart0[index], uart0)){
             server_add_active_pair(pin_pairs_uart0[index], uart0);
@@ -114,7 +110,7 @@ static void server_check_connections_for_uart0_instance(){
  * Similar to UART0 scanning, this function iterates over all UART1 TX/RX pairs
  * and performs handshake attempts.
  */
-static void server_check_connections_for_uart1_instance(){
+static void server_check_connections_for_uart1_instance(void){
     for (uint8_t index = 0; index < PIN_PAIRS_UART1_LEN; index++){
         if(server_check_pin_pair(pin_pairs_uart1[index], uart1)){
             server_add_active_pair(pin_pairs_uart1[index], uart1);
@@ -129,7 +125,7 @@ static void server_check_connections_for_uart1_instance(){
  *
  * Calls the UART0 and UART1 connection checkers to identify all valid connections.
  */
-bool server_find_connections(){
+bool server_find_connections(void){
     server_check_connections_for_uart0_instance();
     server_check_connections_for_uart1_instance();
 

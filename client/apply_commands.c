@@ -7,11 +7,14 @@
 #include "functions.h"
 
 /**
- * @brief Displays the active UART connection on the console.
+ * @brief Prints the active UART connection info to the console.
  *
- * Shows the connected TX/RX pin pair and the associated UART peripheral number.
+ * This function displays the currently connected TX and RX pin pair,
+ * along with the UART peripheral number used by the client.
+ * 
+ * Intended for debugging or informational CLI outputs.
  */
-static inline void client_print_active_connection(){
+static inline void client_print_active_connection(void){
     // printf("\033[2J");    // delete screen
     // printf("\033[H");     // move cursor to upper left screen
     printf("This is the active connection:\n");
@@ -23,6 +26,17 @@ static inline void client_print_active_connection(){
     printf("\n");
 }
 
+/**
+ * @brief Applies a GPIO command by setting a pin's state.
+ *
+ * Initializes the given GPIO pin and sets its direction to output,
+ * then sets its value to HIGH or LOW based on the second element
+ * in the received command array.
+ *
+ * @param received_number_pair A pointer to a 2-byte array where:
+ *        - index 0 = GPIO number
+ *        - index 1 = value (0 = LOW, 1 = HIGH)
+ */
 static void apply_command(uint8_t *received_number_pair){
     gpio_init(received_number_pair[0]);
     gpio_set_dir(received_number_pair[0], GPIO_OUT); 
@@ -30,7 +44,7 @@ static void apply_command(uint8_t *received_number_pair){
     printf("[%u,%u]\n", received_number_pair[0], received_number_pair[1]);
 }
 
-void client_listen_for_commands(){
+void client_listen_for_commands(void){
     while(true){
         char buf[8] = {0};
         uint8_t received_number_pair[2] = {0};
