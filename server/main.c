@@ -2,10 +2,13 @@
  * @file main.c
  * @brief UART server application for Raspberry Pi Pico.
  *
- * This program runs on a Raspberry Pi Pico acting as a UART server.
- * It scans UART0 and UART1 pin pairs to detect connection requests from clients.
- * When a valid TX/RX pair is identified and a handshake is successfully completed,
- * the server stores the connection for further communication.
+ * This program runs on a Raspberry Pi Pico acting as a central UART server.
+ * It scans through all possible UART0 and UART1 TX/RX pin pairs to detect
+ * connection requests from clients. When a handshake is successfully completed,
+ * the server stores the connection in an internal list.
+ *
+ * It then loads previously saved GPIO states for those clients and exposes
+ * a USB CLI interface for real-time control.
  */
 
 #include <stdbool.h>
@@ -17,10 +20,15 @@
 /**
  * @brief Main entry point of the UART server application.
  *
- * Initializes standard USB output and the onboard LED.
- * Then enters a loop to scan for UART connections.
- * If any connections are found, a visual LED indicator is triggered and
- * the program continuously prints the active connection list.
+ * Steps:
+ * - Initializes USB stdio and onboard LED.
+ * - Scans for valid client UART connections via `server_find_connections()`.
+ * - Once at least one connection is established:
+ *   - Blinks the onboard LED.
+ *   - Loads previous GPIO states from internal flash.
+ * - Enters a USB CLI loop (if connected).
+ *
+ * @return int Exit code (not used).
  */
 int main(void){
     stdio_usb_init();

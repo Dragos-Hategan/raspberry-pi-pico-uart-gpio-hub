@@ -1,3 +1,14 @@
+/**
+ * @file apply_commands.c
+ * @brief Handles incoming GPIO commands on the client side.
+ *
+ * This module:
+ * - Listens for UART messages from the server
+ * - Parses commands of the form "[gpio, value]"
+ * - Applies the commands by controlling GPIO pins
+ * - Displays connection info for debugging
+ */
+
 #include <stdio.h>
 
 #include "pico/stdlib.h"

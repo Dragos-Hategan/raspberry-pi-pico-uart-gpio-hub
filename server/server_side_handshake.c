@@ -1,3 +1,15 @@
+/**
+ * @file server_side_handshake.c
+ * @brief Implements UART server-side handshake logic for detecting and validating client connections.
+ *
+ * This module handles scanning all configured TX/RX pin pairs across UART0 and UART1
+ * to detect connection requests from clients. The server:
+ * - Waits for a connection request message from the client.
+ * - Sends an echo of the client's TX/RX pin pair.
+ * - Validates the acknowledgment from the client.
+ * - Stores successful connections in a global array.
+ */
+
 #include <stdio.h>
 #include <stdint.h>
 #include <stdbool.h>

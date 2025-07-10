@@ -1,3 +1,13 @@
+/**
+ * @file client.h
+ * @brief UART client interface for establishing and listening to GPIO commands.
+ *
+ * This module provides:
+ * - UART handshake and connection detection logic (client side)
+ * - Receiving and parsing GPIO control commands from server
+ * - Global access to the active UART client connection
+ */
+
 #ifndef CLIENT_H
 #define CLIENT_H
 
@@ -6,6 +16,12 @@
 #include "config.h"
 #include "types.h"
 
+/**
+ * @brief Global UART connection used by the client.
+ *
+ * Holds the UART instance and TX/RX pin pair after a successful handshake.
+ * Used by client-side modules to send and receive messages.
+ */
 extern uart_connection_t active_uart_client_connection;
 
 /**

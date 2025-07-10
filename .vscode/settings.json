@@ -26,6 +26,10 @@
         "valarray": "c",
         "xutility": "c",
         "input.h": "c",
-        "cassert": "cpp"
+        "cassert": "cpp",
+        "ios": "c",
+        "xiosbase": "c",
+        "format": "c",
+        "vector": "c"
     }
 }
