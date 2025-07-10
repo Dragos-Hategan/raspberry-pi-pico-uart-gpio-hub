@@ -21,7 +21,7 @@ uart_connection_t active_uart_client_connection;
  * @param timeout_ms Timeout in milliseconds for the response.
  * @return true if the handshake is successful, false otherwise.
  */
-bool client_uart_read(uart_inst_t* uart_instance, uart_pin_pair_t pin_pair, uint32_t timeout_ms){
+static bool client_uart_read(uart_inst_t* uart_instance, uart_pin_pair_t pin_pair, uint32_t timeout_ms){
     char buf[32] = {0};
     uint8_t received_number_pair[2] = {0};
 
@@ -57,7 +57,7 @@ bool client_uart_read(uart_inst_t* uart_instance, uart_pin_pair_t pin_pair, uint
  * @param uart_instance Pointer to the UART peripheral (e.g., uart0 or uart1).
  * @return true if the handshake is successful, false otherwise.
  */
-bool client_test_uart_pair(uart_pin_pair_t pin_pair, uart_inst_t * uart_instance) {
+static bool client_test_uart_pair(uart_pin_pair_t pin_pair, uart_inst_t * uart_instance) {
     uart_init_with_pins(uart_instance, pin_pair, DEFAULT_BAUDRATE);
     sleep_ms(10);
 

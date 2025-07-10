@@ -15,7 +15,6 @@ pico_enable_stdio_uart(server 0)
 
 target_include_directories(server PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/../include
-    ${CMAKE_CURRENT_SOURCE_DIR}/../common
 )
 
 target_link_libraries(server 

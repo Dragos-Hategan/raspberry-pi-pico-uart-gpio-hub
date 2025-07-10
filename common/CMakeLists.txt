@@ -4,7 +4,6 @@ add_library(common
 )
 
 target_include_directories(common PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}
     ${CMAKE_CURRENT_SOURCE_DIR}/../include
 )
 
