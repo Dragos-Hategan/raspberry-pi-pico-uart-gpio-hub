@@ -1,3 +1,16 @@
+/**
+ * @file menu.c
+ * @brief USB CLI menu logic for controlling clients on the UART server.
+ *
+ * Provides a terminal-based interface to:
+ * - Display current client connections.
+ * - Select and control GPIO states of client devices.
+ * - Load/save configurations (planned).
+ * - Toggle GPIO states (planned).
+ * 
+ * Input is read from USB serial, with range validation and error handling.
+ */
+
 #include "input.h"
 #include "server.h"
 
@@ -7,18 +20,36 @@ static inline void print_input_error(void){
     printf("Invalid input or overflow. Try again.\n");
 }
 
+/**
+ * @brief Placeholder for saving client configurations to flash.
+ * (Planned feature)
+ */
 static void save_configuration(void){
     
 }
 
+/**
+ * @brief Placeholder for loading saved client configurations.
+ * (Planned feature)
+ */
 static void load_configuration(void){
 
 }
 
+/**
+ * @brief Placeholder for toggling device GPIO state.
+ * (Planned feature)
+ */
 static void toggle_device(void){
     
 }
 
+/**
+ * @brief Prompts the user to enter a desired state: ON (1) or OFF (0).
+ *
+ * @param device_state Pointer to store the selected boolean state.
+ * @return true if valid input received, false otherwise.
+ */
 static bool choose_state(bool *device_state){
     uint32_t state_number;
     const uint32_t INPUT_MIN_DEVICE_INDEX = 0;
@@ -33,6 +64,13 @@ static bool choose_state(bool *device_state){
     return false;
 }
 
+/**
+ * @brief Prompts the user to select a GPIO device to modify.
+ *
+ * @param device_index Output pointer for selected index (1-based).
+ * @param running_client_state The state structure of the selected client.
+ * @return true if valid device selected, false otherwise.
+ */
 static bool choose_device(uint32_t *device_index, const client_state_t *running_client_state){  
     for (uint8_t gpio_index = 0; gpio_index < MAX_NUMBER_OF_GPIOS; gpio_index++){
         server_print_gpio_state(gpio_index, running_client_state);
@@ -53,6 +91,12 @@ static bool choose_device(uint32_t *device_index, const client_state_t *running_
     return false;
 }
 
+/**
+ * @brief Prompts the user to choose which connected client to access.
+ *
+ * @param client_index Output pointer for selected index (1-based).
+ * @return true if valid client selected, false otherwise.
+ */
 static bool choose_client(uint32_t *client_index){
     if (active_server_connections_number == 1){
         *client_index = 1;
@@ -77,6 +121,10 @@ static bool choose_client(uint32_t *client_index){
     return false;
 }
 
+/**
+ * @brief Reads and validates client, device, and state selections from the user,
+ * then sends the state to the corresponding client via UART.
+ */
 static void read_client_and_device_data(void){ 
     const server_persistent_state_t *flash_state = (const server_persistent_state_t *)SERVER_FLASH_ADDR;
     uint32_t client_index;
@@ -138,6 +186,11 @@ static inline void display_active_clients(void){
         }
 }
 
+/**
+ * @brief Dispatches the user-selected menu option to the corresponding action.
+ *
+ * @param choice The selected menu number.
+ */
 static void select_action(uint32_t choice){
     switch (choice){
         case 1:
@@ -161,6 +214,10 @@ static void select_action(uint32_t choice){
     }
 }
 
+
+/**
+ * @brief Reads a menu selection from the user and processes it.
+ */
 static void server_read_choice(void){
     uint32_t option;
     const uint32_t INPUT_MIN_DEVICE_INDEX = 1;
@@ -175,6 +232,12 @@ static void server_read_choice(void){
     }
 }
 
+/**
+ * @brief Entry point for the USB menu system.
+ *
+ * Prints a welcome screen on first call, then shows the menu options.
+ * Processes user selection via `server_read_choice()`.
+ */
 void server_display_menu(void){
     if (first_display){ 
         printf("\033[2J");    // delete screen

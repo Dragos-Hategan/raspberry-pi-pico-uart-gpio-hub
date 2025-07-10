@@ -1,6 +1,16 @@
+/**
+ * @file config.h
+ * @brief Project-wide configuration constants for UART GPIO server.
+ *
+ * Contains default settings like baud rate, UART pin limits, timeout values,
+ * and storage constants used across server and client logic.
+ */
+
 #ifndef CONFIG_H
 #define CONFIG_H
 
+
+// === UART Settings ===
 #ifndef DEFAULT_BAUDRATE
 #define DEFAULT_BAUDRATE 115200u
 #endif
@@ -13,14 +23,8 @@
 #define CONNECTION_ACCEPTED_MESSAGE "Connection Accepted"
 #endif
 
-#ifndef MAX_SERVER_CONNECTIONS
-#define MAX_SERVER_CONNECTIONS (PIN_PAIRS_UART0_LEN + PIN_PAIRS_UART1_LEN)
-#endif
 
-#ifndef LED_DELAY_MS
-#define LED_DELAY_MS 125
-#endif
-
+// === UART Connection Scan ===
 #ifndef PIN_PAIRS_UART0_LEN
 #define PIN_PAIRS_UART0_LEN 3
 #endif
@@ -29,8 +33,14 @@
 #define PIN_PAIRS_UART1_LEN 2
 #endif
 
-#ifndef MS_TO_US_MULTIPLIER
-#define MS_TO_US_MULTIPLIER 1000
+#ifndef MAX_SERVER_CONNECTIONS
+#define MAX_SERVER_CONNECTIONS (PIN_PAIRS_UART0_LEN + PIN_PAIRS_UART1_LEN)
+#endif
+
+
+// === Timings (ms) ===
+#ifndef LED_DELAY_MS
+#define LED_DELAY_MS 125
 #endif
 
 /// Timeout in milliseconds for receiving a UART connection request.
@@ -44,12 +54,14 @@
 #define CLIENT_TIMEOUT_MS 50
 #endif
 
-#ifndef MAX_NUMBER_OF_GPIOS
-#define MAX_NUMBER_OF_GPIOS 26
+#ifndef MS_TO_US_MULTIPLIER
+#define MS_TO_US_MULTIPLIER 1000
 #endif
 
-#ifndef EMPTY_MEMORY_MESSAGE
-#define EMPTY_MEMORY_MESSAGE "Empty"
+
+// === GPIO State ===
+#ifndef MAX_NUMBER_OF_GPIOS
+#define MAX_NUMBER_OF_GPIOS 26
 #endif
 
 #ifndef UART_CONNECTION_FLAG_NUMBER
@@ -57,5 +69,12 @@
 #endif
 
 #define NUMBER_OF_POSSIBLE_PRESETS 5
+
+
+// === Messages ===
+#ifndef EMPTY_MEMORY_MESSAGE
+#define EMPTY_MEMORY_MESSAGE "Empty"
+#endif
+
 
 #endif

@@ -1,3 +1,11 @@
+/**
+ * @file functions.c
+ * @brief Common utility functions for UART communication and LED control.
+ *
+ * This file contains shared helper functions used across the project,
+ * such as UART buffer parsing, LED signaling, and UART initialization.
+ */
+
 #include <stdio.h>
 #include <string.h>
 
@@ -55,7 +63,7 @@ void blink_onboard_led(void){
 }
 
 /**
- * @brief Reads incoming UART data into a buffer with timeout support.
+ * @brief Reads UART data into a buffer until ']' or timeout.
  *
  * This function reads characters from the UART until:
  * - The buffer is full,
@@ -96,9 +104,9 @@ void get_uart_buffer(uart_inst_t* uart, char* buf, uint8_t buffer_size, uint32_t
 }
 
 /**
- * @brief Extracts two decimal numbers from a string of the form "[x,y]".
+ * @brief Parses two decimal numbers from a string in the format "[x,y]".
  *
- * This function scans the buffer and parses two integers separated by a comma.
+ * Assumes well-formed input with exactly one comma separator and digits only.
  * The numbers are written into the provided array.
  *
  * @param received_number_pair Pointer to a 2-element array to hold the parsed numbers.

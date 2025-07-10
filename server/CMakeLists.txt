@@ -17,6 +17,7 @@ target_include_directories(server PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/../include
 )
 
+# Link libraries: SDK + peripherals + common logic
 target_link_libraries(server 
     pico_stdlib
     hardware_uart
@@ -25,8 +26,10 @@ target_link_libraries(server
     common           
 )
 
+# Optional Wi-Fi support if using CYW43 chip
 if(PICO_CYW43_SUPPORTED)
     target_link_libraries(server pico_cyw43_arch_none)
 endif()
 
+# Generate UF2, bin, map, etc.
 pico_add_extra_outputs(server)

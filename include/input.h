@@ -1,12 +1,17 @@
+/**
+ * @file input.h
+ * @brief Interface for reading validated numeric input from the user.
+ *
+ * This header provides a function that prompts the user for a numeric value
+ * and validates whether the input falls within a specified range. Useful in
+ * menu-based CLI applications where user input must be constrained.
+ */
+
 #ifndef INPUT_H
 #define INPUT_H
 
 #include <stdint.h>
 #include <stdbool.h>
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 /**
  * @brief Prompts the user to enter a number within a specified range.
@@ -20,8 +25,4 @@ extern "C" {
  */
 bool read_user_choice_in_range(const char* message, uint32_t* out, uint32_t min, uint32_t max);
 
-#ifdef __cplusplus
-}
-#endif
-
-#endif // INPUT_H
+#endif 

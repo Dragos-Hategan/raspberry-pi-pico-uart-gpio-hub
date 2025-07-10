@@ -1,3 +1,16 @@
+/**
+ * @file client_side_handshake.c
+ * @brief Handles UART handshake from the client side.
+ *
+ * Implements the logic for scanning UART pin pairs, initiating a handshake
+ * with the server, validating echo responses, and confirming connection.
+ *
+ * - Sends a request of the form "Requesting Connection-[tx,rx]"
+ * - Waits for the server to echo "[tx,rx]"
+ * - Responds with "[Connection Accepted]" if valid
+ * - Stores working connection in global `active_uart_client_connection`
+ */
+
 #include <stdio.h>
 #include <stdint.h>
 #include <stdbool.h>
@@ -7,7 +20,6 @@
 #include "config.h"
 #include "client.h"
 
-/// @brief Stores the active UART connection established by the client.
 uart_connection_t active_uart_client_connection;
 
 /**
