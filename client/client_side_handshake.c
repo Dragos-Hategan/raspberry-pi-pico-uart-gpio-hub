@@ -7,6 +7,7 @@
 #include "config.h"
 #include "client.h"
 
+/// @brief Stores the active UART connection established by the client.
 uart_connection_t active_uart_client_connection;
 
 /**
@@ -118,14 +119,6 @@ static bool client_find_connection_for_uart1_instance(void){
     return false;
 }
 
-/**
- * @brief Performs a full scan of all available UART pin pairs until a valid connection is found.
- *
- * Tries all UART0 and UART1 pin pair combinations. Once a working connection is found,
- * the onboard LED blinks to signal success.
- *
- * @return true if a valid connection is found, false otherwise.
- */
 bool client_detect_uart_connection(void){
     bool connection_found = false;
     connection_found = client_find_connection_for_uart0_instance();

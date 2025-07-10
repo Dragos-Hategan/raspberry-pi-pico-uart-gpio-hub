@@ -8,6 +8,14 @@
 
 extern uart_connection_t active_uart_client_connection;
 
+/**
+ * @brief Performs a full scan of all available UART pin pairs until a valid connection is found.
+ *
+ * Tries all UART0 and UART1 pin pair combinations. Once a working connection is found,
+ * the onboard LED blinks to signal success.
+ *
+ * @return true if a valid connection is found, false otherwise.
+ */
 bool client_detect_uart_connection(void);
 
 /**
