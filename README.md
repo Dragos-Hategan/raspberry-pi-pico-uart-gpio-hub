@@ -6,7 +6,7 @@ This project enables a central **Pico-based server** to detect and communicate w
 
 ---
 
-## 🧠 System Overview
+## System Overview
 
 - Server auto-detects all valid TX/RX pin combinations via UART handshake.
 - Each client listens for GPIO control commands and applies them.
@@ -14,7 +14,7 @@ This project enables a central **Pico-based server** to detect and communicate w
 
 ---
 
-## ✨ Features
+## Features
 
 - 🔌 Automatic UART handshake
 - 📶 Scans all UART0 & UART1 pin pairs (up to 5 clients)
@@ -29,7 +29,7 @@ This project enables a central **Pico-based server** to detect and communicate w
 
 ---
 
-## 🧰 Requirements
+## Requirements
 
 - Raspberry Pi Pico boards (1 server, 1+ clients)
 - UART connection wires (TX/RX)
@@ -38,7 +38,7 @@ This project enables a central **Pico-based server** to detect and communicate w
 
 ---
 
-## ⚙️ UART Protocol
+## UART Protocol
 
 ### Handshake
 
@@ -65,7 +65,7 @@ This project supports multiple build systems using CMake. The `-DPICO_BOARD=pico
 
 Below are instructions for common configurations:
 
-### 🔧 Build with **MinGW Makefiles** (recommended for Windows)
+### Build with **MinGW Makefiles** (recommended for Windows)
 
 ```bash
 mkdir build
@@ -94,11 +94,11 @@ cmake -G "MinGW Makefiles" ../.. -DPICO_BOARD=pico2_w
 mingw32-make
 ```
 Each board type now has its own build folder, containing both the client and server firmware ready to be flashed.  
-📝 Make sure `mingw32-make` and `arm-none-eabi-gcc` are in your `PATH`.
+Make sure `mingw32-make` and `arm-none-eabi-gcc` are in your `PATH`.
 
 ---
 
-### 🧱 Build with **Ninja** (cross-platform, fast builds)
+### Build with **Ninja** (cross-platform, fast builds)
 
 ```bash
 mkdir build
@@ -109,7 +109,7 @@ ninja
 
 ---
 
-### 🐧 Build with **Unix Makefiles** (Linux/macOS)
+### Build with **Unix Makefiles** (Linux/macOS)
 
 ```bash
 mkdir build
@@ -120,7 +120,7 @@ make
 
 ---
 
-### 🪟 Build with **Visual Studio 2022** (Windows)
+### Build with **Visual Studio 2022** (Windows)
 
 ```powershell
 mkdir build
@@ -132,15 +132,15 @@ cmake --build . --config Debug
 
 ---
 
-## 🚀 Flashing to Raspberry Pi Pico
+## Flashing to Raspberry Pi Pico
 
-### 🖱️ Option 1: Drag-and-drop (BOOTSEL mode)
+### Option 1: Drag-and-drop (BOOTSEL mode)
 
 1. Hold `BOOTSEL` while plugging in the Pico via USB.
 2. It will mount as a drive.
 3. Drag the `.uf2` file onto it.
 
-### 🔧 Option 2: Use `picotool` (if installed)
+### Option 2: Use `picotool` (if installed)
 
 ```bash
 picotool load firmware.uf2
@@ -153,7 +153,7 @@ Requires:
 
 ---
 
-## 🧪 How It Works
+## How It Works
 
 1. **Power on the server** — it begins scanning UART pin pairs for client requests.
 2. **Power on a client** — it starts scanning and broadcasting handshake messages.
@@ -176,7 +176,7 @@ See `types.c` and `config.h` to customize:
 
 ---
 
-## 📈 Roadmap
+## Roadmap
 
 - [x] Multi-client support
 - [x] Flash-based state persistence with CRC
@@ -188,7 +188,7 @@ See `types.c` and `config.h` to customize:
 
 ---
 
-## 🧠 Design Considerations
+## Design Considerations
 
 - Safe Flash writes are executed via `__not_in_flash_func`.
 - Handshake timeout is tunable per side.
@@ -196,12 +196,12 @@ See `types.c` and `config.h` to customize:
 
 ---
 
-## 📜 License
+## License
 
 Licensed under the [BSD-3-Clause License](https://opensource.org/licenses/BSD-3-Clause).
 
 ---
 
-## 👤 Author
+## Author
 
 **Dragos Hategan**  
