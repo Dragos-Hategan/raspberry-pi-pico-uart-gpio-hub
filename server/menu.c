@@ -3,19 +3,19 @@
 
 bool first_display = true;
 
-static inline void print_input_error(){
+static inline void print_input_error(void){
     printf("Invalid input or overflow. Try again.\n");
 }
 
-static void save_configuration(){
+static void save_configuration(void){
     
 }
 
-static void load_configuration(){
+static void load_configuration(void){
 
 }
 
-static void toggle_device(){
+static void toggle_device(void){
     
 }
 
@@ -77,7 +77,7 @@ static bool choose_client(uint32_t *client_index){
     return false;
 }
 
-static void read_client_and_device_data(){ 
+static void read_client_and_device_data(void){ 
     const server_persistent_state_t *flash_state = (const server_persistent_state_t *)SERVER_FLASH_ADDR;
     uint32_t client_index;
     bool correct_client_input = false;
@@ -128,7 +128,7 @@ static void read_client_and_device_data(){
  *
  * Displays each valid UART connection with its associated TX/RX pins and UART instance number.
  */
-static inline void display_active_clients(){    
+static inline void display_active_clients(void){    
     printf("These are the active connections:\n");
     for (uint8_t index = 1; index <= active_server_connections_number; index++){
         printf("%d. GPIO Pin Pair=[%d,%d]. UART Instance=uart%d.\n", index, 
@@ -161,7 +161,7 @@ static void select_action(uint32_t choice){
     }
 }
 
-static void server_read_choice(){
+static void server_read_choice(void){
     uint32_t option;
     const uint32_t INPUT_MIN_DEVICE_INDEX = 1;
     const uint32_t INPUT_MAX_DEVICE_INDEX = 5;
@@ -175,7 +175,7 @@ static void server_read_choice(){
     }
 }
 
-void server_display_menu(){
+void server_display_menu(void){
     if (first_display){ 
         printf("\033[2J");    // delete screen
         printf("\033[H");     // move cursor to upper left screen
@@ -196,6 +196,8 @@ void server_display_menu(){
         "3. Toggle client's device\n"
         "4. Load configuration\n"
         "5. Save configuration\n"
+        "6. Erase client data\n"
+        "0. Exit\n"
     );
     server_read_choice();
 
