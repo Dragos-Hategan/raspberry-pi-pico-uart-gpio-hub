@@ -27,7 +27,7 @@ uint32_t compute_crc32(const void *data, uint32_t length) {
     return ~crc;
 }
 
-void __not_in_flash_func(save_server_state)(const server_persistent_state_t *state_in) {
+static void __not_in_flash_func(save_server_state)(const server_persistent_state_t *state_in) {
     server_persistent_state_t temp;
     memcpy(&temp, state_in, sizeof(temp));
 
@@ -57,7 +57,7 @@ bool load_server_state(server_persistent_state_t *out_state) {
     return (saved_crc == computed_crc);
 }
 
-void server_send_device_state(uart_pin_pair_t pin_pair, uart_inst_t* uart, uint8_t gpio_number, bool is_on){
+static void server_send_device_state(uart_pin_pair_t pin_pair, uart_inst_t* uart, uint8_t gpio_number, bool is_on){
     uart_init_with_pins(uart, pin_pair, DEFAULT_BAUDRATE);
     char msg[8];
     snprintf(msg, sizeof(msg), "[%d,%d]", gpio_number, is_on);
@@ -66,7 +66,7 @@ void server_send_device_state(uart_pin_pair_t pin_pair, uart_inst_t* uart, uint8
     reset_gpio_pins(pin_pair);
 }
 
-void server_send_client_state(uart_pin_pair_t pin_pair, uart_inst_t* uart, const client_state_t* state){
+static void server_send_client_state(uart_pin_pair_t pin_pair, uart_inst_t* uart, const client_state_t* state){
     uart_init_with_pins(uart, pin_pair, DEFAULT_BAUDRATE);
     for (uint8_t i = 0; i < MAX_NUMBER_OF_GPIOS; i++) {
         char msg[8];

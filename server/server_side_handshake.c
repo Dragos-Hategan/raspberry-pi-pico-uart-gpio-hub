@@ -22,7 +22,7 @@ uart_pin_pair_t actual_client_to_server_pin_pair;
  * @param timeout_ms Timeout in milliseconds for each stage.
  * @return true if a complete and valid handshake occurs, false otherwise.
  */
-bool server_uart_read(uart_inst_t* uart_instance, uint32_t timeout_ms){
+static bool server_uart_read(uart_inst_t* uart_instance, uint32_t timeout_ms){
     char buf[32] = {0};
     uint8_t received_number_pair[2] = {0};
 
