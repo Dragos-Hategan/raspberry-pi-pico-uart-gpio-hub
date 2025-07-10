@@ -7,10 +7,6 @@
 #include "config.h"
 #include "server.h"
 
-/// Timeout in milliseconds for receiving a UART connection request.
-/// Minimum effective value is ~300ms. 500ms provides more robustness.
-#define SERVER_TIMEOUT_MS 500
-
 server_uart_connection_t active_uart_server_connections[MAX_SERVER_CONNECTIONS];
 uint8_t active_server_connections_number = 0;
 uart_pin_pair_t actual_client_to_server_pin_pair;

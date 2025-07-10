@@ -33,6 +33,17 @@
 #define MS_TO_US_MULTIPLIER 1000
 #endif
 
+/// Timeout in milliseconds for receiving a UART connection request.
+/// Minimum effective value is ~300ms. 500ms provides more robustness.
+#ifndef SERVER_TIMEOUT_MS
+#define SERVER_TIMEOUT_MS 500
+#endif
+
+/// Timeout in milliseconds for sending a UART connection request.
+#ifndef CLIENT_TIMEOUT_MS
+#define CLIENT_TIMEOUT_MS 50
+#endif
+
 #ifndef MAX_NUMBER_OF_GPIOS
 #define MAX_NUMBER_OF_GPIOS 26
 #endif
