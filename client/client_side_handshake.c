@@ -83,11 +83,11 @@ static inline void client_add_connection(uart_pin_pair_t pin_pair, uart_inst_t *
 /**
  * @brief Searches UART0 pin pairs for a valid connection with the server.
  *
- * Iterates through all configured UART0 TX/RX combinations, testing each one via `client_test_uart_pair()`.
+ * Iterates through all configured UART0 TX/RX combinations, testing each one via `client_test_uart_pair(void)`.
  *
  * @return true if a valid UART0 connection is found, false otherwise.
  */
-static bool client_find_connection_for_uart0_instance(){
+static bool client_find_connection_for_uart0_instance(void){
     for (uint8_t index = 0; index < PIN_PAIRS_UART0_LEN; index++){
         if(client_test_uart_pair(pin_pairs_uart0[index], uart0)){
             client_add_connection(pin_pairs_uart0[index], uart0);
@@ -102,11 +102,11 @@ static bool client_find_connection_for_uart0_instance(){
 /**
  * @brief Searches UART1 pin pairs for a valid connection with the server.
  *
- * Iterates through all configured UART1 TX/RX combinations, testing each one via `client_test_uart_pair()`.
+ * Iterates through all configured UART1 TX/RX combinations, testing each one via `client_test_uart_pair(void)`.
  *
  * @return true if a valid UART1 connection is found, false otherwise.
  */
-static bool client_find_connection_for_uart1_instance(){
+static bool client_find_connection_for_uart1_instance(void){
     for (uint8_t index = 0; index < PIN_PAIRS_UART1_LEN; index++){
         if(client_test_uart_pair(pin_pairs_uart1[index], uart1)){
             client_add_connection(pin_pairs_uart1[index], uart1);
@@ -126,7 +126,7 @@ static bool client_find_connection_for_uart1_instance(){
  *
  * @return true if a valid connection is found, false otherwise.
  */
-bool client_detect_uart_connection(){
+bool client_detect_uart_connection(void){
     bool connection_found = false;
     connection_found = client_find_connection_for_uart0_instance();
     if (!connection_found){

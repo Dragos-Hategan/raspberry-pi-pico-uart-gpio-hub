@@ -7,7 +7,7 @@
 
 #include "input.h"
 
-static void flush_stdin(){
+static void flush_stdin(void){
     while (true){
         int ch = getchar_timeout_us(0);
         if (ch == PICO_ERROR_TIMEOUT) break;

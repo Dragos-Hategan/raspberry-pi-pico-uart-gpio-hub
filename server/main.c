@@ -22,7 +22,7 @@
  * If any connections are found, a visual LED indicator is triggered and
  * the program continuously prints the active connection list.
  */
-int main(){
+int main(void){
     stdio_usb_init();
     pico_led_init();
     pico_set_led(true);

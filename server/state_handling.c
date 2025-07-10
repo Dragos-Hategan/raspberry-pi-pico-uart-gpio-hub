@@ -198,7 +198,7 @@ static void server_print_persistent_state(server_persistent_state_t *server_pers
     printf("\n\n\n\n");
 }
 
-void server_load_running_states_to_active_clients() {
+void server_load_running_states_to_active_clients(void) {
     server_persistent_state_t server_persistent_state = {0};
     bool valid_crc = load_server_state(&server_persistent_state);
 
