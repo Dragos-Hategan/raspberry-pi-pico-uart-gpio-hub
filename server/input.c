@@ -87,9 +87,20 @@ static bool read_uint32_line(uint32_t *out){
         int ch = getchar();
         if (ch == '\r' || ch == '\n') 
             break;
-        if (len < (int)(sizeof(buffer) - 1)) {
-            buffer[len++] = (char)ch;
-            putchar(ch);
+        
+        if ((ch == 8 || ch == 127) && len > 0) {  // 8 = BS, 127 = DEL
+            len--;
+            buffer[len] = '\0';
+            printf("\b \b");
+            continue;
+        }
+    
+        if (ch >= '0' && ch <= '9'){
+            if (len < (int)(sizeof(buffer) - 1)) {
+                buffer[len++] = (char)ch;
+                buffer[len] = '\0';
+                putchar(ch);
+            }
         }
     }
     putchar('\n');
