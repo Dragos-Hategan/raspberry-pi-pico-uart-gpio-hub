@@ -67,7 +67,7 @@ static bool string_to_uint32(const char *str, uint32_t *out) {
 }
 
 /**
- * @brief Reads a line from stdin and converts it to uint32_t.
+ * @brief Reads an unsigned integer from standard input (stdin).
  *
  * Flushes any previous characters, then reads input until newline (`\n` or `\r`) or buffer limit.
  * Calls `string_to_uint32()` to parse the result.
