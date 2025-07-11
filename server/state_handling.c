@@ -85,7 +85,7 @@ bool load_server_state(server_persistent_state_t *out_state) {
     uint32_t computed_crc = compute_crc32(out_state, sizeof(server_persistent_state_t));
     out_state->crc = saved_crc;
 
-    printf("saved_crc=%lu, computed_crc=%ld\n", saved_crc, computed_crc);
+    printf("saved_crc=%lu, computed_crc=%lu\n", saved_crc, computed_crc);
 
     return (saved_crc == computed_crc);
 }
@@ -346,13 +346,15 @@ void server_load_running_states_to_active_clients(void) {
     bool valid_crc = load_server_state(&server_persistent_state);
 
     if (valid_crc) {
-        printf("LOADING ATTEMPT SUCCESSFULL! Loading states.\n");
+        printf("LOADING ATTEMPT SUCCESSFULL!\nLoading states.\n");
         for (uint8_t index = 0; index < active_server_connections_number; index++) {
             server_load_client_state(active_uart_server_connections[index], &server_persistent_state);
         }
     } else {
-        printf("LOADING ATTEMPT FAILED! Initializing Configuration\n");
+        printf("LOADING ATTEMPT FAILED!\nFirst run or flash problem.\nInitializing Configuration\n");
         server_configure_persistent_state(&server_persistent_state);
+        printf("Configuration was successfull\n");
+
     }
 
     //server_print_persistent_state(&server_persistent_state);
