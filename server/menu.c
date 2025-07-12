@@ -30,34 +30,6 @@ static inline void print_delimitor(void){
     printf("\n****************************************************\n\n");
 }
 
-static void delete_configuration(void){
-
-}
-
-/**
- * @brief Placeholder for loading saved client configurations.
- * (Planned feature)
- */
-static void load_configuration(void){
-
-}
-
-/**
- * @brief Placeholder for saving client configurations to flash.
- * (Planned feature)
- */
-static void save_configuration(void){
-    
-}
-
-/**
- * @brief Placeholder for toggling device GPIO state.
- * (Planned feature)
- */
-static void toggle_device(void){
-    
-}
-
 /**
  * @brief Prompts the user to enter a desired state: ON (1) or OFF (0).
  *
@@ -140,37 +112,56 @@ static bool choose_client(uint32_t *client_index){
 }
 
 /**
- * @brief Reads and validates client, device, and state selections from the user,
- * then sends the state to the corresponding client via UART.
+ * @brief Finds the corresponding flash client index for a given active client.
+ *
+ * Compares the TX pin of the selected client with entries in the flash structure to
+ * determine the matching flash client index.
+ *
+ * @param flash_client_index Output pointer to store the resolved flash index.
+ * @param client_index Index of the selected client (1-based).
+ * @param flash_state Pointer to the flash-stored server state.
  */
-static void read_client_and_device_data(void){ 
-    const server_persistent_state_t *flash_state = (const server_persistent_state_t *)SERVER_FLASH_ADDR;
-    uint32_t client_index;
-    bool correct_client_input = false;
-    while (!correct_client_input){
-        if (choose_client(&client_index)){
-            if (client_index == 0){
-                return;
-            }else{
-                correct_client_input = true;
-            }
+static void find_corect_client_index_from_flash(uint32_t *flash_client_index, uint32_t client_index, const server_persistent_state_t *flash_state){
+    for (uint8_t index = 0; index < MAX_SERVER_CONNECTIONS; index++){
+        if (active_uart_server_connections[client_index - 1].pin_pair.tx == flash_state->clients[index].uart_connection.pin_pair.tx){
+            *flash_client_index = index;
+            break;
+        }   
+    }
+}
+
+/**
+ * @brief Reads a valid ON/OFF state input from the user.
+ *
+ * Prompts until a valid binary state is selected (0 or 1).
+ *
+ * @param device_state Output pointer to store the selected state (true = ON, false = OFF).
+ */
+static void read_device_state(bool *device_state){
+    bool correct_state_input = false;
+    while (!correct_state_input){
+        if (choose_state(device_state)){
+            correct_state_input = true;
         }else{
             print_input_error();
         }
     }
+}
 
-    uint32_t flash_client_index;
-    for (uint8_t index = 0; index < MAX_SERVER_CONNECTIONS; index++){
-        if (active_uart_server_connections[client_index - 1].pin_pair.tx == flash_state->clients[index].uart_connection.pin_pair.tx){
-            flash_client_index = index;
-            break;
-        }   
-    }
-    uint32_t device_index;
+/**
+ * @brief Prompts the user to select a device index for the given client.
+ *
+ * Repeats until a valid device is selected or cancel (0) is entered.
+ *
+ * @param device_index Output pointer to store the selected device index (1-based).
+ * @param flash_client_index Index of the client in the flash state structure.
+ * @param flash_state Pointer to the flash-stored server state.
+ */
+static void read_device_index(uint32_t *device_index, uint32_t flash_client_index, const server_persistent_state_t *flash_state){
     bool correct_device_input = false;
     while (!correct_device_input){
-        if (choose_device(&device_index, &flash_state->clients[flash_client_index].running_client_state)){
-            if (device_index == 0){
+        if (choose_device(device_index, &flash_state->clients[flash_client_index].running_client_state)){
+            if (*device_index == 0){
                 return;
             }else{
                 correct_device_input = true;
@@ -179,20 +170,128 @@ static void read_client_and_device_data(void){
             print_input_error();
         }
     }
+}
 
-    bool device_state;
-    bool correct_state_input = false;
-    while (!correct_state_input){
-        if (choose_state(&device_state)){
-            correct_state_input = true;
+/**
+ * @brief Prompts the user to select a client index.
+ *
+ * Repeats until a valid client is selected or cancel (0) is entered.
+ *
+ * @param client_index Output pointer to store the selected client index (1-based).
+ */
+static void read_client_index(uint32_t *client_index){ 
+    bool correct_client_input = false;
+    while (!correct_client_input){
+        if (choose_client(client_index)){
+            if (*client_index == 0){
+                return;
+            }else{
+                correct_client_input = true;
+            }
         }else{
             print_input_error();
         }
     }
+}
+
+/**
+ * @brief Reads client and device selections and resolves their flash indexes.
+ *
+ * Guides the user through selecting a client and a device,
+ * then determines their corresponding indexes in the flash state structure.
+ *
+ * @param client_index Output pointer to store the selected client index (1-based).
+ * @param flash_state Pointer to the flash-stored server state.
+ * @param flash_client_index Output pointer to store the resolved flash client index.
+ * @param device_index Output pointer to store the selected device index (1-based).
+ */
+static void get_client_flash_device_indexes(uint32_t *client_index, const server_persistent_state_t * flash_state, uint32_t *flash_client_index, uint32_t *device_index){
+    read_client_index(client_index);
+    if (!*client_index){
+        return;
+    }
+    find_corect_client_index_from_flash(flash_client_index, *client_index, flash_state);
+    read_device_index(device_index, *flash_client_index, flash_state);
+}
+
+static void delete_configuration(void){
+
+}
+
+/**
+ * @brief Placeholder for loading saved client configurations.
+ * (Planned feature)
+ */
+static void load_configuration(void){
+
+}
+
+/**
+ * @brief Placeholder for saving client configurations to flash.
+ * (Planned feature)
+ */
+static void save_configuration(void){
+    
+}
+
+/**
+ * @brief Toggles the state of a selected GPIO device for a selected client.
+ *
+ * Prompts the user to select a client and one of its devices, then reads the current
+ * state of the device from flash and flips it (ON → OFF, OFF → ON).
+ * Sends the updated state to the corresponding client via UART, and updates the flash accordingly.
+ */
+static void toggle_device(void){
+    uint32_t client_index;
+    const server_persistent_state_t *flash_state = (const server_persistent_state_t *)SERVER_FLASH_ADDR;
+    uint32_t flash_client_index;
+    uint32_t device_index;
+    get_client_flash_device_indexes(&client_index, flash_state, &flash_client_index, &device_index);
+
+    if (!client_index || !device_index){
+        return;
+    }
+
+    uint32_t gpio_index = flash_state->clients[flash_client_index].running_client_state.devices[device_index - 1].gpio_number;
+    bool device_state = flash_state->clients[flash_client_index].
+                        running_client_state.
+                        devices[gpio_index > 22 ? (gpio_index - 3) : (gpio_index)].
+                        is_on ? false : true;
+
+    server_set_device_state_and_update_flash(active_uart_server_connections[client_index - 1].pin_pair,
+    active_uart_server_connections[client_index - 1].uart_instance,
+    gpio_index,
+    device_state,
+    flash_client_index);
+}
+
+/**
+ * @brief Sets the state of a selected GPIO device for a selected client.
+ *
+ * Prompts the user to select a client, one of its devices, and a desired state (ON/OFF),
+ * then sends the state to the client via UART and updates the flash accordingly.
+ */
+static void set_client_device(void){    
+    uint32_t client_index;
+    const server_persistent_state_t *flash_state = (const server_persistent_state_t *)SERVER_FLASH_ADDR;
+    uint32_t flash_client_index;
+    uint32_t device_index;
+    get_client_flash_device_indexes(&client_index, flash_state, &flash_client_index, &device_index);
+
+    if (!client_index || !device_index){
+        return;
+    }
+
+    bool device_state;
+    read_device_state(&device_state);
+    uint32_t gpio_index = flash_state->clients[flash_client_index].
+                        running_client_state.
+                        devices[device_index - 1].
+                        gpio_number;
 
     server_set_device_state_and_update_flash(active_uart_server_connections[client_index - 1].pin_pair,
         active_uart_server_connections[client_index - 1].uart_instance,
-        flash_state->clients[flash_client_index].running_client_state.devices[device_index - 1].gpio_number,
+        gpio_index,
         device_state,
         flash_client_index);
 }
@@ -223,7 +322,7 @@ static void select_action(uint32_t choice){
             display_active_clients();
             break;
         case 2:
-            read_client_and_device_data();
+            set_client_device();
             break;
         case 3:
             toggle_device();
@@ -253,7 +352,7 @@ static void server_read_choice(void){
     const uint32_t INPUT_MAX_DEVICE_INDEX = 6;
     const char *MESSAGE = "\nPick an option";
     
-    if (read_user_choice_in_range(MESSAGE, &option, INPUT_MIN_DEVICE_INDEX, INPUT_MAX_DEVICE_INDEX) && option > 0){
+    if (read_user_choice_in_range(MESSAGE, &option, INPUT_MIN_DEVICE_INDEX, INPUT_MAX_DEVICE_INDEX)){
         select_action(option);
     }
     else{
