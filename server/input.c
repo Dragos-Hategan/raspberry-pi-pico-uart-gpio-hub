@@ -48,6 +48,8 @@ static bool string_to_uint32(const char *str, uint32_t *out) {
 
     if (*str == '\0') return false;      
 
+    if (str[0] == '0' && str[1] != '\0') return false;
+
     while (*str) {
         if (*str < '0' || *str > '9') {
             return false;
@@ -67,7 +69,7 @@ static bool string_to_uint32(const char *str, uint32_t *out) {
 }
 
 /**
- * @brief Reads a line from stdin and converts it to uint32_t.
+ * @brief Reads an unsigned integer from standard input (stdin).
  *
  * Flushes any previous characters, then reads input until newline (`\n` or `\r`) or buffer limit.
  * Calls `string_to_uint32()` to parse the result.
@@ -85,7 +87,7 @@ static bool read_uint32_line(uint32_t *out){
 
     while (true){
         int ch = getchar();
-        if (ch == '\r' || ch == '\n') 
+        if ((ch == '\r' || ch == '\n') && len > 0) 
             break;
         
         if ((ch == 8 || ch == 127) && len > 0) {  // 8 = BS, 127 = DEL
@@ -121,8 +123,9 @@ static bool read_uint32_line(uint32_t *out){
  */
 bool read_user_choice_in_range(const char* message, uint32_t* out, uint32_t min, uint32_t max){
     printf("%s", message);
-    if (read_uint32_line(out) && *out >= min && *out <= max){
+    if (read_uint32_line(out) && (*out >= min && *out <= max)){
         return true;
     }
+
     return false;
 }
