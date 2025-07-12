@@ -5,8 +5,8 @@
  * Provides a terminal-based interface to:
  * - Display current client connections.
  * - Select and control GPIO states of client devices.
- * - Load/save configurations (planned).
  * - Toggle GPIO states (planned).
+ * - Load/save configurations (planned).
  * 
  * Input is read from USB serial, with range validation and error handling.
  */
@@ -16,16 +16,22 @@
 
 bool first_display = true;
 
+void server_display_menu(void);
+
 static inline void print_input_error(void){
     printf("Invalid input or overflow. Try again.\n");
 }
 
-/**
- * @brief Placeholder for saving client configurations to flash.
- * (Planned feature)
- */
-static void save_configuration(void){
-    
+static inline void print_cancel_message(void){
+    printf("\n0 - cancel");
+}
+
+static inline void print_delimitor(void){
+    printf("\n****************************************************\n\n");
+}
+
+static void delete_configuration(void){
+
 }
 
 /**
@@ -34,6 +40,14 @@ static void save_configuration(void){
  */
 static void load_configuration(void){
 
+}
+
+/**
+ * @brief Placeholder for saving client configurations to flash.
+ * (Planned feature)
+ */
+static void save_configuration(void){
+    
 }
 
 /**
@@ -76,9 +90,11 @@ static bool choose_device(uint32_t *device_index, const client_state_t *running_
         server_print_gpio_state(gpio_index, running_client_state);
     }
 
-    const uint32_t INPUT_MIN_DEVICE_INDEX = 1;
+    const uint32_t INPUT_MIN_DEVICE_INDEX = 0;
     const uint32_t INPUT_MAX_DEVICE_INDEX = MAX_NUMBER_OF_GPIOS;
     const char *MESSAGE = "\nWhat device number do you want to access?";
+
+    print_cancel_message();
 
     if (read_user_choice_in_range(MESSAGE, device_index, INPUT_MIN_DEVICE_INDEX, INPUT_MAX_DEVICE_INDEX)){
         if (running_client_state->devices[*device_index - 1].gpio_number != UART_CONNECTION_FLAG_NUMBER){
@@ -110,9 +126,11 @@ static bool choose_client(uint32_t *client_index){
             active_uart_server_connections[index].pin_pair.rx);
     }
 
-    const uint32_t INPUT_MIN_DEVICE_INDEX = 1;
+    const uint32_t INPUT_MIN_DEVICE_INDEX = 0;
     const uint32_t INPUT_MAX_DEVICE_INDEX = active_server_connections_number;
     const char *MESSAGE = "\nWhat client number do you want to access?";
+
+    print_cancel_message();
 
     if (read_user_choice_in_range(MESSAGE, client_index, INPUT_MIN_DEVICE_INDEX, INPUT_MAX_DEVICE_INDEX)){
         return true;
@@ -131,7 +149,11 @@ static void read_client_and_device_data(void){
     bool correct_client_input = false;
     while (!correct_client_input){
         if (choose_client(&client_index)){
-            correct_client_input = true;
+            if (client_index == 0){
+                return;
+            }else{
+                correct_client_input = true;
+            }
         }else{
             print_input_error();
         }
@@ -148,7 +170,11 @@ static void read_client_and_device_data(void){
     bool correct_device_input = false;
     while (!correct_device_input){
         if (choose_device(&device_index, &flash_state->clients[flash_client_index].running_client_state)){
-            correct_device_input = true;
+            if (device_index == 0){
+                return;
+            }else{
+                correct_device_input = true;
+            }
         }else{
             print_input_error();
         }
@@ -203,10 +229,13 @@ static void select_action(uint32_t choice){
             toggle_device();
             break;
         case 4:
-            load_configuration();
+            save_configuration();
             break;
         case 5:
-            save_configuration();
+            load_configuration();
+            break;
+        case 6:
+            delete_configuration();
             break;
         default:
             printf("Out of range. Try again.\n");
@@ -221,10 +250,10 @@ static void select_action(uint32_t choice){
 static void server_read_choice(void){
     uint32_t option;
     const uint32_t INPUT_MIN_DEVICE_INDEX = 1;
-    const uint32_t INPUT_MAX_DEVICE_INDEX = 5;
+    const uint32_t INPUT_MAX_DEVICE_INDEX = 6;
     const char *MESSAGE = "\nPick an option";
     
-    if (read_user_choice_in_range(MESSAGE, &option, INPUT_MIN_DEVICE_INDEX, INPUT_MAX_DEVICE_INDEX)){
+    if (read_user_choice_in_range(MESSAGE, &option, INPUT_MIN_DEVICE_INDEX, INPUT_MAX_DEVICE_INDEX) && option > 0){
         select_action(option);
     }
     else{
@@ -244,7 +273,7 @@ void server_display_menu(void){
         printf("\033[H");     // move cursor to upper left screen
         first_display = false;
 
-        printf("\n****************************************************\n\n");
+        print_delimitor();
 
         printf("Welcome!\n");
         display_active_clients();
@@ -257,12 +286,11 @@ void server_display_menu(void){
         "1. Display clients\n"
         "2. Set client's device\n"
         "3. Toggle client's device\n"
-        "4. Load configuration\n"
-        "5. Save configuration\n"
-        "6. Erase client data\n"
-        "0. Exit\n"
+        "4. Save configuration\n"
+        "5. Load configuration\n"
+        "6. Delete configuration\n"
     );
     server_read_choice();
 
-    printf("\n****************************************************\n\n");
+    print_delimitor();
 }
