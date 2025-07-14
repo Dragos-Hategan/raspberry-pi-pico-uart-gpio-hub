@@ -151,6 +151,18 @@ bool choose_device(uint32_t *device_index, const client_state_t *running_client_
     return false;
 }
 
+bool choose_reset_variant(uint32_t *reset_variant){
+    printf("1. Running State.\n2. Preset Configs.\n3. All Client Data.\n");
+    
+    const char *MESSAGE = "\nWhat do you want to reset?";
+    print_cancel_message();
+    if (read_user_choice_in_range(MESSAGE, reset_variant, MINIMUM_RESET_VARIANT_INPUT, MAXIMUM_RESET_VARIANT_INPUT)){
+        return true;
+    }
+
+    return false;
+}
+
 bool choose_client(uint32_t *client_index){
     if (active_server_connections_number == 1){
         *client_index = 1;
@@ -176,7 +188,7 @@ bool choose_client(uint32_t *client_index){
 }
 
 bool choose_flash_configuration_index(uint32_t *flash_configuration_index, uint32_t flash_client_index){
-    const char *MESSAGE = "\nWhere will the running configuration be saved?";
+    const char *MESSAGE = "\nWhat configuration do you want to access?";
     print_cancel_message();
     if (read_user_choice_in_range(MESSAGE, flash_configuration_index, MINIMUM_FLASH_CONFIGURATION_INDEX_INPUT, MAXIMUM_FLASH_CONFIGURATION_INDEX_INPUT)){
         return true;

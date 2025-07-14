@@ -59,6 +59,14 @@
 #define MAXIMUM_DEVICE_STATE_INPUT 1
 #endif
 
+#ifndef MINIMUM_RESET_VARIANT_INPUT 
+#define MINIMUM_RESET_VARIANT_INPUT 0
+#endif
+
+#ifndef MAXIMUM_RESET_VARIANT_INPUT 
+#define MAXIMUM_RESET_VARIANT_INPUT 3
+#endif
+
 /**
  * @brief Prompts the user to enter a number within a specified range.
  *        Displays a message, reads the input, and validates that it's within [min, max].
@@ -70,6 +78,20 @@
  * @return true if the input is valid and within range, false otherwise
  */
 bool read_user_choice_in_range(const char* message, uint32_t* out, uint32_t min, uint32_t max);
+
+/**
+ * @brief Prompts the user to choose a reset type.
+ *
+ * - Displays the available reset options:
+ *     1. Running state
+ *     2. Preset configurations
+ *     3. All client data
+ * - Uses range-validated input to ensure a valid selection.
+ *
+ * @param reset_variant Pointer to the output variable for the selected option.
+ * @return true if a valid option was selected, false otherwise.
+ */
+bool choose_reset_variant(uint32_t *reset_variant);
 
 /**
  * @brief Prompts the user to choose which connected client to access.

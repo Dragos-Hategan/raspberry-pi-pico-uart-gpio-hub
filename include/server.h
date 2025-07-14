@@ -50,6 +50,16 @@ extern uint8_t active_server_connections_number;
 bool server_find_connections(void);
 
 /**
+ * @brief Resets the GPIO state of a client.
+ *
+ * Iterates through all devices in the given `client_state_t` and sets their
+ * `is_on` state to false, skipping devices marked as UART connection pins.
+ *
+ * @param client_state Pointer to the client state structure to reset.
+ */
+void server_reset_configuration(client_state_t *client_state);
+
+/**
  * @brief Loads saved GPIO states from flash and sends them to active clients.
  *
  * - Verifies CRC of saved state in flash.
