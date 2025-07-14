@@ -45,16 +45,7 @@ uint32_t compute_crc32(const void *data, uint32_t length) {
     return ~crc;
 }
 
-/**
- * @brief Saves the persistent server state structure to flash memory.
- *
- * - Computes CRC
- * - Copies the data to a buffer
- * - Erases and programs the flash sector
- *
- * @param state_in Pointer to the server_persistent_state_t structure to save.
- */
-static void __not_in_flash_func(save_server_state)(const server_persistent_state_t *state_in) {
+void __not_in_flash_func(save_server_state)(const server_persistent_state_t *state_in) {
     server_persistent_state_t temp;
     memcpy(&temp, state_in, sizeof(temp));
 
@@ -70,12 +61,6 @@ static void __not_in_flash_func(save_server_state)(const server_persistent_state
     restore_interrupts(ints);
 }
 
-/**
- * @brief Loads the server state from flash and validates it using CRC32.
- *
- * @param out_state Pointer to destination structure to store loaded state.
- * @return true if CRC is valid and data is intact, false otherwise.
- */
 bool load_server_state(server_persistent_state_t *out_state) {
     const server_persistent_state_t *flash_state = (const server_persistent_state_t *)SERVER_FLASH_ADDR;
     memcpy(out_state, flash_state, sizeof(server_persistent_state_t));
@@ -84,8 +69,6 @@ bool load_server_state(server_persistent_state_t *out_state) {
     out_state->crc = 0;
     uint32_t computed_crc = compute_crc32(out_state, sizeof(server_persistent_state_t));
     out_state->crc = saved_crc;
-
-    printf("saved_crc=%lu, computed_crc=%lu\n", saved_crc, computed_crc);
 
     return (saved_crc == computed_crc);
 }
@@ -270,9 +253,9 @@ void server_configure_persistent_state(server_persistent_state_t *server_persist
  *
  * @param client Pointer to the client structure.
  */
-void server_print_running_client_state(client_t *client){
+void server_print_running_client_state(const client_t *client){
     printf("Running Client State:\n");
-    client_state_t *running_client_state = &client->running_client_state;
+    const client_state_t *running_client_state = &client->running_client_state;
     for (uint8_t gpio_index = 0; gpio_index < MAX_NUMBER_OF_GPIOS; gpio_index++){
         server_print_gpio_state(gpio_index, running_client_state);
     }
@@ -284,9 +267,9 @@ void server_print_running_client_state(client_t *client){
  * @param client Pointer to the client.
  * @param client_preset_index Preset index to print.
  */
-void server_print_client_preset_configuration(client_t *client, uint8_t client_preset_index){
-    printf("\nPreset Config[%u]:\n", client_preset_index);
-    client_state_t *preset_config = &client->preset_configs[client_preset_index];
+void server_print_client_preset_configuration(const client_t *client, uint8_t client_preset_index){
+    printf("\nPreset Config[%u]:\n", client_preset_index + 1);
+    const client_state_t *preset_config = &client->preset_configs[client_preset_index];
     for (uint8_t gpio_index = 0; gpio_index < MAX_NUMBER_OF_GPIOS; gpio_index++){
         server_print_gpio_state(gpio_index, preset_config);
     }
@@ -309,7 +292,7 @@ void server_print_client_preset_configuration(client_t *client, uint8_t client_p
  */
 static void server_print_persistent_state(server_persistent_state_t *server_persistent_state){
     for (uint8_t server_connections_index = 0; server_connections_index < MAX_SERVER_CONNECTIONS; server_connections_index++){
-        client_t *client = &server_persistent_state->clients[server_connections_index];
+        const client_t *client = &server_persistent_state->clients[server_connections_index];
         printf("Client[%u]:\n", server_connections_index + 1);
         printf("Is active = %s\n", client->is_active ? "YES" : "NO");
 

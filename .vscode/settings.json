@@ -30,6 +30,7 @@
         "ios": "c",
         "xiosbase": "c",
         "format": "c",
-        "vector": "c"
+        "vector": "c",
+        "xstring": "c"
     }
 }

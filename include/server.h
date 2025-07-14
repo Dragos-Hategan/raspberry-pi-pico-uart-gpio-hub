@@ -63,7 +63,7 @@ void server_load_running_states_to_active_clients(void);
  *
  * @param client Pointer to the client_t structure to print.
  */
-void server_print_running_client_state(client_t *);
+void server_print_running_client_state(const client_t *);
 
 /**
  * @brief Prints a saved preset configuration for a given client.
@@ -71,7 +71,7 @@ void server_print_running_client_state(client_t *);
  * @param client Pointer to the client_t.
  * @param client_preset_index Preset index to print (0 to NUMBER_OF_POSSIBLE_PRESETS - 1).
  */
-void server_print_client_preset_configuration(client_t *, uint8_t);
+void server_print_client_preset_configuration(const client_t *, uint8_t);
 
 /**
  * @brief Prints the GPIO state of a device at the given index in a client.
@@ -84,11 +84,30 @@ void server_print_client_preset_configuration(client_t *, uint8_t);
  */
 inline void server_print_gpio_state(uint8_t gpio_index, const client_state_t *client_state){
     if (client_state->devices[gpio_index].gpio_number == UART_CONNECTION_FLAG_NUMBER){
-        printf("Device[%u]: UART connection, no access.\n", gpio_index + 1);
+        printf("%u. Device[%u]: UART connection, no access.\n",gpio_index + 1, gpio_index + 1);
     }else{
-        printf("Device[%u]: gpio_number:%u is_on:%u\n", gpio_index + 1, client_state->devices[gpio_index].gpio_number, client_state->devices[gpio_index].is_on);
+        printf("%u. Device[%u]: gpio_number:%u is_on:%u\n", gpio_index + 1, gpio_index + 1, client_state->devices[gpio_index].gpio_number, client_state->devices[gpio_index].is_on);
     }
 }
+
+/**
+ * @brief Loads the server state from flash and validates it using CRC32.
+ *
+ * @param out_state Pointer to destination structure to store loaded state.
+ * @return true if CRC is valid and data is intact, false otherwise.
+ */
+bool load_server_state(server_persistent_state_t *out_state);
+
+/**
+ * @brief Saves the persistent server state structure to flash memory.
+ *
+ * - Computes CRC
+ * - Copies the data to a buffer
+ * - Erases and programs the flash sector
+ *
+ * @param state_in Pointer to the server_persistent_state_t structure to save.
+ */
+void __not_in_flash_func(save_server_state)(const server_persistent_state_t *state_in);
 
 /**
  * @brief Sets the state of a single device and updates flash accordingly.
