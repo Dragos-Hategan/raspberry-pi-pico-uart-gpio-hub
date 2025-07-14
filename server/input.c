@@ -122,11 +122,8 @@ bool read_user_choice_in_range(const char* message, uint32_t* out, uint32_t min,
 
 bool choose_state(bool *device_state){
     uint32_t state_number;
-    const uint32_t INPUT_MIN_DEVICE_INDEX = 0;
-    const uint32_t INPUT_MAX_DEVICE_INDEX = 1;
     const char *MESSAGE = "\nWhat state?\nON = 1\nOFF = 0";
-
-    if (read_user_choice_in_range(MESSAGE, &state_number, INPUT_MIN_DEVICE_INDEX, INPUT_MAX_DEVICE_INDEX)){
+    if (read_user_choice_in_range(MESSAGE, &state_number, MINIMUM_DEVICE_STATE_INPUT, MAXIMUM_DEVICE_STATE_INPUT)){
         *device_state = state_number ? true : false;
         return true;
     }
@@ -141,13 +138,9 @@ bool choose_device(uint32_t *device_index, const client_state_t *running_client_
         server_print_gpio_state(gpio_index, running_client_state);
     }
 
-    const uint32_t INPUT_MIN_DEVICE_INDEX = 0;
-    const uint32_t INPUT_MAX_DEVICE_INDEX = MAX_NUMBER_OF_GPIOS;
     const char *MESSAGE = "\nWhat device number do you want to access?";
-
     print_cancel_message();
-
-    if (read_user_choice_in_range(MESSAGE, device_index, INPUT_MIN_DEVICE_INDEX, INPUT_MAX_DEVICE_INDEX)){
+    if (read_user_choice_in_range(MESSAGE, device_index, MINIMUM_DEVICE_INDEX_INPUT, MAXIMUM_DEVICE_INDEX_INPUT)){
         if (running_client_state->devices[*device_index - 1].gpio_number != UART_CONNECTION_FLAG_NUMBER){
             return true;
         }else{
@@ -174,55 +167,36 @@ bool choose_client(uint32_t *client_index){
             active_uart_server_connections[index].pin_pair.rx);
     }
 
-    const uint32_t INPUT_MIN_DEVICE_INDEX = 0;
-    const uint32_t INPUT_MAX_DEVICE_INDEX = active_server_connections_number;
     const char *MESSAGE = "\nWhat client do you want to access?";
-
     print_cancel_message();
-
-    if (read_user_choice_in_range(MESSAGE, client_index, INPUT_MIN_DEVICE_INDEX, INPUT_MAX_DEVICE_INDEX)){
+    if (read_user_choice_in_range(MESSAGE, client_index, MINIMUM_CLIENT_INDEX_INPUT, active_server_connections_number)){
         return true;
     }
-
     return false;
 }
 
 bool choose_flash_configuration_index(uint32_t *flash_configuration_index, uint32_t flash_client_index){
-    const uint32_t INPUT_MIN_DEVICE_INDEX = 0;
-    const uint32_t INPUT_MAX_DEVICE_INDEX = NUMBER_OF_POSSIBLE_PRESETS;
     const char *MESSAGE = "\nWhere will the running configuration be saved?";
-
     print_cancel_message();
-    
-    if (read_user_choice_in_range(MESSAGE, flash_configuration_index, INPUT_MIN_DEVICE_INDEX, INPUT_MAX_DEVICE_INDEX)){
+    if (read_user_choice_in_range(MESSAGE, flash_configuration_index, MINIMUM_FLASH_CONFIGURATION_INDEX_INPUT, MAXIMUM_FLASH_CONFIGURATION_INDEX_INPUT)){
         return true;
     }
-
     return false;
 }
 
 bool choose_saving_option(uint32_t *saving_option){
-    const uint32_t INPUT_MIN_DEVICE_INDEX = 0;
-    const uint32_t INPUT_MAX_DEVICE_INDEX = 2;
     const char *MESSAGE = "\nHow do you want to save?";
-
     print_cancel_message();
-    
-    if (read_user_choice_in_range(MESSAGE, saving_option, INPUT_MIN_DEVICE_INDEX, INPUT_MAX_DEVICE_INDEX)){
+    if (read_user_choice_in_range(MESSAGE, saving_option, MINIMUM_SAVING_OPTION_INPUT, MAXIMUM_SAVING_OPTION_INPUT)){
         return true;
     }
-
     return false;
 }
 
 bool choose_menu_option(uint32_t *menu_option){
-    const uint32_t INPUT_MIN_DEVICE_INDEX = 1;
-    const uint32_t INPUT_MAX_DEVICE_INDEX = 6;
     const char *MESSAGE = "\nPick an option";
-    
-    if (read_user_choice_in_range(MESSAGE, menu_option, INPUT_MIN_DEVICE_INDEX, INPUT_MAX_DEVICE_INDEX)){
+    if (read_user_choice_in_range(MESSAGE, menu_option, MINIMUM_MENU_OPTION_INDEX_INPUT, MAXIMUM_MENU_OPTION_INDEX_INPUT)){
         return true;
     }
-
     return false;
 }

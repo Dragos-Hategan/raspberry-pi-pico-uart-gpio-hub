@@ -15,6 +15,50 @@
 
 #include "types.h"
 
+#ifndef MINIMUM_MENU_OPTION_INDEX_INPUT
+#define MINIMUM_MENU_OPTION_INDEX_INPUT 1
+#endif
+
+#ifndef MAXIMUM_MENU_OPTION_INDEX_INPUT
+#define MAXIMUM_MENU_OPTION_INDEX_INPUT 6
+#endif
+
+#ifndef MINIMUM_SAVING_OPTION_INPUT 
+#define MINIMUM_SAVING_OPTION_INPUT 0
+#endif
+
+#ifndef MAXIMUM_SAVING_OPTION_INPUT 
+#define MAXIMUM_SAVING_OPTION_INPUT 2
+#endif
+
+#ifndef MINIMUM_FLASH_CONFIGURATION_INDEX_INPUT 
+#define MINIMUM_FLASH_CONFIGURATION_INDEX_INPUT 0
+#endif
+
+#ifndef MAXIMUM_FLASH_CONFIGURATION_INDEX_INPUT 
+#define MAXIMUM_FLASH_CONFIGURATION_INDEX_INPUT NUMBER_OF_POSSIBLE_PRESETS
+#endif
+
+#ifndef MINIMUM_CLIENT_INDEX_INPUT 
+#define MINIMUM_CLIENT_INDEX_INPUT 0
+#endif
+
+#ifndef MINIMUM_DEVICE_INDEX_INPUT 
+#define MINIMUM_DEVICE_INDEX_INPUT 0
+#endif
+
+#ifndef MAXIMUM_DEVICE_INDEX_INPUT 
+#define MAXIMUM_DEVICE_INDEX_INPUT MAX_NUMBER_OF_GPIOS
+#endif
+
+#ifndef MINIMUM_DEVICE_STATE_INPUT 
+#define MINIMUM_DEVICE_STATE_INPUT 0
+#endif
+
+#ifndef MAXIMUM_DEVICE_STATE_INPUT 
+#define MAXIMUM_DEVICE_STATE_INPUT 1
+#endif
+
 /**
  * @brief Prompts the user to enter a number within a specified range.
  *        Displays a message, reads the input, and validates that it's within [min, max].
@@ -76,7 +120,24 @@ bool choose_flash_configuration_index(uint32_t *flash_configuration_index, uint3
  */
 bool choose_saving_option(uint32_t *saving_option);
 
+/**
+ * @brief Prompts the user to select a menu option from the main CLI.
+ *
+ * This function displays a message prompting the user to pick a number
+ * between 1 and 6, representing the available menu options.
+ * It reads and validates the input, and stores the selected option in `menu_option`.
+ *
+ * The valid range is:
+ * - 1: Display clients
+ * - 2: Set client's device
+ * - 3: Toggle client's device
+ * - 4: Save configuration
+ * - 5: Load configuration
+ * - 6: Delete configuration
+ *
+ * @param[out] menu_option Pointer to store the selected menu option.
+ * @return true if a valid input was received, false otherwise.
+ */
 bool choose_menu_option(uint32_t *menu_option);
-
 
 #endif 
