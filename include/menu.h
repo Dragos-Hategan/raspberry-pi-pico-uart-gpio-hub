@@ -18,4 +18,8 @@
  */
 void server_display_menu(void);
 
+inline void print_cancel_message(void){
+    printf("0. cancel\n");
+}
+
 #endif

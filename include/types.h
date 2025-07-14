@@ -23,7 +23,6 @@ typedef struct{
     uint8_t rx;
 }uart_pin_pair_t;
 
-
 /**
  * @brief UART0 pin pairs used for scanning possible connections.
  *

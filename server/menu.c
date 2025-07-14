@@ -15,6 +15,7 @@
 
 #include "input.h"
 #include "server.h"
+#include "menu.h"
 
 bool first_display = true;
 
@@ -24,98 +25,8 @@ static inline void print_input_error(void){
     printf("Invalid input or overflow. Try again.\n");
 }
 
-static inline void print_cancel_message(void){
-    printf("0. cancel\n");
-}
-
 static inline void print_delimitor(void){
     printf("\n****************************************************\n\n");
-}
-
-/**
- * @brief Prompts the user to enter a desired state: ON (1) or OFF (0).
- *
- * @param device_state Pointer to store the selected boolean state.
- * @return true if valid input received, false otherwise.
- */
-static bool choose_state(bool *device_state){
-    uint32_t state_number;
-    const uint32_t INPUT_MIN_DEVICE_INDEX = 0;
-    const uint32_t INPUT_MAX_DEVICE_INDEX = 1;
-    const char *MESSAGE = "\nWhat state?\nON = 1\nOFF = 0";
-
-    if (read_user_choice_in_range(MESSAGE, &state_number, INPUT_MIN_DEVICE_INDEX, INPUT_MAX_DEVICE_INDEX)){
-        *device_state = state_number ? true : false;
-        return true;
-    }
-
-    return false;
-}
-
-/**
- * @brief Prompts the user to select a GPIO device to modify.
- *
- * @param device_index Output pointer for selected index (1-based).
- * @param running_client_state The state structure of the selected client.
- * @return true if valid device selected, false otherwise.
- */
-static bool choose_device(uint32_t *device_index, const client_state_t *running_client_state){  
-    printf("\n");
-    
-    for (uint8_t gpio_index = 0; gpio_index < MAX_NUMBER_OF_GPIOS; gpio_index++){
-        server_print_gpio_state(gpio_index, running_client_state);
-    }
-
-    const uint32_t INPUT_MIN_DEVICE_INDEX = 0;
-    const uint32_t INPUT_MAX_DEVICE_INDEX = MAX_NUMBER_OF_GPIOS;
-    const char *MESSAGE = "\nWhat device number do you want to access?";
-
-    print_cancel_message();
-
-    if (read_user_choice_in_range(MESSAGE, device_index, INPUT_MIN_DEVICE_INDEX, INPUT_MAX_DEVICE_INDEX)){
-        if (running_client_state->devices[*device_index - 1].gpio_number != UART_CONNECTION_FLAG_NUMBER){
-            return true;
-        }else{
-            printf("Selected device is used as UART connection.\n");
-        }
-    }
-
-    return false;
-}
-
-/**
- * @brief Prompts the user to choose which connected client to access.
- *
- * @param client_index Output pointer for selected index (1-based).
- * @return true if valid client selected, false otherwise.
- */
-static bool choose_client(uint32_t *client_index){
-    if (active_server_connections_number == 1){
-        *client_index = 1;
-        return true;
-    }
-    
-    printf("\n");
-
-    for (uint32_t index = 0; index < active_server_connections_number; index++){
-        printf("%u. Client No. %u, connected to the server's GPIO pins [%d,%d]\n",
-            index + 1,
-            index + 1,
-            active_uart_server_connections[index].pin_pair.tx,
-            active_uart_server_connections[index].pin_pair.rx);
-    }
-
-    const uint32_t INPUT_MIN_DEVICE_INDEX = 0;
-    const uint32_t INPUT_MAX_DEVICE_INDEX = active_server_connections_number;
-    const char *MESSAGE = "\nWhat client do you want to access?";
-
-    print_cancel_message();
-
-    if (read_user_choice_in_range(MESSAGE, client_index, INPUT_MIN_DEVICE_INDEX, INPUT_MAX_DEVICE_INDEX)){
-        return true;
-    }
-
-    return false;
 }
 
 /**
@@ -221,8 +132,183 @@ static void get_client_flash_device_indexes(uint32_t *client_index, const server
     read_device_index(device_index, *flash_client_index, flash_state);
 }
 
-static void delete_configuration(void){
+/**
+ * @brief Repeatedly prompts the user to select a valid preset configuration index.
+ *
+ * - Displays the list of available preset configuration slots.
+ * - Loops until a valid selection is made via `choose_flash_configuration_index()`.
+ * - Stores the final selection in `flash_configuration_index`.
+ *
+ * @param flash_configuration_index Output pointer for selected configuration index (1-based from user input).
+ * @param flash_client_index Index of the client whose configurations are being listed.
+ */
+static void read_flash_configuration_index(uint32_t *flash_configuration_index, uint32_t flash_client_index){
+    bool correct_flash_configuration_input = false;
+    while (!correct_flash_configuration_input){
+        printf("\n");
+        for (uint32_t configuration_index = 1; configuration_index <= NUMBER_OF_POSSIBLE_PRESETS; configuration_index++){
+            printf("%u. Preset Config[%u]\n", configuration_index, configuration_index);
+        }
+        if (choose_flash_configuration_index(flash_configuration_index, flash_client_index)){
+            correct_flash_configuration_input = true;
+        }else{
+            print_input_error();
+        }
+    }
+}
 
+/**
+ * @brief Resets the currently active (running) configuration of a client.
+ *
+ * - Loads the full persistent server state from flash.
+ * - Resets the `running_client_state` using `server_reset_configuration()`.
+ * - Sends the updated state to the client over UART.
+ * - Saves the modified state back to flash.
+ *
+ * @param flash_client_index Index of the client in the persistent flash structure.
+ */
+static void reset_running_configuration(uint32_t flash_client_index){
+    server_persistent_state_t state;
+    load_server_state(&state);
+
+    server_reset_configuration(&state.clients[flash_client_index].running_client_state);
+
+    server_send_client_state(state.clients[flash_client_index].uart_connection.pin_pair,
+                            state.clients[flash_client_index].uart_connection.uart_instance,
+                            &state.clients[flash_client_index].running_client_state);
+
+    save_server_state(&state);
+
+    printf("\nRunning Configuration Reset.\n");
+}
+
+/**
+ * @brief Resets one of the preset configurations for a given client.
+ *
+ * - Loads the full persistent server state from flash.
+ * - Prompts the user to select a valid preset index.
+ * - Resets the selected preset using `server_reset_configuration()`.
+ * - Saves the modified state back to flash.
+ *
+ * @param flash_client_index Index of the client in the persistent flash structure.
+ */
+static void reset_preset_configuration(uint32_t flash_client_index){
+    server_persistent_state_t state;
+    load_server_state(&state);
+
+    uint32_t flash_configuration_index;
+    read_flash_configuration_index(&flash_configuration_index, flash_client_index);    
+    if (!flash_configuration_index){
+        return;
+    }
+
+    server_reset_configuration(&state.clients[flash_client_index].preset_configs[flash_configuration_index - 1]);
+
+    save_server_state(&state);
+
+    printf("\nPreset Configuration [%u] Reset.\n", flash_configuration_index);
+}
+
+/**
+ * @brief Resets all data associated with a client.
+ *
+ * - Resets the running state of the client and sends it over UART.
+ * - Resets all preset configurations.
+ * - Saves the updated state back to flash.
+ *
+ * @param flash_client_index Index of the client in the persistent flash structure.
+ */
+static void reset_all_client_data(uint32_t flash_client_index){
+    server_persistent_state_t state;
+    load_server_state(&state);
+    
+    server_reset_configuration(&state.clients[flash_client_index].running_client_state);
+
+    server_send_client_state(state.clients[flash_client_index].uart_connection.pin_pair,
+                            state.clients[flash_client_index].uart_connection.uart_instance,
+                            &state.clients[flash_client_index].running_client_state);
+
+    for (uint8_t configuration_index = 0; configuration_index < NUMBER_OF_POSSIBLE_PRESETS; configuration_index++){
+        server_reset_configuration(&state.clients[flash_client_index].preset_configs[configuration_index]);
+    }
+
+    save_server_state(&state);
+
+    printf("\nAll Client Data Reset.\n");
+}
+
+/**
+ * @brief Reads a reset variant option from the user.
+ *
+ * Prompts the user with a menu to choose what part of the client should be reset.
+ * Keeps asking until a valid input is provided or the user cancels with 0.
+ *
+ * @param reset_variant Pointer to store the selected option.
+ *                      Valid values:
+ *                      - 0: Cancel
+ *                      - 1: Reset running configuration
+ *                      - 2: Reset preset configurations
+ *                      - 3: Reset all client data
+ */
+static void read_reset_variant(uint32_t *reset_variant){
+    bool correct_reset_variant_input = false;
+    while (!correct_reset_variant_input){
+        if (choose_reset_variant(reset_variant)){
+            if (*reset_variant == 0){
+                return;
+            }else{
+                correct_reset_variant_input = true;
+            }
+        }else{
+            print_input_error();
+            printf("\n");
+        }
+    }
+}
+
+/**
+ * @brief Entry point for resetting client data.
+ *
+ * - Prompts the user to select a client.
+ * - Displays its running and preset configurations.
+ * - Asks the user what kind of reset to perform.
+ * - Executes the corresponding reset action:
+ *     - 1: Only running configuration
+ *     - 2: Only preset configurations
+ *     - 3: Entire client data (running + presets)
+ */
+static void reset_configuration(void){
+    uint32_t client_index;
+    read_client_index(&client_index);
+    if (!client_index){
+        return;
+    }
+
+    uint32_t flash_client_index;
+    const server_persistent_state_t *flash_state = (const server_persistent_state_t *)SERVER_FLASH_ADDR;
+    find_corect_client_index_from_flash(&flash_client_index, client_index, flash_state);
+    const client_t* client = (const client_t *)&flash_state->clients[flash_client_index];
+
+    printf("\n");
+    server_print_running_client_state(client);
+    printf("\n");
+    for (uint8_t client_preset_index = 0; client_preset_index < NUMBER_OF_POSSIBLE_PRESETS; client_preset_index++){
+        server_print_client_preset_configuration(client, client_preset_index);
+    }
+
+    uint32_t reset_choice;
+    read_reset_variant(&reset_choice);
+    if (!reset_choice){
+        return;
+    }
+
+    if (reset_choice == 1){
+        reset_running_configuration(flash_client_index);
+    }else if (reset_choice == 2){
+        reset_preset_configuration(flash_client_index);
+    }else{
+        reset_all_client_data(flash_client_index);
+    }
 }
 
 /**
@@ -254,54 +340,6 @@ static void load_configuration_into_running_state(uint32_t flash_configuration_i
 }
 
 /**
- * @brief Prompts the user to select a preset configuration index.
- *
- * Displays a cancel option and asks the user to choose a preset index within valid bounds.
- *
- * @param flash_configuration_index Output pointer to store the selected preset index.
- * @param flash_client_index Index of the client (unused, reserved for future contextual UI).
- * @return true if valid input received, false otherwise.
- */
-static bool choose_flash_configuration_index(uint32_t *flash_configuration_index, uint32_t flash_client_index){
-    const uint32_t INPUT_MIN_DEVICE_INDEX = 0;
-    const uint32_t INPUT_MAX_DEVICE_INDEX = NUMBER_OF_POSSIBLE_PRESETS;
-    const char *MESSAGE = "\nWhere will the running configuration be saved?";
-
-    print_cancel_message();
-    
-    if (read_user_choice_in_range(MESSAGE, flash_configuration_index, INPUT_MIN_DEVICE_INDEX, INPUT_MAX_DEVICE_INDEX)){
-        return true;
-    }
-
-    return false;
-}
-
-/**
- * @brief Repeatedly prompts the user to select a valid preset configuration index.
- *
- * - Displays the list of available preset configuration slots.
- * - Loops until a valid selection is made via `choose_flash_configuration_index()`.
- * - Stores the final selection in `flash_configuration_index`.
- *
- * @param flash_configuration_index Output pointer for selected configuration index (1-based from user input).
- * @param flash_client_index Index of the client whose configurations are being listed.
- */
-static void read_flash_configuration_index(uint32_t *flash_configuration_index, uint32_t flash_client_index){
-    bool correct_flash_configuration_input = false;
-    while (!correct_flash_configuration_input){
-        for (uint32_t confiuration_index = 1; confiuration_index <= NUMBER_OF_POSSIBLE_PRESETS; confiuration_index++){
-            printf("%u. Preset Config[%u]\n", confiuration_index, confiuration_index);
-        }
-        if (choose_flash_configuration_index(flash_configuration_index, flash_client_index)){
-            correct_flash_configuration_input = true;
-        }else{
-            print_input_error();
-            printf("\n");
-        }
-    }
-}
-
-/**
  * @brief Loads a saved preset configuration into a client's running state.
  *
  * - Prompts the user to select a client.
@@ -319,8 +357,8 @@ static void load_configuration(void){
     uint32_t flash_client_index;
     const server_persistent_state_t *flash_state = (const server_persistent_state_t *)SERVER_FLASH_ADDR;
     find_corect_client_index_from_flash(&flash_client_index, client_index, flash_state);
-
     const client_t* client = (const client_t *)&flash_state->clients[flash_client_index];
+
     printf("\n");
     server_print_running_client_state(client);
     printf("\n");
@@ -395,31 +433,6 @@ static void build_configuration(){
 }
 
 /**
- * @brief Prompts the user to choose how to save a configuration.
- *
- * Options:
- * - 0: Cancel
- * - 1: Save current running configuration
- * - 2: Build and save a new configuration
- *
- * @param saving_option Output pointer to store the selected option.
- * @return true if valid input received, false otherwise.
- */
-static bool choose_saving_option(uint32_t *saving_option){
-    const uint32_t INPUT_MIN_DEVICE_INDEX = 0;
-    const uint32_t INPUT_MAX_DEVICE_INDEX = 2;
-    const char *MESSAGE = "\nHow do you want to save?";
-
-    print_cancel_message();
-    
-    if (read_user_choice_in_range(MESSAGE, saving_option, INPUT_MIN_DEVICE_INDEX, INPUT_MAX_DEVICE_INDEX)){
-        return true;
-    }
-
-    return false;
-}
-
-/**
  * @brief Repeatedly prompts the user to select a valid saving option.
  *
  * - Displays the saving options (running or built).
@@ -461,8 +474,8 @@ static void save_configuration(void){
     uint32_t flash_client_index;
     const server_persistent_state_t *flash_state = (const server_persistent_state_t *)SERVER_FLASH_ADDR;
     find_corect_client_index_from_flash(&flash_client_index, client_index, flash_state);
-
     const client_t *client = &flash_state->clients[flash_client_index];
+    
     printf("\n");
     server_print_running_client_state(client);
 
@@ -579,52 +592,15 @@ static void select_action(uint32_t choice){
             load_configuration();
             break;
         case 6:
-            delete_configuration();
+            reset_configuration();
             break;
         default:
             printf("Out of range. Try again.\n");
             break;
+        }
     }
-}
-
-
-/**
- * @brief Reads a menu selection from the user and processes it.
- */
-static void server_read_choice(void){
-    uint32_t option;
-    const uint32_t INPUT_MIN_DEVICE_INDEX = 1;
-    const uint32_t INPUT_MAX_DEVICE_INDEX = 6;
-    const char *MESSAGE = "\nPick an option";
     
-    if (read_user_choice_in_range(MESSAGE, &option, INPUT_MIN_DEVICE_INDEX, INPUT_MAX_DEVICE_INDEX)){
-        select_action(option);
-    }
-    else{
-        print_input_error();
-    }
-}
-
-/**
- * @brief Entry point for the USB menu system.
- *
- * Prints a welcome screen on first call, then shows the menu options.
- * Processes user selection via `server_read_choice()`.
- */
-void server_display_menu(void){
-    if (first_display){ 
-        printf("\033[2J");    // delete screen
-        printf("\033[H");     // move cursor to upper left screen
-        first_display = false;
-
-        print_delimitor();
-
-        printf("Welcome!\n");
-        display_active_clients();
-
-        printf("\n");
-    }
-
+static inline void display_menu_options(){
     printf(
         "Options:\n"
         "1. Display clients\n"
@@ -632,9 +608,54 @@ void server_display_menu(void){
         "3. Toggle client's device\n"
         "4. Save configuration\n"
         "5. Load configuration\n"
-        "6. Delete configuration\n"
+        "6. Reset configuration\n"
     );
-    server_read_choice();
+}
+    
+/**
+ * @brief Reads a menu selection from the user and processes it.
+ */
+static void read_menu_option(uint32_t *menu_option){
+    bool correct_menu_option_input = false;
+    while (!correct_menu_option_input){
+        display_menu_options();
+        if (choose_menu_option(menu_option)){
+            if (*menu_option == 0){
+                return;
+            }else{
+                correct_menu_option_input = true;
+            }
+        }else{
+            print_input_error();
+            printf("\n");
+        }
+    }
+}
+
+static inline void clear_screen(){
+    printf("\033[2J");    // delete screen
+    printf("\033[H");     // move cursor to upper left screen
+}
+
+/**
+ * @brief Entry point for the USB menu system.
+ *
+ * Prints a welcome screen on first call, then shows the menu options.
+ * Processes user selection via `select_action(menu_option)`.
+ */
+void server_display_menu(void){
+    if (first_display){ 
+        first_display = false;
+        clear_screen();
+        print_delimitor();
+        printf("Welcome!\n");
+        display_active_clients();
+        printf("\n");
+    }
+
+    uint32_t menu_option;
+    read_menu_option(&menu_option);
+    select_action(menu_option);
 
     print_delimitor();
 }

@@ -144,6 +144,14 @@ static void configure_running_state_uart_connection_pins(uint8_t client_list_ind
     }
 }
 
+void server_reset_configuration(client_state_t *client_state){
+    for (uint8_t index = 0; index < MAX_NUMBER_OF_GPIOS; index++){
+        if (client_state->devices[index].gpio_number != UART_CONNECTION_FLAG_NUMBER){
+            client_state->devices[index].is_on = false;
+        }
+    }
+}
+
 /**
  * @brief Initializes the current (live) GPIO states for a client.
  *
