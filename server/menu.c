@@ -60,6 +60,8 @@ static bool choose_state(bool *device_state){
  * @return true if valid device selected, false otherwise.
  */
 static bool choose_device(uint32_t *device_index, const client_state_t *running_client_state){  
+    printf("\n");
+    
     for (uint8_t gpio_index = 0; gpio_index < MAX_NUMBER_OF_GPIOS; gpio_index++){
         server_print_gpio_state(gpio_index, running_client_state);
     }
@@ -92,7 +94,9 @@ static bool choose_client(uint32_t *client_index){
         *client_index = 1;
         return true;
     }
-       
+    
+    printf("\n");
+
     for (uint32_t index = 0; index < active_server_connections_number; index++){
         printf("%u. Client No. %u, connected to the server's GPIO pins [%d,%d]\n",
             index + 1,
@@ -103,7 +107,7 @@ static bool choose_client(uint32_t *client_index){
 
     const uint32_t INPUT_MIN_DEVICE_INDEX = 0;
     const uint32_t INPUT_MAX_DEVICE_INDEX = active_server_connections_number;
-    const char *MESSAGE = "\nWhat client number do you want to access?";
+    const char *MESSAGE = "\nWhat client do you want to access?";
 
     print_cancel_message();
 
@@ -222,11 +226,119 @@ static void delete_configuration(void){
 }
 
 /**
- * @brief Placeholder for loading saved client configurations.
- * (Planned feature)
+ * @brief Loads a preset configuration into a client's running state and applies it via UART.
+ *
+ * - Loads the full persistent state from flash.
+ * - Copies the selected preset configuration into the running configuration.
+ * - Sends the new configuration to the client via UART.
+ * - Saves the updated state back to flash.
+ *
+ * @param flash_configuration_index Index of the preset configuration to load (0-based).
+ * @param flash_client_index Index of the client in the flash-stored structure.
+ */
+static void load_configuration_into_running_state(uint32_t flash_configuration_index, uint32_t flash_client_index){
+    server_persistent_state_t state;
+    load_server_state(&state);
+
+    memcpy(
+        &state.clients[flash_client_index].running_client_state,
+        &state.clients[flash_client_index].preset_configs[flash_configuration_index],
+        sizeof(client_state_t)
+    );
+
+    server_send_client_state(state.clients[flash_client_index].uart_connection.pin_pair,
+                            state.clients[flash_client_index].uart_connection.uart_instance,
+                            &state.clients[flash_client_index].running_client_state);
+    save_server_state(&state);
+    printf("\nConfiguration Preset[%u] loaded!\n", flash_configuration_index + 1);
+}
+
+/**
+ * @brief Prompts the user to select a preset configuration index.
+ *
+ * Displays a cancel option and asks the user to choose a preset index within valid bounds.
+ *
+ * @param flash_configuration_index Output pointer to store the selected preset index.
+ * @param flash_client_index Index of the client (unused, reserved for future contextual UI).
+ * @return true if valid input received, false otherwise.
+ */
+static bool choose_flash_configuration_index(uint32_t *flash_configuration_index, uint32_t flash_client_index){
+    const uint32_t INPUT_MIN_DEVICE_INDEX = 0;
+    const uint32_t INPUT_MAX_DEVICE_INDEX = NUMBER_OF_POSSIBLE_PRESETS;
+    const char *MESSAGE = "\nWhere will the running configuration be saved?";
+
+    print_cancel_message();
+    
+    if (read_user_choice_in_range(MESSAGE, flash_configuration_index, INPUT_MIN_DEVICE_INDEX, INPUT_MAX_DEVICE_INDEX)){
+        return true;
+    }
+
+    return false;
+}
+
+/**
+ * @brief Repeatedly prompts the user to select a valid preset configuration index.
+ *
+ * - Displays the list of available preset configuration slots.
+ * - Loops until a valid selection is made via `choose_flash_configuration_index()`.
+ * - Stores the final selection in `flash_configuration_index`.
+ *
+ * @param flash_configuration_index Output pointer for selected configuration index (1-based from user input).
+ * @param flash_client_index Index of the client whose configurations are being listed.
+ */
+static void read_flash_configuration_index(uint32_t *flash_configuration_index, uint32_t flash_client_index){
+    bool correct_flash_configuration_input = false;
+    while (!correct_flash_configuration_input){
+        for (uint32_t confiuration_index = 1; confiuration_index <= NUMBER_OF_POSSIBLE_PRESETS; confiuration_index++){
+            printf("%u. Preset Config[%u]\n", confiuration_index, confiuration_index);
+        }
+        if (choose_flash_configuration_index(flash_configuration_index, flash_client_index)){
+            correct_flash_configuration_input = true;
+        }else{
+            print_input_error();
+            printf("\n");
+        }
+    }
+}
+
+/**
+ * @brief Loads a saved preset configuration into a client's running state.
+ *
+ * - Prompts the user to select a client.
+ * - Displays current running and preset configurations.
+ * - Asks the user to select which preset to load.
+ * - Loads and applies the selected preset into the running state.
  */
 static void load_configuration(void){
+    uint32_t client_index;
+    read_client_index(&client_index);
+    if (!client_index){
+        return;
+    }
 
+    uint32_t flash_client_index;
+    const server_persistent_state_t *flash_state = (const server_persistent_state_t *)SERVER_FLASH_ADDR;
+    find_corect_client_index_from_flash(&flash_client_index, client_index, flash_state);
+
+    const client_t* client = (const client_t *)&flash_state->clients[flash_client_index];
+    printf("\n");
+    server_print_running_client_state(client);
+    printf("\n");
+    for (uint8_t client_preset_index = 0; client_preset_index < NUMBER_OF_POSSIBLE_PRESETS; client_preset_index++){
+        server_print_client_preset_configuration(client, client_preset_index);
+    }
+
+    uint32_t flash_configuration_index;
+    read_flash_configuration_index(&flash_configuration_index, flash_client_index);    
+    if (!flash_configuration_index){
+        return;
+    }
+
+    if (flash_configuration_index == 0){
+        return;
+    }else{
+        load_configuration_into_running_state(flash_configuration_index - 1, flash_client_index);
+    }
 }
 
 /**
@@ -250,7 +362,7 @@ static void save_running_configuration_into_preset_configuration(uint32_t flash_
     );
     
     save_server_state(&state);
-    printf("Configuration saved in Preset[%u]!\n", flash_configuration_index + 1);
+    printf("\nConfiguration saved in Preset[%u]!\n", flash_configuration_index + 1);
 }
 
 /**
@@ -262,32 +374,73 @@ static void save_running_configuration_into_preset_configuration(uint32_t flash_
  *
  * @param flash_client_index Index of the client in the persistent flash state structure.
  */
-static void save_running_configuration(uint32_t flash_client_index){
-    for (uint32_t confiuration_index = 1; confiuration_index <= NUMBER_OF_POSSIBLE_PRESETS; confiuration_index++){
-        printf("%u. Preset Config[%u]\n", confiuration_index, confiuration_index);
+static void save_running_configuration(uint32_t flash_client_index, const client_t* client){
+    printf("\n");
+
+    for (uint8_t client_preset_index = 0; client_preset_index < NUMBER_OF_POSSIBLE_PRESETS; client_preset_index++){
+        server_print_client_preset_configuration(client, client_preset_index);
     }
 
     uint32_t flash_configuration_index;
-    const uint32_t INPUT_MIN_DEVICE_INDEX = 0;
-    const uint32_t INPUT_MAX_DEVICE_INDEX = NUMBER_OF_POSSIBLE_PRESETS;
-    const char *MESSAGE = "\nWhere will the running configuration be saved?";
+    read_flash_configuration_index(&flash_configuration_index, flash_client_index);    
+    if (!flash_configuration_index){
+        return;
+    }
 
-    print_cancel_message();
-    
-    if (read_user_choice_in_range(MESSAGE, &flash_configuration_index, INPUT_MIN_DEVICE_INDEX, INPUT_MAX_DEVICE_INDEX)){
-        if (flash_configuration_index == 0){
-            return;
-        }else{
-            save_running_configuration_into_preset_configuration(flash_configuration_index - 1, flash_client_index);
-        }
-    }
-    else{
-        print_input_error();
-    }
+    save_running_configuration_into_preset_configuration(flash_configuration_index - 1, flash_client_index);
 }
 
 static void build_configuration(){
     printf("Building configuration\n");
+}
+
+/**
+ * @brief Prompts the user to choose how to save a configuration.
+ *
+ * Options:
+ * - 0: Cancel
+ * - 1: Save current running configuration
+ * - 2: Build and save a new configuration
+ *
+ * @param saving_option Output pointer to store the selected option.
+ * @return true if valid input received, false otherwise.
+ */
+static bool choose_saving_option(uint32_t *saving_option){
+    const uint32_t INPUT_MIN_DEVICE_INDEX = 0;
+    const uint32_t INPUT_MAX_DEVICE_INDEX = 2;
+    const char *MESSAGE = "\nHow do you want to save?";
+
+    print_cancel_message();
+    
+    if (read_user_choice_in_range(MESSAGE, saving_option, INPUT_MIN_DEVICE_INDEX, INPUT_MAX_DEVICE_INDEX)){
+        return true;
+    }
+
+    return false;
+}
+
+/**
+ * @brief Repeatedly prompts the user to select a valid saving option.
+ *
+ * - Displays the saving options (running or built).
+ * - Repeats until a valid non-zero option is selected via `choose_saving_option()`.
+ *
+ * @param saving_option Output pointer to store the selected saving option.
+ */
+static void read_saving_option(uint32_t *saving_option){
+    bool correct_saving_option_input = false;
+    while (!correct_saving_option_input){
+        printf("\n1. Save running configuration.\n2. Build and save configuration.\n");
+        if (choose_saving_option(saving_option)){
+            if (*saving_option == 0){
+                return;
+            }else{
+                correct_saving_option_input = true;
+            }
+        }else{
+            print_input_error();
+        }
+    }
 }
 
 /**
@@ -310,31 +463,19 @@ static void save_configuration(void){
     find_corect_client_index_from_flash(&flash_client_index, client_index, flash_state);
 
     const client_t *client = &flash_state->clients[flash_client_index];
+    printf("\n");
     server_print_running_client_state(client);
-    for (uint8_t client_preset_index = 0; client_preset_index < NUMBER_OF_POSSIBLE_PRESETS; client_preset_index++){
-        server_print_client_preset_configuration(client, client_preset_index);
+
+    uint32_t saving_option;
+    read_saving_option(&saving_option);
+    if (!saving_option){
+        return;
     }
 
-    printf("\n1. Save running configuration.\n2. Build and save configuration.\n");
-
-    uint32_t option;
-    const uint32_t INPUT_MIN_DEVICE_INDEX = 0;
-    const uint32_t INPUT_MAX_DEVICE_INDEX = 2;
-    const char *MESSAGE = "\nHow do you want to save?";
-
-    print_cancel_message();
-    
-    if (read_user_choice_in_range(MESSAGE, &option, INPUT_MIN_DEVICE_INDEX, INPUT_MAX_DEVICE_INDEX)){
-        if (option == 0){
-            return;
-        }else if (option == 1){
-            save_running_configuration(flash_client_index);
-        }else{
-            build_configuration();
-        }
-    }
-    else{
-        print_input_error();
+    if (saving_option == 1){
+        save_running_configuration(flash_client_index, client);
+    }else{
+        build_configuration();
     }
 }
 

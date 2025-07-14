@@ -106,7 +106,6 @@ static bool read_uint32_line(uint32_t *out){
         }
     }
     putchar('\n');
-    putchar('\n');
     return string_to_uint32(buffer, out);
 }
 

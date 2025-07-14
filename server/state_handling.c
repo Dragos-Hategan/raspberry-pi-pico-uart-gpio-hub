@@ -90,14 +90,7 @@ static void server_send_device_state(uart_pin_pair_t pin_pair, uart_inst_t* uart
     reset_gpio_pins(pin_pair);
 }
 
-/**
- * @brief Sends the entire current client state over UART.
- *
- * @param pin_pair UART TX/RX pin pair to use.
- * @param uart UART instance.
- * @param state Pointer to the client_state_t to send.
- */
-static void server_send_client_state(uart_pin_pair_t pin_pair, uart_inst_t* uart, const client_state_t* state){
+void server_send_client_state(uart_pin_pair_t pin_pair, uart_inst_t* uart, const client_state_t* state){
     uart_init_with_pins(uart, pin_pair, DEFAULT_BAUDRATE);
     for (uint8_t i = 0; i < MAX_NUMBER_OF_GPIOS; i++) {
         char msg[8];
@@ -268,11 +261,12 @@ void server_print_running_client_state(const client_t *client){
  * @param client_preset_index Preset index to print.
  */
 void server_print_client_preset_configuration(const client_t *client, uint8_t client_preset_index){
-    printf("\nPreset Config[%u]:\n", client_preset_index + 1);
+    printf("Preset Config[%u]:\n", client_preset_index + 1);
     const client_state_t *preset_config = &client->preset_configs[client_preset_index];
     for (uint8_t gpio_index = 0; gpio_index < MAX_NUMBER_OF_GPIOS; gpio_index++){
         server_print_gpio_state(gpio_index, preset_config);
     }
+    printf("\n");
 }
 
 /**

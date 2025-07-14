@@ -99,6 +99,15 @@ inline void server_print_gpio_state(uint8_t gpio_index, const client_state_t *cl
 bool load_server_state(server_persistent_state_t *out_state);
 
 /**
+ * @brief Sends the entire current client state over UART.
+ *
+ * @param pin_pair UART TX/RX pin pair to use.
+ * @param uart UART instance.
+ * @param state Pointer to the client_state_t to send.
+ */
+void server_send_client_state(uart_pin_pair_t, uart_inst_t*, const client_state_t*);
+
+/**
  * @brief Saves the persistent server state structure to flash memory.
  *
  * - Computes CRC
