@@ -15,6 +15,7 @@
 
 #include "input.h"
 #include "server.h"
+#include "menu.h"
 
 bool first_display = true;
 
@@ -24,98 +25,8 @@ static inline void print_input_error(void){
     printf("Invalid input or overflow. Try again.\n");
 }
 
-static inline void print_cancel_message(void){
-    printf("0. cancel\n");
-}
-
 static inline void print_delimitor(void){
     printf("\n****************************************************\n\n");
-}
-
-/**
- * @brief Prompts the user to enter a desired state: ON (1) or OFF (0).
- *
- * @param device_state Pointer to store the selected boolean state.
- * @return true if valid input received, false otherwise.
- */
-static bool choose_state(bool *device_state){
-    uint32_t state_number;
-    const uint32_t INPUT_MIN_DEVICE_INDEX = 0;
-    const uint32_t INPUT_MAX_DEVICE_INDEX = 1;
-    const char *MESSAGE = "\nWhat state?\nON = 1\nOFF = 0";
-
-    if (read_user_choice_in_range(MESSAGE, &state_number, INPUT_MIN_DEVICE_INDEX, INPUT_MAX_DEVICE_INDEX)){
-        *device_state = state_number ? true : false;
-        return true;
-    }
-
-    return false;
-}
-
-/**
- * @brief Prompts the user to select a GPIO device to modify.
- *
- * @param device_index Output pointer for selected index (1-based).
- * @param running_client_state The state structure of the selected client.
- * @return true if valid device selected, false otherwise.
- */
-static bool choose_device(uint32_t *device_index, const client_state_t *running_client_state){  
-    printf("\n");
-    
-    for (uint8_t gpio_index = 0; gpio_index < MAX_NUMBER_OF_GPIOS; gpio_index++){
-        server_print_gpio_state(gpio_index, running_client_state);
-    }
-
-    const uint32_t INPUT_MIN_DEVICE_INDEX = 0;
-    const uint32_t INPUT_MAX_DEVICE_INDEX = MAX_NUMBER_OF_GPIOS;
-    const char *MESSAGE = "\nWhat device number do you want to access?";
-
-    print_cancel_message();
-
-    if (read_user_choice_in_range(MESSAGE, device_index, INPUT_MIN_DEVICE_INDEX, INPUT_MAX_DEVICE_INDEX)){
-        if (running_client_state->devices[*device_index - 1].gpio_number != UART_CONNECTION_FLAG_NUMBER){
-            return true;
-        }else{
-            printf("Selected device is used as UART connection.\n");
-        }
-    }
-
-    return false;
-}
-
-/**
- * @brief Prompts the user to choose which connected client to access.
- *
- * @param client_index Output pointer for selected index (1-based).
- * @return true if valid client selected, false otherwise.
- */
-static bool choose_client(uint32_t *client_index){
-    if (active_server_connections_number == 1){
-        *client_index = 1;
-        return true;
-    }
-    
-    printf("\n");
-
-    for (uint32_t index = 0; index < active_server_connections_number; index++){
-        printf("%u. Client No. %u, connected to the server's GPIO pins [%d,%d]\n",
-            index + 1,
-            index + 1,
-            active_uart_server_connections[index].pin_pair.tx,
-            active_uart_server_connections[index].pin_pair.rx);
-    }
-
-    const uint32_t INPUT_MIN_DEVICE_INDEX = 0;
-    const uint32_t INPUT_MAX_DEVICE_INDEX = active_server_connections_number;
-    const char *MESSAGE = "\nWhat client do you want to access?";
-
-    print_cancel_message();
-
-    if (read_user_choice_in_range(MESSAGE, client_index, INPUT_MIN_DEVICE_INDEX, INPUT_MAX_DEVICE_INDEX)){
-        return true;
-    }
-
-    return false;
 }
 
 /**
@@ -254,29 +165,6 @@ static void load_configuration_into_running_state(uint32_t flash_configuration_i
 }
 
 /**
- * @brief Prompts the user to select a preset configuration index.
- *
- * Displays a cancel option and asks the user to choose a preset index within valid bounds.
- *
- * @param flash_configuration_index Output pointer to store the selected preset index.
- * @param flash_client_index Index of the client (unused, reserved for future contextual UI).
- * @return true if valid input received, false otherwise.
- */
-static bool choose_flash_configuration_index(uint32_t *flash_configuration_index, uint32_t flash_client_index){
-    const uint32_t INPUT_MIN_DEVICE_INDEX = 0;
-    const uint32_t INPUT_MAX_DEVICE_INDEX = NUMBER_OF_POSSIBLE_PRESETS;
-    const char *MESSAGE = "\nWhere will the running configuration be saved?";
-
-    print_cancel_message();
-    
-    if (read_user_choice_in_range(MESSAGE, flash_configuration_index, INPUT_MIN_DEVICE_INDEX, INPUT_MAX_DEVICE_INDEX)){
-        return true;
-    }
-
-    return false;
-}
-
-/**
  * @brief Repeatedly prompts the user to select a valid preset configuration index.
  *
  * - Displays the list of available preset configuration slots.
@@ -392,31 +280,6 @@ static void save_running_configuration(uint32_t flash_client_index, const client
 
 static void build_configuration(){
     printf("Building configuration\n");
-}
-
-/**
- * @brief Prompts the user to choose how to save a configuration.
- *
- * Options:
- * - 0: Cancel
- * - 1: Save current running configuration
- * - 2: Build and save a new configuration
- *
- * @param saving_option Output pointer to store the selected option.
- * @return true if valid input received, false otherwise.
- */
-static bool choose_saving_option(uint32_t *saving_option){
-    const uint32_t INPUT_MIN_DEVICE_INDEX = 0;
-    const uint32_t INPUT_MAX_DEVICE_INDEX = 2;
-    const char *MESSAGE = "\nHow do you want to save?";
-
-    print_cancel_message();
-    
-    if (read_user_choice_in_range(MESSAGE, saving_option, INPUT_MIN_DEVICE_INDEX, INPUT_MAX_DEVICE_INDEX)){
-        return true;
-    }
-
-    return false;
 }
 
 /**
@@ -584,47 +447,10 @@ static void select_action(uint32_t choice){
         default:
             printf("Out of range. Try again.\n");
             break;
+        }
     }
-}
-
-
-/**
- * @brief Reads a menu selection from the user and processes it.
- */
-static void server_read_choice(void){
-    uint32_t option;
-    const uint32_t INPUT_MIN_DEVICE_INDEX = 1;
-    const uint32_t INPUT_MAX_DEVICE_INDEX = 6;
-    const char *MESSAGE = "\nPick an option";
     
-    if (read_user_choice_in_range(MESSAGE, &option, INPUT_MIN_DEVICE_INDEX, INPUT_MAX_DEVICE_INDEX)){
-        select_action(option);
-    }
-    else{
-        print_input_error();
-    }
-}
-
-/**
- * @brief Entry point for the USB menu system.
- *
- * Prints a welcome screen on first call, then shows the menu options.
- * Processes user selection via `server_read_choice()`.
- */
-void server_display_menu(void){
-    if (first_display){ 
-        printf("\033[2J");    // delete screen
-        printf("\033[H");     // move cursor to upper left screen
-        first_display = false;
-
-        print_delimitor();
-
-        printf("Welcome!\n");
-        display_active_clients();
-
-        printf("\n");
-    }
-
+static inline void display_menu_options(){
     printf(
         "Options:\n"
         "1. Display clients\n"
@@ -634,7 +460,52 @@ void server_display_menu(void){
         "5. Load configuration\n"
         "6. Delete configuration\n"
     );
-    server_read_choice();
+}
+    
+/**
+ * @brief Reads a menu selection from the user and processes it.
+ */
+static void read_menu_option(uint32_t *menu_option){
+    bool correct_menu_option_input = false;
+    while (!correct_menu_option_input){
+        display_menu_options();
+        if (choose_menu_option(menu_option)){
+            if (*menu_option == 0){
+                return;
+            }else{
+                correct_menu_option_input = true;
+            }
+        }else{
+            print_input_error();
+            printf("\n");
+        }
+    }
+}
+
+static inline void clear_screen(){
+    printf("\033[2J");    // delete screen
+    printf("\033[H");     // move cursor to upper left screen
+}
+
+/**
+ * @brief Entry point for the USB menu system.
+ *
+ * Prints a welcome screen on first call, then shows the menu options.
+ * Processes user selection via `select_action(menu_option)`.
+ */
+void server_display_menu(void){
+    if (first_display){ 
+        first_display = false;
+        clear_screen();
+        print_delimitor();
+        printf("Welcome!\n");
+        display_active_clients();
+        printf("\n");
+    }
+
+    uint32_t menu_option;
+    read_menu_option(&menu_option);
+    select_action(menu_option);
 
     print_delimitor();
 }
