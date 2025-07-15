@@ -116,9 +116,13 @@ void server_print_client_preset_configurations(const client_t *);
  */
 inline void server_print_gpio_state(uint8_t gpio_index, const client_state_t *client_state){
     if (client_state->devices[gpio_index].gpio_number == UART_CONNECTION_FLAG_NUMBER){
-        printf("%u. Device[%u]: UART connection, no access.\n",gpio_index + 1, gpio_index + 1);
+        printf("%2u. UART connection, no access.\n", gpio_index + 1);
     }else{
-        printf("%u. Device[%u]: gpio_number:%u is_on:%u\n", gpio_index + 1, gpio_index + 1, client_state->devices[gpio_index].gpio_number, client_state->devices[gpio_index].is_on);
+        printf("%2u. GPIO_NO: %2u  Power: %s\n",
+            gpio_index + 1,
+            client_state->devices[gpio_index].gpio_number,
+            client_state->devices[gpio_index].is_on ? "ON" : "OFF"
+        );
     }
 }
 

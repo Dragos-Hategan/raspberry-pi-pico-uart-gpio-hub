@@ -131,7 +131,7 @@ static void get_client_flash_device_indexes(uint32_t *client_index, const server
     find_corect_client_index_from_flash(flash_client_index, *client_index, flash_state);
     const client_state_t *client_state = &flash_state->clients[*flash_client_index].running_client_state;
     
-    printf("\nRunning Client State:");
+    printf("\nRunning Client State Devices:");
     read_device_index(device_index, *flash_client_index, flash_state, client_state);
 }
 
@@ -200,6 +200,7 @@ static void reset_preset_configuration(uint32_t flash_client_index){
     load_server_state(&state);
 
     uint32_t flash_configuration_index;
+    printf("\n");
     read_flash_configuration_index(&flash_configuration_index, flash_client_index);    
     if (!flash_configuration_index){
         return;
@@ -337,7 +338,7 @@ static void load_configuration_into_running_state(uint32_t flash_configuration_i
                             state.clients[flash_client_index].uart_connection.uart_instance,
                             &state.clients[flash_client_index].running_client_state);
     save_server_state(&state);
-    printf("\nConfiguration Preset[%u] loaded!\n", flash_configuration_index + 1);
+    printf("\nConfiguration Preset[%u] Loaded!\n", flash_configuration_index + 1);
 }
 
 /**
@@ -399,7 +400,7 @@ static void save_running_configuration_into_preset_configuration(uint32_t flash_
     );
     
     save_server_state(&state);
-    printf("\nConfiguration saved in Preset[%u]!\n", flash_configuration_index + 1);
+    printf("\nConfiguration saved in Preset[%u].\n", flash_configuration_index + 1);
 }
 
 /**
@@ -409,11 +410,23 @@ static void save_running_configuration_into_preset_configuration(uint32_t flash_
  * If the user confirms, it delegates to `save_running_configuration_into_preset_configuration()` 
  * to perform the actual copy and flash save.
  *
- * @param flash_client_index Index of the client in the persistent flash state structure.
  */
-static void save_running_configuration(uint32_t flash_client_index, const client_t* client){
-    printf("\n");
+static void save_running_state(void){    
+    uint32_t client_index;
+    read_client_index(&client_index);
+    if (!client_index){
+        return;
+    }
 
+    uint32_t flash_client_index;
+    const server_persistent_state_t *flash_state = (const server_persistent_state_t *)SERVER_FLASH_ADDR;
+    find_corect_client_index_from_flash(&flash_client_index, client_index, flash_state);
+    const client_t *client = &flash_state->clients[flash_client_index];
+    
+    printf("\n");
+    server_print_running_client_state(client);
+
+    printf("\n");
     server_print_client_preset_configurations(client);
 
     uint32_t flash_configuration_index;
@@ -468,16 +481,25 @@ static void set_configuration_devices(uint32_t flash_client_index, uint32_t flas
 }
 
 /**
- * @brief Starts an interactive process to build or edit a client preset configuration.
+ * @brief Starts an interactive process to build a client preset configuration.
  *
  * - Displays all existing preset configurations for the selected client.
  * - Prompts the user to choose one of the preset slots to modify.
  * - Calls `set_configuration_devices()` to configure the ON/OFF state of individual devices.
  *
- * @param flash_client_index Index of the client in the persistent flash structure.
- * @param client Pointer to the client_t structure holding the configurations.
  */
-static void build_configuration(uint32_t flash_client_index, const client_t* client){
+static void build_preset_configuration(void){
+    uint32_t client_index;
+    read_client_index(&client_index);
+    if (!client_index){
+        return;
+    }
+
+    uint32_t flash_client_index;
+    const server_persistent_state_t *flash_state = (const server_persistent_state_t *)SERVER_FLASH_ADDR;
+    find_corect_client_index_from_flash(&flash_client_index, client_index, flash_state);
+    const client_t *client = &flash_state->clients[flash_client_index];
+    
     printf("\n");
     server_print_client_preset_configurations(client);
     
@@ -518,42 +540,6 @@ static void read_saving_option(uint32_t *saving_option){
 }
 
 /**
- * @brief Handles the "Save configuration" menu option.
- *
- * - Prompts the user to select a client.
- * - Displays current running configuration and saved presets for that client.
- * - Asks how the configuration should be saved (running or built).
- * - Based on user input, either saves the current state or enters build mode.
- */
-static void save_configuration(void){
-    uint32_t client_index;
-    read_client_index(&client_index);
-    if (!client_index){
-        return;
-    }
-
-    uint32_t flash_client_index;
-    const server_persistent_state_t *flash_state = (const server_persistent_state_t *)SERVER_FLASH_ADDR;
-    find_corect_client_index_from_flash(&flash_client_index, client_index, flash_state);
-    const client_t *client = &flash_state->clients[flash_client_index];
-    
-    printf("\n");
-    server_print_running_client_state(client);
-
-    uint32_t saving_option;
-    read_saving_option(&saving_option);
-    if (!saving_option){
-        return;
-    }
-
-    if (saving_option == 1){
-        save_running_configuration(flash_client_index, client);
-    }else{
-        build_configuration(flash_client_index, client);
-    }
-}
-
-/**
  * @brief Toggles the state of a selected GPIO device for a selected client.
  *
  * Prompts the user to select a client and one of its devices, then reads the current
@@ -582,6 +568,8 @@ static void toggle_device(void){
     gpio_index,
     device_state,
     flash_client_index);
+
+    printf("\nDevice[%u] Toggled.\n");
 }
 
 /**
@@ -617,6 +605,8 @@ static void set_client_device(void){
         gpio_index,
         device_state,
         flash_client_index);
+
+    printf("\nDevice[%u] %s.\n", device_index, device_state == 1 ? "ON" : "OFF");
 }
 
 /**
@@ -651,12 +641,15 @@ static void select_action(uint32_t choice){
             toggle_device();
             break;
         case 4:
-            save_configuration();
+            save_running_state();
             break;
         case 5:
-            load_configuration();
+            build_preset_configuration();
             break;
         case 6:
+            load_configuration();
+            break;
+        case 7:
             reset_configuration();
             break;
         default:
@@ -671,9 +664,10 @@ static inline void display_menu_options(){
         "1. Display clients\n"
         "2. Set client's device\n"
         "3. Toggle client's device\n"
-        "4. Save configuration\n"
-        "5. Load configuration\n"
-        "6. Reset configuration\n"
+        "4. Save running state into preset configuration\n"
+        "5. Build and save preset configuration\n"
+        "6. Load preset configuration into running state\n"
+        "7. Reset configuration\n"
     );
 }
     
