@@ -83,6 +83,8 @@ void server_print_running_client_state(const client_t *);
  */
 void server_print_client_preset_configuration(const client_t *, uint8_t);
 
+void server_print_client_preset_configurations(const client_t *);
+
 /**
  * @brief Prints the GPIO state of a device at the given index in a client.
  *
