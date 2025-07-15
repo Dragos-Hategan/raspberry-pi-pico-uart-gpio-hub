@@ -178,20 +178,20 @@ inline void find_corect_client_index_from_flash(uint32_t *flash_client_index, ui
 }
 
 /**
- * @brief Sets the state (ON/OFF) of devices in a preset configuration for a client.
+ * @brief Configures the devices for a given client and preset configuration index.
  *
- * - Loads the current persistent server state from flash.
- * - Repeatedly prompts the user to:
- *     - Select a device (by index).
- *     - Choose its desired state (0 = OFF, 1 = ON).
- * - Updates the specified preset configuration with the new device state.
- * - Saves the modified state to flash after each update.
- * - Exits if the user cancels during device or state selection.
+ * This function enters an interactive loop where the user can set the ON/OFF state
+ * for specific devices (GPIOs) of a selected client. The changes are stored in the 
+ * specified preset configuration index within the server's persistent state.
+ * 
+ * The loop continues to prompt the user for device index and state until the input 
+ * routine signals an exit (typically via a cancel command or invalid input).
  *
- * @param flash_client_index Index of the client in the persistent flash structure.
- * @param flash_configuration_index Index of the preset configuration to modify (0-based).
+ * @param flash_client_index Index of the client in flash memory (persistent state).
+ * @param flash_configuration_index Index of the preset configuration to modify.
+ * @param input_client_data Pointer to a structure used for passing user input data.
  */
-void set_configuration_devices(uint32_t flash_client_index, uint32_t flash_configuration_index);
+void set_configuration_devices(uint32_t flash_client_index, uint32_t flash_configuration_index, input_client_data_t *client_data);
 
 /// Flash memory layout constants used for saving/loading persistent server state
 #define SERVER_SECTOR_SIZE    4096

@@ -56,21 +56,12 @@ static void reset_running_configuration(uint32_t flash_client_index){
  *
  * @param flash_client_index Index of the client in the persistent flash structure.
  */
-static void reset_preset_configuration(uint32_t flash_client_index){
+static void reset_preset_configuration(uint32_t flash_client_index, uint32_t flash_configuration_index){
     server_persistent_state_t state;
     load_server_state(&state);
-
-    uint32_t flash_configuration_index;
-    printf("\n");
-    read_flash_configuration_index(&flash_configuration_index);    
-    if (!flash_configuration_index){
-        return;
-    }
-
     server_reset_configuration(&state.clients[flash_client_index].preset_configs[flash_configuration_index - 1]);
 
     save_server_state(&state);
-
     printf("\nPreset Configuration [%u] Reset.\n", flash_configuration_index);
 }
 
@@ -86,7 +77,6 @@ static void reset_preset_configuration(uint32_t flash_client_index){
 static void reset_all_client_data(uint32_t flash_client_index){
     server_persistent_state_t state;
     load_server_state(&state);
-    
     server_reset_configuration(&state.clients[flash_client_index].running_client_state);
 
     server_send_client_state(state.clients[flash_client_index].uart_connection.pin_pair,
@@ -98,7 +88,6 @@ static void reset_all_client_data(uint32_t flash_client_index){
     }
 
     save_server_state(&state);
-
     printf("\nAll Client Data Reset.\n");
 }
 
@@ -175,7 +164,7 @@ static void reset_configuration(void){
         if (input_client_data.reset_choice == 1){
             reset_running_configuration(input_client_data.flash_client_index);
         }else if (input_client_data.reset_choice == 2){
-            reset_preset_configuration(input_client_data.flash_client_index);
+            reset_preset_configuration(input_client_data.flash_client_index, input_client_data.flash_configuration_index);
         }else{
             reset_all_client_data(input_client_data.flash_client_index);
         }

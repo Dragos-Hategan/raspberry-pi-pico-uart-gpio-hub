@@ -149,7 +149,7 @@ bool choose_device(uint32_t *device_index, const client_state_t *client_state){
 }
 
 bool choose_reset_variant(uint32_t *reset_variant){
-    printf("1. Running State.\n2. Preset Configs.\n3. All Client Data.\n");
+    printf("1. Running State.\n2. Preset Config.\n3. All Client Data.\n");
     
     const char *MESSAGE = "\nWhat do you want to reset?";
     print_cancel_message();
@@ -288,6 +288,7 @@ bool read_client_data(input_client_data_t *client_data, client_input_flags_t cli
         if (!client_data->client_index){
             return false;
         }  
+
     }
 
     const server_persistent_state_t *flash_state = (const server_persistent_state_t *)SERVER_FLASH_ADDR;
@@ -331,7 +332,7 @@ bool read_client_data(input_client_data_t *client_data, client_input_flags_t cli
         if (!client_data->flash_configuration_index){
             return false;
         }
-        set_configuration_devices(client_data->flash_client_index, client_data->flash_configuration_index - 1);
+        set_configuration_devices(client_data->flash_client_index, client_data->flash_configuration_index - 1, client_data);
     }
 
     if(client_input_flags.is_load){
@@ -358,6 +359,7 @@ bool read_client_data(input_client_data_t *client_data, client_input_flags_t cli
         }
 
         if (client_data->reset_choice == 2){
+            printf("\n");
             read_flash_configuration_index(&client_data->flash_configuration_index);  
             if (!client_data->flash_configuration_index){
                 return false;
