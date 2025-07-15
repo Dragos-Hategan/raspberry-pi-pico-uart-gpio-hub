@@ -249,7 +249,7 @@ void server_configure_persistent_state(server_persistent_state_t *server_persist
     save_server_state(server_persistent_state);
 }
 
-static void server_print_state_devices(const client_state_t *client_state){
+void server_print_state_devices(const client_state_t *client_state){
     for (uint8_t gpio_index = 0; gpio_index < MAX_NUMBER_OF_GPIOS; gpio_index++){
         server_print_gpio_state(gpio_index, client_state);
     }

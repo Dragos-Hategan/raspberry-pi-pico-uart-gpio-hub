@@ -75,10 +75,10 @@ static void read_device_state(uint32_t *device_state){
  * @param flash_client_index Index of the client in the flash state structure.
  * @param flash_state Pointer to the flash-stored server state.
  */
-static void read_device_index(uint32_t *device_index, uint32_t flash_client_index, const server_persistent_state_t *flash_state){
+static void read_device_index(uint32_t *device_index, uint32_t flash_client_index, const server_persistent_state_t *flash_state, const client_state_t *client_state){
     bool correct_device_input = false;
     while (!correct_device_input){
-        if (choose_device(device_index, &flash_state->clients[flash_client_index])){
+        if (choose_device(device_index, client_state)){
             if (*device_index == 0){
                 return;
             }else{
@@ -129,7 +129,10 @@ static void get_client_flash_device_indexes(uint32_t *client_index, const server
         return;
     }
     find_corect_client_index_from_flash(flash_client_index, *client_index, flash_state);
-    read_device_index(device_index, *flash_client_index, flash_state);
+    const client_state_t *client_state = &flash_state->clients[*flash_client_index].running_client_state;
+    
+    printf("\nRunning Client State:");
+    read_device_index(device_index, *flash_client_index, flash_state, client_state);
 }
 
 /**
@@ -422,11 +425,58 @@ static void save_running_configuration(uint32_t flash_client_index, const client
     save_running_configuration_into_preset_configuration(flash_configuration_index - 1, flash_client_index);
 }
 
+/**
+ * @brief Sets the state (ON/OFF) of devices in a preset configuration for a client.
+ *
+ * - Loads the current persistent server state from flash.
+ * - Repeatedly prompts the user to:
+ *     - Select a device (by index).
+ *     - Choose its desired state (0 = OFF, 1 = ON).
+ * - Updates the specified preset configuration with the new device state.
+ * - Saves the modified state to flash after each update.
+ * - Exits if the user cancels during device or state selection.
+ *
+ * @param flash_client_index Index of the client in the persistent flash structure.
+ * @param flash_configuration_index Index of the preset configuration to modify (0-based).
+ */
 static void set_configuration_devices(uint32_t flash_client_index, uint32_t flash_configuration_index){
-    // afisez starea, cer input de device, cer 1. ON, 2. 0FF, 3. TOGGLE
+    server_persistent_state_t state;
+    load_server_state(&state);
+
+    while(true){
+        uint32_t device_index;
+        read_device_index(&device_index,
+            flash_client_index,
+            &state,
+            &state.clients[flash_client_index].preset_configs[flash_configuration_index]
+        );
+        if (!device_index){
+            return;
+        }
     
+        uint32_t device_state;
+        read_device_state(&device_state);
+        if (!device_state){
+            return;
+        }
+        device_state %= 2;
+
+        state.clients[flash_client_index].preset_configs[flash_configuration_index].devices[device_index - 1].is_on = device_state;
+
+        save_server_state(&state);
+    }
 }
 
+/**
+ * @brief Starts an interactive process to build or edit a client preset configuration.
+ *
+ * - Displays all existing preset configurations for the selected client.
+ * - Prompts the user to choose one of the preset slots to modify.
+ * - Calls `set_configuration_devices()` to configure the ON/OFF state of individual devices.
+ *
+ * @param flash_client_index Index of the client in the persistent flash structure.
+ * @param client Pointer to the client_t structure holding the configurations.
+ */
 static void build_configuration(uint32_t flash_client_index, const client_t* client){
     printf("\n");
     server_print_client_preset_configurations(client);
@@ -440,7 +490,7 @@ static void build_configuration(uint32_t flash_client_index, const client_t* cli
 
     set_configuration_devices(flash_client_index, flash_configuration_index);
 
-    printf("Building Configuration Complete.\n");
+    printf("\nBuilding Configuration Complete.\n");
 }
 
 /**
