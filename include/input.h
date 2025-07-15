@@ -124,10 +124,9 @@ bool choose_state(uint32_t *device_state);
  * Displays a cancel option and asks the user to choose a preset index within valid bounds.
  *
  * @param flash_configuration_index Output pointer to store the selected preset index.
- * @param flash_client_index Index of the client (unused, reserved for future contextual UI).
  * @return true if valid input received, false otherwise.
  */
-bool choose_flash_configuration_index(uint32_t *flash_configuration_index, uint32_t flash_client_index);
+bool choose_flash_configuration_index(uint32_t *flash_configuration_index);
 
 /**
  * @brief Prompts the user to choose how to save a configuration.
@@ -161,5 +160,11 @@ bool choose_saving_option(uint32_t *saving_option);
  * @return true if a valid input was received, false otherwise.
  */
 bool choose_menu_option(uint32_t *menu_option);
+
+void read_device_index(uint32_t *device_index, uint32_t flash_client_index, const server_persistent_state_t *flash_state, const client_state_t *client_state);
+void read_flash_configuration_index(uint32_t *flash_configuration_index);
+void read_device_state(uint32_t *device_state);
+void read_client_index(uint32_t *client_index);
+void read_reset_variant(uint32_t *reset_variant);
 
 #endif 

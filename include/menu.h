@@ -22,4 +22,12 @@ inline void print_cancel_message(void){
     printf("0. cancel\n");
 }
 
+inline void print_input_error(void){
+    printf("Invalid input or overflow. Try again.\n");
+}
+
+inline void print_delimitor(void){
+    printf("\n****************************************************\n\n");
+}
+
 #endif

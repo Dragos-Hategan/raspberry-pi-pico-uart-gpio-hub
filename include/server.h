@@ -13,19 +13,8 @@
 
 #include "hardware/uart.h"
 
-#include "config.h"
 #include "types.h"
-
-/**
- * @brief Full persistent state saved in flash.
- *
- * Holds all known clients and their saved configurations.
- * Includes a CRC32 checksum for integrity verification.
- */
-typedef struct {
-    client_t clients[MAX_SERVER_CONNECTIONS];
-    uint32_t crc;
-} server_persistent_state_t;
+#include "config.h"
 
 /**
  * @brief Active UART server connections detected at runtime.
