@@ -184,7 +184,7 @@ bool choose_client(uint32_t *client_index){
     return false;
 }
 
-bool choose_flash_configuration_index(uint32_t *flash_configuration_index, uint32_t flash_client_index){
+bool choose_flash_configuration_index(uint32_t *flash_configuration_index){
     const char *MESSAGE = "\nWhat configuration do you want to access?";
     print_cancel_message();
     if (read_user_choice_in_range(MESSAGE, flash_configuration_index, MINIMUM_FLASH_CONFIGURATION_INDEX_INPUT, MAXIMUM_FLASH_CONFIGURATION_INDEX_INPUT)){
@@ -208,4 +208,162 @@ bool choose_menu_option(uint32_t *menu_option){
         return true;
     }
     return false;
+}
+
+void read_device_index(uint32_t *device_index, uint32_t flash_client_index, const server_persistent_state_t *flash_state, const client_state_t *client_state){
+    bool correct_device_input = false;
+    while (!correct_device_input){
+        if (choose_device(device_index, client_state)){
+            if (*device_index == 0){
+                return;
+            }else{
+                correct_device_input = true;
+            }
+        }else{
+            print_input_error();
+        }
+    }
+}
+
+void read_flash_configuration_index(uint32_t *flash_configuration_index){
+    bool correct_flash_configuration_input = false;
+    while (!correct_flash_configuration_input){
+        for (uint32_t configuration_index = 1; configuration_index <= NUMBER_OF_POSSIBLE_PRESETS; configuration_index++){
+            printf("%u. Preset Config[%u]\n", configuration_index, configuration_index);
+        }
+        if (choose_flash_configuration_index(flash_configuration_index)){
+            correct_flash_configuration_input = true;
+        }else{
+            print_input_error();
+            printf("\n");
+        }
+    }
+}
+
+void read_device_state(uint32_t *device_state){
+    bool correct_state_input = false;
+    while (!correct_state_input){
+        if (choose_state(device_state)){
+            correct_state_input = true;
+        }else{
+            print_input_error();
+        }
+    }
+}
+
+void read_client_index(uint32_t *client_index){ 
+    bool correct_client_input = false;
+    while (!correct_client_input){
+        if (choose_client(client_index)){
+            if (*client_index == 0){
+                return;
+            }else{
+                correct_client_input = true;
+            }
+        }else{
+            print_input_error();
+        }
+    }
+}
+
+void read_reset_variant(uint32_t *reset_variant){
+    bool correct_reset_variant_input = false;
+    while (!correct_reset_variant_input){
+        if (choose_reset_variant(reset_variant)){
+            if (*reset_variant == 0){
+                return;
+            }else{
+                correct_reset_variant_input = true;
+            }
+        }else{
+            print_input_error();
+            printf("\n");
+        }
+    }
+}
+
+bool read_client_data(input_client_data_t *client_data, client_input_flags_t client_input_flags){
+    if (client_input_flags.need_client_index){
+        read_client_index(&client_data->client_index);
+        if (!client_data->client_index){
+            return false;
+        }  
+    }
+
+    const server_persistent_state_t *flash_state = (const server_persistent_state_t *)SERVER_FLASH_ADDR;
+    find_corect_client_index_from_flash(&client_data->flash_client_index, client_data->client_index, flash_state);
+    const client_state_t *client_state = &flash_state->clients[client_data->flash_client_index].running_client_state;
+    client_data->client_state = client_state;
+    client_data->flash_state = flash_state;
+
+    if (client_input_flags.need_device_index){
+        read_device_index(&client_data->device_index, client_data->flash_client_index, flash_state, client_state);
+        if (!client_data->device_index){
+            return false;
+        }
+    }
+
+    if (client_input_flags.need_device_state){
+        read_device_state(&client_data->device_state);
+        if (!client_data->device_state){
+            return false;
+        }
+        client_data->device_state %= 2;
+    }
+
+    if (client_input_flags.need_config_index && !client_input_flags.is_building_preset){
+        printf("\n");
+        server_print_running_client_state((const client_t *)&flash_state->clients[client_data->flash_client_index]);
+        printf("\n");
+        server_print_client_preset_configurations((const client_t *)&flash_state->clients[client_data->flash_client_index]);
+
+        read_flash_configuration_index(&client_data->flash_configuration_index);  
+        if (!client_data->flash_configuration_index){
+            return false;
+        }
+    }
+
+    if (client_input_flags.is_building_preset){
+        printf("\n");
+        server_print_client_preset_configurations((const client_t *)&flash_state->clients[client_data->flash_client_index]);   
+
+        read_flash_configuration_index(&client_data->flash_configuration_index);  
+        if (!client_data->flash_configuration_index){
+            return false;
+        }
+        set_configuration_devices(client_data->flash_client_index, client_data->flash_configuration_index - 1);
+    }
+
+    if(client_input_flags.is_load){
+        printf("\n");
+        server_print_running_client_state((const client_t *)&flash_state->clients[client_data->flash_client_index]);
+        printf("\n");
+        server_print_client_preset_configurations((const client_t *)&flash_state->clients[client_data->flash_client_index]);
+
+        read_flash_configuration_index(&client_data->flash_configuration_index);    
+        if (!client_data->flash_configuration_index){
+            return false;
+        }
+    }
+
+    if (client_input_flags.need_reset_choice){
+        printf("\n");
+        server_print_running_client_state((const client_t *)&flash_state->clients[client_data->flash_client_index]);
+        printf("\n");
+        server_print_client_preset_configurations((const client_t *)&flash_state->clients[client_data->flash_client_index]);
+
+        read_reset_variant(&client_data->reset_choice);
+        if (!client_data->reset_choice){
+            return false;
+        }
+
+        if (client_data->reset_choice == 2){
+            read_flash_configuration_index(&client_data->flash_configuration_index);  
+            if (!client_data->flash_configuration_index){
+                return false;
+            }
+        }
+    }
+
+    return true;
 }
