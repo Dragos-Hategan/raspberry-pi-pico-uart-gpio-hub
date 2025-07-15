@@ -131,14 +131,14 @@ bool choose_state(uint32_t *device_state){
     return false;
 }
 
-bool choose_device(uint32_t *device_index, const client_t *client){  
+bool choose_device(uint32_t *device_index, const client_state_t *client_state){  
     printf("\n");
-    server_print_running_client_state(client);
+    server_print_state_devices(client_state);
 
     const char *MESSAGE = "\nWhat device number do you want to access?";
     print_cancel_message();
     if (read_user_choice_in_range(MESSAGE, device_index, MINIMUM_DEVICE_INDEX_INPUT, MAXIMUM_DEVICE_INDEX_INPUT)){
-        if (client->running_client_state.devices[*device_index - 1].gpio_number != UART_CONNECTION_FLAG_NUMBER){
+        if (client_state->devices[*device_index - 1].gpio_number != UART_CONNECTION_FLAG_NUMBER){
             return true;
         }else{
             printf("Selected device is used as UART connection.\n");

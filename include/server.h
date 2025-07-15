@@ -83,6 +83,26 @@ void server_print_running_client_state(const client_t *);
  */
 void server_print_client_preset_configuration(const client_t *, uint8_t);
 
+/**
+ * @brief Prints the state of all devices from a given client state structure.
+ *
+ * - Iterates through all available GPIO devices.
+ * - Prints each device's state using `server_print_gpio_state()`.
+ * - Skips devices used for UART communication.
+ *
+ * @param client_state Pointer to the client_state_t structure to display.
+ */
+void server_print_state_devices(const client_state_t *client_state);
+
+/**
+ * @brief Prints all preset configurations for a client.
+ *
+ * - Iterates through each preset slot of the client.
+ * - Prints each configuration using `server_print_client_preset_configuration()`.
+ * - Adds spacing between configurations for clarity.
+ *
+ * @param client Pointer to the client_t structure containing the preset configurations.
+ */
 void server_print_client_preset_configurations(const client_t *);
 
 /**

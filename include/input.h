@@ -105,10 +105,10 @@ bool choose_client(uint32_t *client_index);
  * @brief Prompts the user to select a GPIO device to modify.
  *
  * @param device_index Output pointer for selected index (1-based).
- * @param running_client_state The state structure of the selected client.
+ * @param client_state The state structure of the selected client.
  * @return true if valid device selected, false otherwise.
  */
-bool choose_device(uint32_t *device_index, const client_t *client);
+bool choose_device(uint32_t *device_index, const client_state_t *client_state);
 
 /**
  * @brief Prompts the user to enter a desired state: ON (1) or OFF (0).
