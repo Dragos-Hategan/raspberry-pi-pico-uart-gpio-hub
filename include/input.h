@@ -56,7 +56,7 @@
 #endif
 
 #ifndef MAXIMUM_DEVICE_STATE_INPUT 
-#define MAXIMUM_DEVICE_STATE_INPUT 1
+#define MAXIMUM_DEVICE_STATE_INPUT 2
 #endif
 
 #ifndef MINIMUM_RESET_VARIANT_INPUT 
@@ -108,7 +108,7 @@ bool choose_client(uint32_t *client_index);
  * @param running_client_state The state structure of the selected client.
  * @return true if valid device selected, false otherwise.
  */
-bool choose_device(uint32_t *device_index, const client_state_t *running_client_state);
+bool choose_device(uint32_t *device_index, const client_t *client);
 
 /**
  * @brief Prompts the user to enter a desired state: ON (1) or OFF (0).
@@ -116,7 +116,7 @@ bool choose_device(uint32_t *device_index, const client_state_t *running_client_
  * @param device_state Pointer to store the selected boolean state.
  * @return true if valid input received, false otherwise.
  */
-bool choose_state(bool *device_state);
+bool choose_state(uint32_t *device_state);
 
 /**
  * @brief Prompts the user to select a preset configuration index.
