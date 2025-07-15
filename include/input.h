@@ -161,10 +161,76 @@ bool choose_saving_option(uint32_t *saving_option);
  */
 bool choose_menu_option(uint32_t *menu_option);
 
+/**
+ * @brief Prompts the user to select a device index for the given client.
+ *
+ * Repeats until a valid device is selected or cancel (0) is entered.
+ *
+ * @param device_index Output pointer to store the selected device index (1-based).
+ * @param flash_client_index Index of the client in the flash state structure.
+ * @param flash_state Pointer to the flash-stored server state.
+ */
 void read_device_index(uint32_t *device_index, uint32_t flash_client_index, const server_persistent_state_t *flash_state, const client_state_t *client_state);
+
+/**
+ * @brief Repeatedly prompts the user to select a valid preset configuration index.
+ *
+ * - Displays the list of available preset configuration slots.
+ * - Loops until a valid selection is made via `choose_flash_configuration_index()`.
+ * - Stores the final selection in `flash_configuration_index`.
+ *
+ * @param flash_configuration_index Output pointer for selected configuration index (1-based from user input).
+ * @param flash_client_index Index of the client whose configurations are being listed.
+ */
 void read_flash_configuration_index(uint32_t *flash_configuration_index);
+
+/**
+ * @brief Reads a valid ON/OFF state input from the user.
+ *
+ * Prompts until a valid binary state is selected (0 or 1).
+ *
+ * @param device_state Output pointer to store the selected state (true = ON, false = OFF).
+ */
 void read_device_state(uint32_t *device_state);
+
+/**
+ * @brief Prompts the user to select a client index.
+ *
+ * Repeats until a valid client is selected or cancel (0) is entered.
+ *
+ * @param client_index Output pointer to store the selected client index (1-based).
+ */
 void read_client_index(uint32_t *client_index);
+
+/**
+ * @brief Reads a reset variant option from the user.
+ *
+ * Prompts the user with a menu to choose what part of the client should be reset.
+ * Keeps asking until a valid input is provided or the user cancels with 0.
+ *
+ * @param reset_variant Pointer to store the selected option.
+ *                      Valid values:
+ *                      - 0: Cancel
+ *                      - 1: Reset running configuration
+ *                      - 2: Reset preset configurations
+ *                      - 3: Reset all client data
+ */
 void read_reset_variant(uint32_t *reset_variant);
+
+/**
+ * @brief Collects validated input from the user for client-related operations.
+ *
+ * This function performs multiple user interactions based on the provided `client_input_flags_t`.
+ * It reads values such as client index, device index, GPIO state, preset configuration index, or
+ * reset choice, and stores them into a `input_client_data_t` structure.
+ *
+ * If `build_preset` is true, the function also calls `set_configuration_devices()` automatically.
+ * 
+ * This function short-circuits (returns early) if any step is canceled or receives invalid input.
+ *
+ * @param[out] client_data Pointer to the structure where the input values will be stored.
+ * @param[in] client_input_flags Specifies which inputs are required (see `client_input_flags_t`).
+ */
+bool read_client_data(input_client_data_t *client_data, client_input_flags_t client_input_flags);
 
 #endif 

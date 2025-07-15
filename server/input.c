@@ -210,16 +210,6 @@ bool choose_menu_option(uint32_t *menu_option){
     return false;
 }
 
-
-/**
- * @brief Prompts the user to select a device index for the given client.
- *
- * Repeats until a valid device is selected or cancel (0) is entered.
- *
- * @param device_index Output pointer to store the selected device index (1-based).
- * @param flash_client_index Index of the client in the flash state structure.
- * @param flash_state Pointer to the flash-stored server state.
- */
 void read_device_index(uint32_t *device_index, uint32_t flash_client_index, const server_persistent_state_t *flash_state, const client_state_t *client_state){
     bool correct_device_input = false;
     while (!correct_device_input){
@@ -235,16 +225,6 @@ void read_device_index(uint32_t *device_index, uint32_t flash_client_index, cons
     }
 }
 
-/**
- * @brief Repeatedly prompts the user to select a valid preset configuration index.
- *
- * - Displays the list of available preset configuration slots.
- * - Loops until a valid selection is made via `choose_flash_configuration_index()`.
- * - Stores the final selection in `flash_configuration_index`.
- *
- * @param flash_configuration_index Output pointer for selected configuration index (1-based from user input).
- * @param flash_client_index Index of the client whose configurations are being listed.
- */
 void read_flash_configuration_index(uint32_t *flash_configuration_index){
     bool correct_flash_configuration_input = false;
     while (!correct_flash_configuration_input){
@@ -260,13 +240,6 @@ void read_flash_configuration_index(uint32_t *flash_configuration_index){
     }
 }
 
-/**
- * @brief Reads a valid ON/OFF state input from the user.
- *
- * Prompts until a valid binary state is selected (0 or 1).
- *
- * @param device_state Output pointer to store the selected state (true = ON, false = OFF).
- */
 void read_device_state(uint32_t *device_state){
     bool correct_state_input = false;
     while (!correct_state_input){
@@ -278,13 +251,6 @@ void read_device_state(uint32_t *device_state){
     }
 }
 
-/**
- * @brief Prompts the user to select a client index.
- *
- * Repeats until a valid client is selected or cancel (0) is entered.
- *
- * @param client_index Output pointer to store the selected client index (1-based).
- */
 void read_client_index(uint32_t *client_index){ 
     bool correct_client_input = false;
     while (!correct_client_input){
@@ -300,19 +266,6 @@ void read_client_index(uint32_t *client_index){
     }
 }
 
-/**
- * @brief Reads a reset variant option from the user.
- *
- * Prompts the user with a menu to choose what part of the client should be reset.
- * Keeps asking until a valid input is provided or the user cancels with 0.
- *
- * @param reset_variant Pointer to store the selected option.
- *                      Valid values:
- *                      - 0: Cancel
- *                      - 1: Reset running configuration
- *                      - 2: Reset preset configurations
- *                      - 3: Reset all client data
- */
 void read_reset_variant(uint32_t *reset_variant){
     bool correct_reset_variant_input = false;
     while (!correct_reset_variant_input){
@@ -327,4 +280,90 @@ void read_reset_variant(uint32_t *reset_variant){
             printf("\n");
         }
     }
+}
+
+bool read_client_data(input_client_data_t *client_data, client_input_flags_t client_input_flags){
+    if (client_input_flags.need_client_index){
+        read_client_index(&client_data->client_index);
+        if (!client_data->client_index){
+            return false;
+        }  
+    }
+
+    const server_persistent_state_t *flash_state = (const server_persistent_state_t *)SERVER_FLASH_ADDR;
+    find_corect_client_index_from_flash(&client_data->flash_client_index, client_data->client_index, flash_state);
+    const client_state_t *client_state = &flash_state->clients[client_data->flash_client_index].running_client_state;
+    client_data->client_state = client_state;
+    client_data->flash_state = flash_state;
+
+    if (client_input_flags.need_device_index){
+        read_device_index(&client_data->device_index, client_data->flash_client_index, flash_state, client_state);
+        if (!client_data->device_index){
+            return false;
+        }
+    }
+
+    if (client_input_flags.need_device_state){
+        read_device_state(&client_data->device_state);
+        if (!client_data->device_state){
+            return false;
+        }
+        client_data->device_state %= 2;
+    }
+
+    if (client_input_flags.need_config_index && !client_input_flags.is_building_preset){
+        printf("\n");
+        server_print_running_client_state((const client_t *)&flash_state->clients[client_data->flash_client_index]);
+        printf("\n");
+        server_print_client_preset_configurations((const client_t *)&flash_state->clients[client_data->flash_client_index]);
+
+        read_flash_configuration_index(&client_data->flash_configuration_index);  
+        if (!client_data->flash_configuration_index){
+            return false;
+        }
+    }
+
+    if (client_input_flags.is_building_preset){
+        printf("\n");
+        server_print_client_preset_configurations((const client_t *)&flash_state->clients[client_data->flash_client_index]);   
+
+        read_flash_configuration_index(&client_data->flash_configuration_index);  
+        if (!client_data->flash_configuration_index){
+            return false;
+        }
+        set_configuration_devices(client_data->flash_client_index, client_data->flash_configuration_index - 1);
+    }
+
+    if(client_input_flags.is_load){
+        printf("\n");
+        server_print_running_client_state((const client_t *)&flash_state->clients[client_data->flash_client_index]);
+        printf("\n");
+        server_print_client_preset_configurations((const client_t *)&flash_state->clients[client_data->flash_client_index]);
+
+        read_flash_configuration_index(&client_data->flash_configuration_index);    
+        if (!client_data->flash_configuration_index){
+            return false;
+        }
+    }
+
+    if (client_input_flags.need_reset_choice){
+        printf("\n");
+        server_print_running_client_state((const client_t *)&flash_state->clients[client_data->flash_client_index]);
+        printf("\n");
+        server_print_client_preset_configurations((const client_t *)&flash_state->clients[client_data->flash_client_index]);
+
+        read_reset_variant(&client_data->reset_choice);
+        if (!client_data->reset_choice){
+            return false;
+        }
+
+        if (client_data->reset_choice == 2){
+            read_flash_configuration_index(&client_data->flash_configuration_index);  
+            if (!client_data->flash_configuration_index){
+                return false;
+            }
+        }
+    }
+
+    return true;
 }

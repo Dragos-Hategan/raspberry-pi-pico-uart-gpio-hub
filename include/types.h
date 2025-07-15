@@ -133,6 +133,7 @@ typedef struct{
  * CLI features such as toggling GPIOs, building presets, or resetting configurations.
  */
 typedef struct {
+    bool need_client_index;
     bool need_device_index;
     bool need_device_state;
     bool need_config_index;

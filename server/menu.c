@@ -22,25 +22,6 @@ bool first_display = true;
 void server_display_menu(void);
 
 /**
- * @brief Finds the corresponding flash client index for a given active client.
- *
- * Compares the TX pin of the selected client with entries in the flash structure to
- * determine the matching flash client index.
- *
- * @param flash_client_index Output pointer to store the resolved flash index.
- * @param client_index Index of the selected client (1-based).
- * @param flash_state Pointer to the flash-stored server state.
- */
-static void find_corect_client_index_from_flash(uint32_t *flash_client_index, uint32_t client_index, const server_persistent_state_t *flash_state){
-    for (uint8_t index = 0; index < MAX_SERVER_CONNECTIONS; index++){
-        if (active_uart_server_connections[client_index - 1].pin_pair.tx == flash_state->clients[index].uart_connection.pin_pair.tx){
-            *flash_client_index = index;
-            break;
-        }   
-    }
-}
-
-/**
  * @brief Resets the currently active (running) configuration of a client.
  *
  * - Loads the full persistent server state from flash.
@@ -173,148 +154,6 @@ static void save_running_configuration_into_preset_configuration(uint32_t flash_
     printf("\nConfiguration saved in Preset[%u].\n", flash_configuration_index + 1);
 }
 
-
-/**
- * @brief Sets the state (ON/OFF) of devices in a preset configuration for a client.
- *
- * - Loads the current persistent server state from flash.
- * - Repeatedly prompts the user to:
- *     - Select a device (by index).
- *     - Choose its desired state (0 = OFF, 1 = ON).
- * - Updates the specified preset configuration with the new device state.
- * - Saves the modified state to flash after each update.
- * - Exits if the user cancels during device or state selection.
- *
- * @param flash_client_index Index of the client in the persistent flash structure.
- * @param flash_configuration_index Index of the preset configuration to modify (0-based).
- */
-static void set_configuration_devices(uint32_t flash_client_index, uint32_t flash_configuration_index){
-    server_persistent_state_t state;
-    load_server_state(&state);
-
-    while(true){
-        uint32_t device_index;
-        read_device_index(&device_index,
-            flash_client_index,
-            &state,
-            &state.clients[flash_client_index].preset_configs[flash_configuration_index]
-        );
-        if (!device_index){
-            return;
-        }
-    
-        uint32_t device_state;
-        read_device_state(&device_state);
-        if (!device_state){
-            return;
-        }
-        device_state %= 2;
-
-        state.clients[flash_client_index].preset_configs[flash_configuration_index].devices[device_index - 1].is_on = device_state;
-
-        save_server_state(&state);
-    }
-}
-
-/**
- * @brief Collects validated input from the user for client-related operations.
- *
- * This function performs multiple user interactions based on the provided `client_input_flags_t`.
- * It reads values such as client index, device index, GPIO state, preset configuration index, or
- * reset choice, and stores them into a `input_client_data_t` structure.
- *
- * If `build_preset` is true, the function also calls `set_configuration_devices()` automatically.
- * 
- * This function short-circuits (returns early) if any step is canceled or receives invalid input.
- *
- * @param[out] client_data Pointer to the structure where the input values will be stored.
- * @param[in] client_input_flags Specifies which inputs are required (see `client_input_flags_t`).
- */
-static bool read_client_data(input_client_data_t *client_data, client_input_flags_t client_input_flags){
-    read_client_index(&client_data->client_index);
-    if (!client_data->client_index){
-         return false;
-    }  
-
-    const server_persistent_state_t *flash_state = (const server_persistent_state_t *)SERVER_FLASH_ADDR;
-    find_corect_client_index_from_flash(&client_data->flash_client_index, client_data->client_index, flash_state);
-    const client_state_t *client_state = &flash_state->clients[client_data->flash_client_index].running_client_state;
-    client_data->client_state = client_state;
-    client_data->flash_state = flash_state;
-
-    if (client_input_flags.need_device_index){
-        read_device_index(&client_data->device_index, client_data->flash_client_index, flash_state, client_state);
-        if (!client_data->device_index){
-            return false;
-        }
-    }
-
-    if (client_input_flags.need_device_state){
-        read_device_state(&client_data->device_state);
-        if (!client_data->device_state){
-            return false;
-        }
-        client_data->device_state %= 2;
-    }
-
-    if (client_input_flags.need_config_index && !client_input_flags.is_building_preset){
-        printf("\n");
-        server_print_running_client_state((const client_t *)&flash_state->clients[client_data->flash_client_index]);
-        printf("\n");
-        server_print_client_preset_configurations((const client_t *)&flash_state->clients[client_data->flash_client_index]);
-
-        read_flash_configuration_index(&client_data->flash_configuration_index);  
-        if (!client_data->flash_configuration_index){
-            return false;
-        }
-    }
-
-    if (client_input_flags.is_building_preset){
-        printf("\n");
-        server_print_client_preset_configurations((const client_t *)&flash_state->clients[client_data->flash_client_index]);   
-
-        read_flash_configuration_index(&client_data->flash_configuration_index);  
-        if (!client_data->flash_configuration_index){
-            return false;
-        }
-        set_configuration_devices(client_data->flash_client_index, client_data->flash_configuration_index - 1);
-    }
-
-    if(client_input_flags.is_load){
-        printf("\n");
-        server_print_running_client_state((const client_t *)&flash_state->clients[client_data->flash_client_index]);
-        printf("\n");
-        server_print_client_preset_configurations((const client_t *)&flash_state->clients[client_data->flash_client_index]);
-
-        read_flash_configuration_index(&client_data->flash_configuration_index);    
-        if (!client_data->flash_configuration_index){
-            return false;
-        }
-    }
-
-    if (client_input_flags.need_reset_choice){
-        printf("\n");
-        server_print_running_client_state((const client_t *)&flash_state->clients[client_data->flash_client_index]);
-        printf("\n");
-        server_print_client_preset_configurations((const client_t *)&flash_state->clients[client_data->flash_client_index]);
-
-        read_reset_variant(&client_data->reset_choice);
-        if (!client_data->reset_choice){
-            return false;
-        }
-
-        if (client_data->reset_choice == 2){
-            read_flash_configuration_index(&client_data->flash_configuration_index);  
-            if (!client_data->flash_configuration_index){
-                return false;
-            }
-        }
-    }
-
-    return true;
-}
-
-
 /**
  * @brief Entry point for resetting client data.
  *
@@ -329,6 +168,7 @@ static bool read_client_data(input_client_data_t *client_data, client_input_flag
 static void reset_configuration(void){
     input_client_data_t input_client_data = {0};
     client_input_flags_t client_input_flags = {0};
+    client_input_flags.need_client_index = true;
     client_input_flags.need_reset_choice = true;
 
     if (read_client_data(&input_client_data, client_input_flags)){
@@ -353,6 +193,7 @@ static void reset_configuration(void){
 static void load_configuration(void){
     input_client_data_t input_client_data = {0};
     client_input_flags_t client_input_flags = {0};
+    client_input_flags.need_client_index = true;
     client_input_flags.is_load = true;
     
     if (read_client_data(&input_client_data, client_input_flags)){
@@ -371,6 +212,7 @@ static void load_configuration(void){
 static void build_preset_configuration(void){
     input_client_data_t input_client_data = {0};
     client_input_flags_t client_input_flags = {0};
+    client_input_flags.need_client_index = true;
     client_input_flags.is_building_preset = true;
     read_client_data(&input_client_data, client_input_flags);
 
@@ -388,6 +230,7 @@ static void build_preset_configuration(void){
 static void save_running_state(void){    
     input_client_data_t input_client_data = {0};
     client_input_flags_t client_input_flags = {0};
+    client_input_flags.need_client_index = true;
     client_input_flags.need_config_index = true;
 
     if (read_client_data(&input_client_data, client_input_flags)){
@@ -405,6 +248,7 @@ static void save_running_state(void){
 static void toggle_device(void){
     input_client_data_t input_client_data = {0};
     client_input_flags_t client_input_flags = {0};
+    client_input_flags.need_client_index = true;
     client_input_flags.need_device_index = true;
 
     if (read_client_data(&input_client_data, client_input_flags)){
@@ -432,6 +276,7 @@ static void toggle_device(void){
 static void set_client_device(void){    
     input_client_data_t input_client_data = {0};
     client_input_flags_t client_input_flags = {0};
+    client_input_flags.need_client_index = true;
     client_input_flags.need_device_index = true;
     client_input_flags.need_device_state = true;
 
