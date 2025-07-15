@@ -55,7 +55,7 @@ static void find_corect_client_index_from_flash(uint32_t *flash_client_index, ui
  *
  * @param device_state Output pointer to store the selected state (true = ON, false = OFF).
  */
-static void read_device_state(bool *device_state){
+static void read_device_state(uint32_t *device_state){
     bool correct_state_input = false;
     while (!correct_state_input){
         if (choose_state(device_state)){
@@ -78,7 +78,7 @@ static void read_device_state(bool *device_state){
 static void read_device_index(uint32_t *device_index, uint32_t flash_client_index, const server_persistent_state_t *flash_state){
     bool correct_device_input = false;
     while (!correct_device_input){
-        if (choose_device(device_index, &flash_state->clients[flash_client_index].running_client_state)){
+        if (choose_device(device_index, &flash_state->clients[flash_client_index])){
             if (*device_index == 0){
                 return;
             }else{
@@ -428,7 +428,19 @@ static void save_running_configuration(uint32_t flash_client_index, const client
     save_running_configuration_into_preset_configuration(flash_configuration_index - 1, flash_client_index);
 }
 
-static void build_configuration(){
+static void build_configuration(uint32_t flash_client_index, const client_t* client){
+    uint32_t flash_configuration_index;
+    read_flash_configuration_index(&flash_configuration_index, flash_client_index);    
+    if (!flash_configuration_index){
+        return;
+    }
+    flash_configuration_index--;
+
+    printf("\n");
+    server_print_client_preset_configuration(client, flash_configuration_index);
+
+    // afisez starea, cer input de device, cer 1. ON, 2. 0FF, 3. TOGGLE
+
     printf("Building configuration\n");
 }
 
@@ -443,7 +455,7 @@ static void build_configuration(){
 static void read_saving_option(uint32_t *saving_option){
     bool correct_saving_option_input = false;
     while (!correct_saving_option_input){
-        printf("\n1. Save running configuration.\n2. Build and save configuration.\n");
+        printf("\n1. Save running configuration into preset.\n2. Build and save preset configuration.\n");
         if (choose_saving_option(saving_option)){
             if (*saving_option == 0){
                 return;
@@ -488,7 +500,7 @@ static void save_configuration(void){
     if (saving_option == 1){
         save_running_configuration(flash_client_index, client);
     }else{
-        build_configuration();
+        build_configuration(flash_client_index, client);
     }
 }
 
@@ -535,13 +547,16 @@ static void set_client_device(void){
     uint32_t flash_client_index;
     uint32_t device_index;
     get_client_flash_device_indexes(&client_index, flash_state, &flash_client_index, &device_index);
-
     if (!client_index || !device_index){
         return;
     }
 
-    bool device_state;
+    uint32_t device_state;
     read_device_state(&device_state);
+    if (!device_state){
+        return;
+    }
+
     uint32_t gpio_index = flash_state->clients[flash_client_index].
                         running_client_state.
                         devices[device_index - 1].
@@ -560,7 +575,7 @@ static void set_client_device(void){
  * Displays each valid UART connection with its associated TX/RX pins and UART instance number.
  */
 static inline void display_active_clients(void){    
-    printf("These are the active connections:\n");
+    printf("These are the active client connections:\n");
     for (uint8_t index = 1; index <= active_server_connections_number; index++){
         printf("%d. GPIO Pin Pair=[%d,%d]. UART Instance=uart%d.\n", index, 
             active_uart_server_connections[index - 1].pin_pair.tx,

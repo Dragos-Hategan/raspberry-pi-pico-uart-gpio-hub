@@ -120,28 +120,25 @@ bool read_user_choice_in_range(const char* message, uint32_t* out, uint32_t min,
     return false;
 }
 
-bool choose_state(bool *device_state){
-    uint32_t state_number;
-    const char *MESSAGE = "\nWhat state?\nON = 1\nOFF = 0";
-    if (read_user_choice_in_range(MESSAGE, &state_number, MINIMUM_DEVICE_STATE_INPUT, MAXIMUM_DEVICE_STATE_INPUT)){
-        *device_state = state_number ? true : false;
+bool choose_state(uint32_t *device_state){
+    printf("\n1. ON\n2. OFF\n");
+    const char *MESSAGE = "\nWhat state?";
+    print_cancel_message();
+    if (read_user_choice_in_range(MESSAGE, device_state, MINIMUM_DEVICE_STATE_INPUT, MAXIMUM_DEVICE_STATE_INPUT)){
         return true;
     }
 
     return false;
 }
 
-bool choose_device(uint32_t *device_index, const client_state_t *running_client_state){  
+bool choose_device(uint32_t *device_index, const client_t *client){  
     printf("\n");
-    
-    for (uint8_t gpio_index = 0; gpio_index < MAX_NUMBER_OF_GPIOS; gpio_index++){
-        server_print_gpio_state(gpio_index, running_client_state);
-    }
+    server_print_running_client_state(client);
 
     const char *MESSAGE = "\nWhat device number do you want to access?";
     print_cancel_message();
     if (read_user_choice_in_range(MESSAGE, device_index, MINIMUM_DEVICE_INDEX_INPUT, MAXIMUM_DEVICE_INDEX_INPUT)){
-        if (running_client_state->devices[*device_index - 1].gpio_number != UART_CONNECTION_FLAG_NUMBER){
+        if (client->running_client_state.devices[*device_index - 1].gpio_number != UART_CONNECTION_FLAG_NUMBER){
             return true;
         }else{
             printf("Selected device is used as UART connection.\n");
