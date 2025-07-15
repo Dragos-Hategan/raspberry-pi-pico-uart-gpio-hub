@@ -13,19 +13,8 @@
 
 #include "hardware/uart.h"
 
-#include "config.h"
 #include "types.h"
-
-/**
- * @brief Full persistent state saved in flash.
- *
- * Holds all known clients and their saved configurations.
- * Includes a CRC32 checksum for integrity verification.
- */
-typedef struct {
-    client_t clients[MAX_SERVER_CONNECTIONS];
-    uint32_t crc;
-} server_persistent_state_t;
+#include "config.h"
 
 /**
  * @brief Active UART server connections detected at runtime.
@@ -168,6 +157,41 @@ void __not_in_flash_func(save_server_state)(const server_persistent_state_t *sta
  * @param flash_client_index Index of the client in flash storage.
  */
 void server_set_device_state_and_update_flash(uart_pin_pair_t , uart_inst_t*, uint8_t, bool, uint32_t);
+
+/**
+ * @brief Finds the corresponding flash client index for a given active client.
+ *
+ * Compares the TX pin of the selected client with entries in the flash structure to
+ * determine the matching flash client index.
+ *
+ * @param flash_client_index Output pointer to store the resolved flash index.
+ * @param client_index Index of the selected client (1-based).
+ * @param flash_state Pointer to the flash-stored server state.
+ */
+inline void find_corect_client_index_from_flash(uint32_t *flash_client_index, uint32_t client_index, const server_persistent_state_t *flash_state){
+    for (uint8_t index = 0; index < MAX_SERVER_CONNECTIONS; index++){
+        if (active_uart_server_connections[client_index - 1].pin_pair.tx == flash_state->clients[index].uart_connection.pin_pair.tx){
+            *flash_client_index = index;
+            break;
+        }   
+    }
+}
+
+/**
+ * @brief Configures the devices for a given client and preset configuration index.
+ *
+ * This function enters an interactive loop where the user can set the ON/OFF state
+ * for specific devices (GPIOs) of a selected client. The changes are stored in the 
+ * specified preset configuration index within the server's persistent state.
+ * 
+ * The loop continues to prompt the user for device index and state until the input 
+ * routine signals an exit (typically via a cancel command or invalid input).
+ *
+ * @param flash_client_index Index of the client in flash memory (persistent state).
+ * @param flash_configuration_index Index of the preset configuration to modify.
+ * @param input_client_data Pointer to a structure used for passing user input data.
+ */
+void set_configuration_devices(uint32_t flash_client_index, uint32_t flash_configuration_index, input_client_data_t *client_data);
 
 /// Flash memory layout constants used for saving/loading persistent server state
 #define SERVER_SECTOR_SIZE    4096

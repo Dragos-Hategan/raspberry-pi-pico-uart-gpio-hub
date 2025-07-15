@@ -20,6 +20,7 @@
 #include "types.h"
 #include "server.h"
 #include "functions.h"
+#include "input.h"
 
 /**
  * @brief Computes CRC32 checksum over a block of memory.
@@ -168,6 +169,34 @@ static void configure_running_state(uint8_t client_list_index, server_persistent
     }
 
     configure_running_state_uart_connection_pins(client_list_index, server_persistent_state);
+}
+
+void set_configuration_devices(uint32_t flash_client_index, uint32_t flash_configuration_index, input_client_data_t *input_client_data){
+    server_persistent_state_t state;
+    load_server_state(&state);
+
+    while(true){
+        uint32_t device_index;
+        read_device_index(&device_index,
+            flash_client_index,
+            &state,
+            &state.clients[flash_client_index].preset_configs[flash_configuration_index]
+        );
+        if (!device_index){
+            return;
+        }
+    
+        uint32_t device_state;
+        read_device_state(&device_state);
+        if (!device_state){
+            return;
+        }
+        device_state %= 2;
+
+        state.clients[flash_client_index].preset_configs[flash_configuration_index].devices[device_index - 1].is_on = device_state;
+
+        save_server_state(&state);
+    }
 }
 
 /**
