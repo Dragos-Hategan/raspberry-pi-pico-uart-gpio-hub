@@ -141,7 +141,7 @@ bool choose_device(uint32_t *device_index, const client_state_t *client_state){
         if (client_state->devices[*device_index - 1].gpio_number != UART_CONNECTION_FLAG_NUMBER){
             return true;
         }else{
-            printf("Selected device is used as UART connection.\n");
+            printf("\nSelected device is used as UART connection.\n");
         }
     }
 

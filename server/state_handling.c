@@ -261,7 +261,7 @@ void server_print_state_devices(const client_state_t *client_state){
  * @param client Pointer to the client structure.
  */
 void server_print_running_client_state(const client_t *client){
-    printf("Running Client State:\n");
+    printf("Running Client State Devices:\n");
     server_print_state_devices(&client->running_client_state);
 }
 
@@ -272,7 +272,7 @@ void server_print_running_client_state(const client_t *client){
  * @param client_preset_index Preset index to print.
  */
 void server_print_client_preset_configuration(const client_t *client, uint8_t client_preset_index){
-    printf("Preset Config[%u]:\n", client_preset_index + 1);
+    printf("Preset Config[%u] Devices:\n", client_preset_index + 1);
     server_print_state_devices(&client->preset_configs[client_preset_index]);
 }
 
