@@ -145,7 +145,6 @@ static void get_client_flash_device_indexes(uint32_t *client_index, const server
 static void read_flash_configuration_index(uint32_t *flash_configuration_index, uint32_t flash_client_index){
     bool correct_flash_configuration_input = false;
     while (!correct_flash_configuration_input){
-        printf("\n");
         for (uint32_t configuration_index = 1; configuration_index <= NUMBER_OF_POSSIBLE_PRESETS; configuration_index++){
             printf("%u. Preset Config[%u]\n", configuration_index, configuration_index);
         }
@@ -153,6 +152,7 @@ static void read_flash_configuration_index(uint32_t *flash_configuration_index, 
             correct_flash_configuration_input = true;
         }else{
             print_input_error();
+            printf("\n");
         }
     }
 }
@@ -292,9 +292,7 @@ static void reset_configuration(void){
     printf("\n");
     server_print_running_client_state(client);
     printf("\n");
-    for (uint8_t client_preset_index = 0; client_preset_index < NUMBER_OF_POSSIBLE_PRESETS; client_preset_index++){
-        server_print_client_preset_configuration(client, client_preset_index);
-    }
+    server_print_client_preset_configurations(client);
 
     uint32_t reset_choice;
     read_reset_variant(&reset_choice);
@@ -362,9 +360,7 @@ static void load_configuration(void){
     printf("\n");
     server_print_running_client_state(client);
     printf("\n");
-    for (uint8_t client_preset_index = 0; client_preset_index < NUMBER_OF_POSSIBLE_PRESETS; client_preset_index++){
-        server_print_client_preset_configuration(client, client_preset_index);
-    }
+    server_print_client_preset_configurations(client);
 
     uint32_t flash_configuration_index;
     read_flash_configuration_index(&flash_configuration_index, flash_client_index);    
@@ -415,9 +411,7 @@ static void save_running_configuration_into_preset_configuration(uint32_t flash_
 static void save_running_configuration(uint32_t flash_client_index, const client_t* client){
     printf("\n");
 
-    for (uint8_t client_preset_index = 0; client_preset_index < NUMBER_OF_POSSIBLE_PRESETS; client_preset_index++){
-        server_print_client_preset_configuration(client, client_preset_index);
-    }
+    server_print_client_preset_configurations(client);
 
     uint32_t flash_configuration_index;
     read_flash_configuration_index(&flash_configuration_index, flash_client_index);    
@@ -428,7 +422,15 @@ static void save_running_configuration(uint32_t flash_client_index, const client
     save_running_configuration_into_preset_configuration(flash_configuration_index - 1, flash_client_index);
 }
 
+static void set_configuration_devices(uint32_t flash_client_index, uint32_t flash_configuration_index){
+    // afisez starea, cer input de device, cer 1. ON, 2. 0FF, 3. TOGGLE
+    
+}
+
 static void build_configuration(uint32_t flash_client_index, const client_t* client){
+    printf("\n");
+    server_print_client_preset_configurations(client);
+    
     uint32_t flash_configuration_index;
     read_flash_configuration_index(&flash_configuration_index, flash_client_index);    
     if (!flash_configuration_index){
@@ -436,12 +438,9 @@ static void build_configuration(uint32_t flash_client_index, const client_t* cli
     }
     flash_configuration_index--;
 
-    printf("\n");
-    server_print_client_preset_configuration(client, flash_configuration_index);
+    set_configuration_devices(flash_client_index, flash_configuration_index);
 
-    // afisez starea, cer input de device, cer 1. ON, 2. 0FF, 3. TOGGLE
-
-    printf("Building configuration\n");
+    printf("Building Configuration Complete.\n");
 }
 
 /**
@@ -556,6 +555,7 @@ static void set_client_device(void){
     if (!device_state){
         return;
     }
+    device_state %= 2;
 
     uint32_t gpio_index = flash_state->clients[flash_client_index].
                         running_client_state.
@@ -575,7 +575,7 @@ static void set_client_device(void){
  * Displays each valid UART connection with its associated TX/RX pins and UART instance number.
  */
 static inline void display_active_clients(void){    
-    printf("These are the active client connections:\n");
+    printf("\nThese are the active client connections:\n");
     for (uint8_t index = 1; index <= active_server_connections_number; index++){
         printf("%d. GPIO Pin Pair=[%d,%d]. UART Instance=uart%d.\n", index, 
             active_uart_server_connections[index - 1].pin_pair.tx,
@@ -663,7 +663,7 @@ void server_display_menu(void){
         first_display = false;
         clear_screen();
         print_delimitor();
-        printf("Welcome!\n");
+        printf("Welcome!");
         display_active_clients();
         printf("\n");
     }

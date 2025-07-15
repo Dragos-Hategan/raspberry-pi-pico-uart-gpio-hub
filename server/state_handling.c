@@ -249,6 +249,12 @@ void server_configure_persistent_state(server_persistent_state_t *server_persist
     save_server_state(server_persistent_state);
 }
 
+static void server_print_state_devices(const client_state_t *client_state){
+    for (uint8_t gpio_index = 0; gpio_index < MAX_NUMBER_OF_GPIOS; gpio_index++){
+        server_print_gpio_state(gpio_index, client_state);
+    }
+}
+
 /**
  * @brief Prints the live (running) GPIO state for a single client.
  *
@@ -256,10 +262,7 @@ void server_configure_persistent_state(server_persistent_state_t *server_persist
  */
 void server_print_running_client_state(const client_t *client){
     printf("Running Client State:\n");
-    const client_state_t *running_client_state = &client->running_client_state;
-    for (uint8_t gpio_index = 0; gpio_index < MAX_NUMBER_OF_GPIOS; gpio_index++){
-        server_print_gpio_state(gpio_index, running_client_state);
-    }
+    server_print_state_devices(&client->running_client_state);
 }
 
 /**
@@ -270,11 +273,14 @@ void server_print_running_client_state(const client_t *client){
  */
 void server_print_client_preset_configuration(const client_t *client, uint8_t client_preset_index){
     printf("Preset Config[%u]:\n", client_preset_index + 1);
-    const client_state_t *preset_config = &client->preset_configs[client_preset_index];
-    for (uint8_t gpio_index = 0; gpio_index < MAX_NUMBER_OF_GPIOS; gpio_index++){
-        server_print_gpio_state(gpio_index, preset_config);
+    server_print_state_devices(&client->preset_configs[client_preset_index]);
+}
+
+void server_print_client_preset_configurations(const client_t *client){
+    for (uint32_t preset_config_index = 0; preset_config_index < NUMBER_OF_POSSIBLE_PRESETS; preset_config_index++){
+        server_print_client_preset_configuration(client, preset_config_index);
+        printf("\n");
     }
-    printf("\n");
 }
 
 /**
@@ -299,13 +305,14 @@ static void server_print_persistent_state(server_persistent_state_t *server_pers
         printf("Is active = %s\n", client->is_active ? "YES" : "NO");
 
         server_print_running_client_state(client);
+        server_print_client_preset_configurations(client);
 
-        for (uint8_t client_preset_index = 0; client_preset_index < NUMBER_OF_POSSIBLE_PRESETS; client_preset_index++){
-            server_print_client_preset_configuration(client, client_preset_index);
-        }
+        printf("\nUart connection:\nPin TX: %u, Pin RX: %u, Uart Instance Number: %u\n",
+            client->uart_connection.pin_pair.tx,
+            client->uart_connection.pin_pair.rx,
+            UART_NUM(client->uart_connection.uart_instance)
+        );
 
-        printf("\nUart connection:\nPin TX: %u, Pin RX: %u, Uart Instance Number: %u\n", client->uart_connection.pin_pair.tx, client->uart_connection.pin_pair.rx, UART_NUM(client->uart_connection.uart_instance));
-        
         printf("\n\n");
     }
 
