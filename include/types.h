@@ -91,4 +91,58 @@ typedef struct{
     bool is_active;
 }client_t;
 
+/**
+ * @brief Full persistent state saved in flash.
+ *
+ * Holds all known clients and their saved configurations.
+ * Includes a CRC32 checksum for integrity verification.
+ */
+typedef struct {
+    client_t clients[MAX_SERVER_CONNECTIONS];
+    uint32_t crc;
+} server_persistent_state_t;
+
+/**
+ * @struct input_client_data_t
+ * @brief Stores all user-selected input values required for client-related operations.
+ *
+ * This structure holds temporary values gathered via CLI interaction and is used
+ * to perform operations such as:
+ * - Selecting a client (from runtime or flash)
+ * - Choosing a device (GPIO)
+ * - Setting a desired GPIO state (ON/OFF/TOGGLE)
+ * - Selecting a configuration preset
+ * - Selecting a reset type (e.g., running, preset, all)
+ *
+ * It also includes pointers to the current runtime client state and the persistent server state.
+ */
+typedef struct{
+    uint32_t client_index;
+    uint32_t flash_client_index;
+    uint32_t device_index;
+    uint32_t device_state;
+    uint32_t flash_configuration_index;
+    uint32_t reset_choice;
+    const client_state_t *client_state;
+    const server_persistent_state_t *flash_state;
+}input_client_data_t;
+
+/**
+ * @struct client_input_flags_t
+ * @brief Specifies which user inputs should be collected when interacting with a client.
+ *
+ * This structure allows modular control over the type of input required for different operations.
+ * It enables the reuse of a common input collection function (`read_client_data`) across various
+ * CLI features such as toggling GPIOs, building presets, or resetting configurations.
+ */
+typedef struct {
+    bool need_client_index;
+    bool need_device_index;
+    bool need_device_state;
+    bool need_config_index;
+    bool is_building_preset;
+    bool need_reset_choice;
+    bool is_load;
+}client_input_flags_t;
+
 #endif
