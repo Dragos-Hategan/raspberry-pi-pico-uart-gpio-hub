@@ -12,6 +12,6 @@ enable_language(CXX)
 
 pico_sdk_init()
 
-add_subdirectory(client)
-add_subdirectory(server)
-add_subdirectory(common)
+add_subdirectory(src/client)
+add_subdirectory(src/common)
+add_subdirectory(src/server)
