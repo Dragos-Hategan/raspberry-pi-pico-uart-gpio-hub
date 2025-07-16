@@ -29,14 +29,14 @@
 void reset_running_configuration(uint32_t flash_client_index);
 
 /**
- * @brief Resets one of the preset configurations for a given client.
+ * @brief Resets a specific preset configuration for a given client in flash.
  *
- * - Loads the full persistent server state from flash.
- * - Prompts the user to select a valid preset index.
- * - Resets the selected preset using `server_reset_configuration()`.
- * - Saves the modified state back to flash.
+ * This function loads the current persistent server state from flash,
+ * resets the specified preset configuration for the given client (excluding UART flags),
+ * and then saves the updated state back to flash memory.
  *
- * @param flash_client_index Index of the client in the persistent flash structure.
+ * @param[in] flash_client_index Index of the client in the flash-stored client list.
+ * @param[in] flash_configuration_index Index of the preset configuration to reset (1-based).
  */
 void reset_preset_configuration(uint32_t flash_client_index, uint32_t flash_configuration_index);
 
@@ -99,16 +99,6 @@ extern uint8_t active_server_connections_number;
 bool server_find_connections(void);
 
 /**
- * @brief Resets the GPIO state of a client.
- *
- * Iterates through all devices in the given `client_state_t` and sets their
- * `is_on` state to false, skipping devices marked as UART connection pins.
- *
- * @param client_state Pointer to the client state structure to reset.
- */
-void server_reset_configuration(client_state_t *client_state);
-
-/**
  * @brief Loads saved GPIO states from flash and sends them to active clients.
  *
  * - Verifies CRC of saved state in flash.
@@ -122,7 +112,7 @@ void server_load_running_states_to_active_clients(void);
  *
  * @param client Pointer to the client_t structure to print.
  */
-void server_print_running_client_state(const client_t *);
+void server_print_running_client_state(const client_t * client);
 
 /**
  * @brief Prints a saved preset configuration for a given client.
@@ -130,7 +120,7 @@ void server_print_running_client_state(const client_t *);
  * @param client Pointer to the client_t.
  * @param client_preset_index Preset index to print (0 to NUMBER_OF_POSSIBLE_PRESETS - 1).
  */
-void server_print_client_preset_configuration(const client_t *, uint8_t);
+void server_print_client_preset_configuration(const client_t * client, uint8_t client_preset_index);
 
 /**
  * @brief Prints the state of all devices from a given client state structure.
@@ -152,7 +142,7 @@ void server_print_state_devices(const client_state_t *client_state);
  *
  * @param client Pointer to the client_t structure containing the preset configurations.
  */
-void server_print_client_preset_configurations(const client_t *);
+void server_print_client_preset_configurations(const client_t * client);
 
 /**
  * @brief Prints the GPIO state of a device at the given index in a client.
@@ -176,34 +166,6 @@ inline void server_print_gpio_state(uint8_t gpio_index, const client_state_t *cl
 }
 
 /**
- * @brief Loads the server state from flash and validates it using CRC32.
- *
- * @param out_state Pointer to destination structure to store loaded state.
- * @return true if CRC is valid and data is intact, false otherwise.
- */
-bool load_server_state(server_persistent_state_t *out_state);
-
-/**
- * @brief Sends the entire current client state over UART.
- *
- * @param pin_pair UART TX/RX pin pair to use.
- * @param uart UART instance.
- * @param state Pointer to the client_state_t to send.
- */
-void server_send_client_state(uart_pin_pair_t, uart_inst_t*, const client_state_t*);
-
-/**
- * @brief Saves the persistent server state structure to flash memory.
- *
- * - Computes CRC
- * - Copies the data to a buffer
- * - Erases and programs the flash sector
- *
- * @param state_in Pointer to the server_persistent_state_t structure to save.
- */
-void __not_in_flash_func(save_server_state)(const server_persistent_state_t *state_in);
-
-/**
  * @brief Sets the state of a single device and updates flash accordingly.
  *
  * - Sends the updated GPIO state to the client via UART.
@@ -216,7 +178,7 @@ void __not_in_flash_func(save_server_state)(const server_persistent_state_t *sta
  * @param device_state true = ON, false = OFF.
  * @param flash_client_index Index of the client in flash storage.
  */
-void server_set_device_state_and_update_flash(uart_pin_pair_t , uart_inst_t*, uint8_t, bool, uint32_t);
+void server_set_device_state_and_update_flash(uart_pin_pair_t pin_pair, uart_inst_t* uart_instance, uint8_t gpio_index, bool device_state, uint32_t flash_client_index);
 
 /**
  * @brief Finds the corresponding flash client index for a given active client.

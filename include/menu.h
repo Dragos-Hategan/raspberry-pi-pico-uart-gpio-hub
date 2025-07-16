@@ -35,4 +35,18 @@ inline void clear_screen(){
     printf("\033[H");     // move cursor to upper left screen
 }
 
+inline void display_menu_options(){
+    printf(
+        "Options:\n"
+        "1. Display clients\n"
+        "2. Set client's device\n"
+        "3. Toggle client's device\n"
+        "4. Save running state into preset configuration\n"
+        "5. Build and save preset configuration\n"
+        "6. Load preset configuration into running state\n"
+        "7. Reset configuration\n"
+        "8. Clear Screen\n"
+    );
+}
+
 #endif

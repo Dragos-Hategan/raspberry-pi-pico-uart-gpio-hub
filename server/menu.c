@@ -5,8 +5,8 @@
  * Provides a terminal-based interface to:
  * - Display current client connections.
  * - Select and control GPIO states of client devices.
- * - Toggle GPIO states (planned).
- * - Load/save configurations (planned).
+ * - Toggle GPIO states.
+ * - Save/build/load/reset configurations.
  * 
  * Input is read from USB serial, with range validation and error handling.
  */
@@ -214,22 +214,14 @@ static void select_action(uint32_t choice){
         }
     }
     
-static inline void display_menu_options(){
-    printf(
-        "Options:\n"
-        "1. Display clients\n"
-        "2. Set client's device\n"
-        "3. Toggle client's device\n"
-        "4. Save running state into preset configuration\n"
-        "5. Build and save preset configuration\n"
-        "6. Load preset configuration into running state\n"
-        "7. Reset configuration\n"
-        "8. Clear Screen\n"
-    );
-}
-    
 /**
- * @brief Reads a menu selection from the user and processes it.
+ * @brief Reads a menu selection from the user and validates it.
+ *
+ * This function displays the available menu options and waits for the user 
+ * to select a valid one. If the selected option is 0, the function exits early.
+ * Otherwise, it loops until a valid input is received.
+ *
+ * @param[out] menu_option Pointer to the variable where the selected menu option will be stored.
  */
 static void read_menu_option(uint32_t *menu_option){
     bool correct_menu_option_input = false;

@@ -104,14 +104,17 @@ typedef struct {
 
 /**
  * @struct input_client_data_t
- * @brief Stores all user-selected data required for client operations.
+ * @brief Stores all user-selected input values required for client-related operations.
  *
- * This structure is used to store values selected via CLI input for:
- * - Client selection
- * - Device selection
- * - Desired GPIO state
- * - Configuration preset selection
- * - Reset type selection
+ * This structure holds temporary values gathered via CLI interaction and is used
+ * to perform operations such as:
+ * - Selecting a client (from runtime or flash)
+ * - Choosing a device (GPIO)
+ * - Setting a desired GPIO state (ON/OFF/TOGGLE)
+ * - Selecting a configuration preset
+ * - Selecting a reset type (e.g., running, preset, all)
+ *
+ * It also includes pointers to the current runtime client state and the persistent server state.
  */
 typedef struct{
     uint32_t client_index;

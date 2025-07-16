@@ -63,7 +63,7 @@ void get_uart_buffer(uart_inst_t *uart, char *buffer, uint8_t buffer_size, uint3
 /**
  * @brief Resets the TX and RX pins to default SIO mode.
  *
- * Used to return the pins to GPIO after UART communication is finished.
+ * Used to return the pins to GPIO after UART communication is used.
  *
  * @param pin_pair TX/RX pin pair to reset.
  */

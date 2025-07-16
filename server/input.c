@@ -37,7 +37,7 @@ static void flush_stdin(void){
  * @brief Converts a numeric string to an unsigned 32-bit integer.
  *
  * Ignores leading spaces. Returns false if the string is empty, contains non-digit characters,
- * or if an overflow would occur.
+ * contains leading zeros or if an overflow would occur.
  *
  * @param str Pointer to the input string.
  * @param out Pointer to the variable where the result will be stored.
@@ -188,15 +188,6 @@ bool choose_flash_configuration_index(uint32_t *flash_configuration_index){
     const char *MESSAGE = "\nWhat configuration do you want to access?";
     print_cancel_message();
     if (read_user_choice_in_range(MESSAGE, flash_configuration_index, MINIMUM_FLASH_CONFIGURATION_INDEX_INPUT, MAXIMUM_FLASH_CONFIGURATION_INDEX_INPUT)){
-        return true;
-    }
-    return false;
-}
-
-bool choose_saving_option(uint32_t *saving_option){
-    const char *MESSAGE = "\nHow do you want to save?";
-    print_cancel_message();
-    if (read_user_choice_in_range(MESSAGE, saving_option, MINIMUM_SAVING_OPTION_INPUT, MAXIMUM_SAVING_OPTION_INPUT)){
         return true;
     }
     return false;
