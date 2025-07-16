@@ -1,4 +1,4 @@
-# rpi-pico-uart-led-control
+# rpi-pico-uart-gpio-control
 
 > **Multi-client UART-based GPIO control system** for Raspberry Pi Pico, with persistent flash state and automatic UART connection detection.
 

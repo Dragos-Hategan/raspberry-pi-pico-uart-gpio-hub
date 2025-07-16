@@ -31,10 +31,6 @@
         "xiosbase": "c",
         "format": "c",
         "vector": "c",
-        "xstring": "c",
-        "atomic": "c",
-        "memory": "c",
-        "any": "c",
-        "menu.h": "c"
+        "xstring": "c"
     }
 }
