@@ -60,6 +60,7 @@ void blink_onboard_led(void){
         pico_set_led(true);
         sleep_ms(LED_DELAY_MS);
     }
+    pico_set_led(false);
 }
 
 /**

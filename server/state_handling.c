@@ -372,9 +372,9 @@ void server_load_running_states_to_active_clients(void) {
             server_load_client_state(active_uart_server_connections[index], &server_persistent_state);
         }
     } else {
-        printf("LOADING ATTEMPT FAILED!\nFirst run or flash problem.\nInitializing Configuration\n");
+        printf("LOADING ATTEMPT FAILED!\nIncorrect CRC, this is first run after build or flash problem.\nInitializing Configuration...\n");
         server_configure_persistent_state(&server_persistent_state);
-        printf("Configuration was successfull\n");
+        printf("CONFIGURATION WAS SUCCESSFULL!\nStarting...\n");
 
     }
 
