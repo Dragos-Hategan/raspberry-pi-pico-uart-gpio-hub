@@ -327,6 +327,9 @@ static void select_action(uint32_t choice){
         case 7:
             reset_configuration();
             break;
+        case 8:
+            clear_screen();
+            break;
         default:
             printf("Out of range. Try again.\n");
             break;
@@ -343,6 +346,7 @@ static inline void display_menu_options(){
         "5. Build and save preset configuration\n"
         "6. Load preset configuration into running state\n"
         "7. Reset configuration\n"
+        "8. Clean Screen\n"
     );
 }
     
@@ -366,11 +370,6 @@ static void read_menu_option(uint32_t *menu_option){
     }
 }
 
-static inline void clear_screen(){
-    printf("\033[2J");    // delete screen
-    printf("\033[H");     // move cursor to upper left screen
-}
-
 /**
  * @brief Entry point for the USB menu system.
  *
@@ -380,7 +379,6 @@ static inline void clear_screen(){
 void server_display_menu(void){
     if (first_display){ 
         first_display = false;
-        clear_screen();
         print_delimitor();
         printf("Welcome!");
         display_active_clients();

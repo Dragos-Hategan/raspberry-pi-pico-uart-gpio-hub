@@ -22,4 +22,17 @@ inline void print_cancel_message(void){
     printf("0. cancel\n");
 }
 
+inline void print_input_error(void){
+    printf("Invalid input or overflow. Try again.\n");
+}
+
+inline void print_delimitor(void){
+    printf("\n****************************************************\n\n");
+}
+
+inline void clear_screen(){
+    printf("\033[2J");    // delete screen
+    printf("\033[H");     // move cursor to upper left screen
+}
+
 #endif
