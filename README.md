@@ -252,12 +252,22 @@ Edit `types.c` and `config.h` to customize:
 
 ---
 
-## License
-
-Licensed under the [BSD-3-Clause License](https://opensource.org/licenses/BSD-3-Clause).
-
----
-
 ## Author
 
 **Dragos Hategan**
+
+---
+
+## License
+
+This project is licensed under the [BSD-3-Clause License](https://opensource.org/licenses/BSD-3-Clause).
+
+---
+
+## Author Note
+
+This open-source project was developed by **Dragos Hategan** as part of a professional embedded IoT portfolio.
+
+You are free to use, modify, and redistribute this project, including in commercial or private projects, as long as attribution is maintained. If you build upon this codebase or publish derived works, please consider crediting the original author by name or linking back to this repository.
+
+For freelancing, consulting, or collaborations in embedded systems, feel free to reach out via GitHub or [LinkedIn](https://www.linkedin.com/in/dragos-hategan).
