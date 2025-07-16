@@ -120,31 +120,11 @@ bool read_user_choice_in_range(const char* message, uint32_t* out, uint32_t min,
     return false;
 }
 
-bool choose_state(uint32_t *device_state){
-    printf("\n1. ON\n2. OFF\n");
-    const char *MESSAGE = "\nWhat state?";
-    print_cancel_message();
-    if (read_user_choice_in_range(MESSAGE, device_state, MINIMUM_DEVICE_STATE_INPUT, MAXIMUM_DEVICE_STATE_INPUT)){
+bool choose_menu_option(uint32_t *menu_option){
+    const char *MESSAGE = "\nPick an option";
+    if (read_user_choice_in_range(MESSAGE, menu_option, MINIMUM_MENU_OPTION_INDEX_INPUT, MAXIMUM_MENU_OPTION_INDEX_INPUT)){
         return true;
     }
-
-    return false;
-}
-
-bool choose_device(uint32_t *device_index, const client_state_t *client_state){  
-    printf("\n");
-    server_print_state_devices(client_state);
-
-    const char *MESSAGE = "\nWhat device number do you want to access?";
-    print_cancel_message();
-    if (read_user_choice_in_range(MESSAGE, device_index, MINIMUM_DEVICE_INDEX_INPUT, MAXIMUM_DEVICE_INDEX_INPUT)){
-        if (client_state->devices[*device_index - 1].gpio_number != UART_CONNECTION_FLAG_NUMBER){
-            return true;
-        }else{
-            printf("\nSelected device is used as UART connection.\n");
-        }
-    }
-
     return false;
 }
 
@@ -158,6 +138,68 @@ bool choose_reset_variant(uint32_t *reset_variant){
     }
 
     return false;
+}
+
+void read_reset_variant(uint32_t *reset_variant){
+    bool correct_reset_variant_input = false;
+    while (!correct_reset_variant_input){
+        if (choose_reset_variant(reset_variant)){
+            if (*reset_variant == 0){
+                return;
+            }else{
+                correct_reset_variant_input = true;
+            }
+        }else{
+            print_input_error();
+            printf("\n");
+        }
+    }
+}
+
+bool choose_flash_configuration_index(uint32_t *flash_configuration_index){
+    const char *MESSAGE = "\nWhat configuration do you want to access?";
+    print_cancel_message();
+    if (read_user_choice_in_range(MESSAGE, flash_configuration_index, MINIMUM_FLASH_CONFIGURATION_INDEX_INPUT, MAXIMUM_FLASH_CONFIGURATION_INDEX_INPUT)){
+        return true;
+    }
+    return false;
+}
+
+void read_flash_configuration_index(uint32_t *flash_configuration_index){
+    bool correct_flash_configuration_input = false;
+    while (!correct_flash_configuration_input){
+        for (uint32_t configuration_index = 1; configuration_index <= NUMBER_OF_POSSIBLE_PRESETS; configuration_index++){
+            printf("%u. Preset Config[%u]\n", configuration_index, configuration_index);
+        }
+        if (choose_flash_configuration_index(flash_configuration_index)){
+            correct_flash_configuration_input = true;
+        }else{
+            print_input_error();
+            printf("\n");
+        }
+    }
+}
+
+bool choose_state(uint32_t *device_state){
+    printf("\n1. ON\n2. OFF\n");
+    const char *MESSAGE = "\nWhat state?";
+    print_cancel_message();
+    if (read_user_choice_in_range(MESSAGE, device_state, MINIMUM_DEVICE_STATE_INPUT, MAXIMUM_DEVICE_STATE_INPUT)){
+        return true;
+    }
+
+    return false;
+}
+
+void read_device_state(uint32_t *device_state){
+    bool correct_state_input = false;
+    while (!correct_state_input){
+        if (choose_state(device_state)){
+            correct_state_input = true;
+        }else{
+            print_input_error();
+        }
+    }
 }
 
 bool choose_client(uint32_t *client_index){
@@ -184,64 +226,6 @@ bool choose_client(uint32_t *client_index){
     return false;
 }
 
-bool choose_flash_configuration_index(uint32_t *flash_configuration_index){
-    const char *MESSAGE = "\nWhat configuration do you want to access?";
-    print_cancel_message();
-    if (read_user_choice_in_range(MESSAGE, flash_configuration_index, MINIMUM_FLASH_CONFIGURATION_INDEX_INPUT, MAXIMUM_FLASH_CONFIGURATION_INDEX_INPUT)){
-        return true;
-    }
-    return false;
-}
-
-bool choose_menu_option(uint32_t *menu_option){
-    const char *MESSAGE = "\nPick an option";
-    if (read_user_choice_in_range(MESSAGE, menu_option, MINIMUM_MENU_OPTION_INDEX_INPUT, MAXIMUM_MENU_OPTION_INDEX_INPUT)){
-        return true;
-    }
-    return false;
-}
-
-void read_device_index(uint32_t *device_index, uint32_t flash_client_index, const server_persistent_state_t *flash_state, const client_state_t *client_state){
-    bool correct_device_input = false;
-    while (!correct_device_input){
-        if (choose_device(device_index, client_state)){
-            if (*device_index == 0){
-                return;
-            }else{
-                correct_device_input = true;
-            }
-        }else{
-            print_input_error();
-        }
-    }
-}
-
-void read_flash_configuration_index(uint32_t *flash_configuration_index){
-    bool correct_flash_configuration_input = false;
-    while (!correct_flash_configuration_input){
-        for (uint32_t configuration_index = 1; configuration_index <= NUMBER_OF_POSSIBLE_PRESETS; configuration_index++){
-            printf("%u. Preset Config[%u]\n", configuration_index, configuration_index);
-        }
-        if (choose_flash_configuration_index(flash_configuration_index)){
-            correct_flash_configuration_input = true;
-        }else{
-            print_input_error();
-            printf("\n");
-        }
-    }
-}
-
-void read_device_state(uint32_t *device_state){
-    bool correct_state_input = false;
-    while (!correct_state_input){
-        if (choose_state(device_state)){
-            correct_state_input = true;
-        }else{
-            print_input_error();
-        }
-    }
-}
-
 void read_client_index(uint32_t *client_index){ 
     bool correct_client_input = false;
     while (!correct_client_input){
@@ -257,18 +241,34 @@ void read_client_index(uint32_t *client_index){
     }
 }
 
-void read_reset_variant(uint32_t *reset_variant){
-    bool correct_reset_variant_input = false;
-    while (!correct_reset_variant_input){
-        if (choose_reset_variant(reset_variant)){
-            if (*reset_variant == 0){
+bool choose_device(uint32_t *device_index, const client_state_t *client_state){  
+    printf("\n");
+    server_print_state_devices(client_state);
+
+    const char *MESSAGE = "\nWhat device number do you want to access?";
+    print_cancel_message();
+    if (read_user_choice_in_range(MESSAGE, device_index, MINIMUM_DEVICE_INDEX_INPUT, MAXIMUM_DEVICE_INDEX_INPUT)){
+        if (client_state->devices[*device_index - 1].gpio_number != UART_CONNECTION_FLAG_NUMBER){
+            return true;
+        }else{
+            printf("\nSelected device is used as UART connection.\n");
+        }
+    }
+
+    return false;
+}
+
+void read_device_index(uint32_t *device_index, uint32_t flash_client_index, const server_persistent_state_t *flash_state, const client_state_t *client_state){
+    bool correct_device_input = false;
+    while (!correct_device_input){
+        if (choose_device(device_index, client_state)){
+            if (*device_index == 0){
                 return;
             }else{
-                correct_reset_variant_input = true;
+                correct_device_input = true;
             }
         }else{
             print_input_error();
-            printf("\n");
         }
     }
 }

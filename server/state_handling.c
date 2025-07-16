@@ -22,22 +22,27 @@
 #include "functions.h"
 #include "input.h"
 
-/**
- * @brief Sends the entire current client state over UART.
- *
- * @param pin_pair UART TX/RX pin pair to use.
- * @param uart UART instance.
- * @param state Pointer to the client_state_t to send.
- */
-static void server_send_client_state(uart_pin_pair_t pin_pair, uart_inst_t* uart, const client_state_t* state){
-    uart_init_with_pins(uart, pin_pair, DEFAULT_BAUDRATE);
-    for (uint8_t i = 0; i < MAX_NUMBER_OF_GPIOS; i++) {
-        char msg[8];
-        snprintf(msg, sizeof(msg), "[%d,%d]", state->devices[i].gpio_number, state->devices[i].is_on);
-        uart_puts(uart, msg);
-        sleep_ms(10);
+void server_print_state_devices(const client_state_t *client_state){
+    for (uint8_t gpio_index = 0; gpio_index < MAX_NUMBER_OF_GPIOS; gpio_index++){
+        server_print_gpio_state(gpio_index, client_state);
     }
-    reset_gpio_pins(pin_pair);
+}
+
+void server_print_running_client_state(const client_t *client){
+    printf("Running Client State Devices:\n");
+    server_print_state_devices(&client->running_client_state);
+}
+
+void server_print_client_preset_configuration(const client_t *client, uint8_t client_preset_index){
+    printf("Preset Config[%u] Devices:\n", client_preset_index + 1);
+    server_print_state_devices(&client->preset_configs[client_preset_index]);
+}
+
+void server_print_client_preset_configurations(const client_t *client){
+    for (uint32_t preset_config_index = 0; preset_config_index < NUMBER_OF_POSSIBLE_PRESETS; preset_config_index++){
+        server_print_client_preset_configuration(client, preset_config_index);
+        printf("\n");
+    }
 }
 
 /**
@@ -107,6 +112,34 @@ static void __not_in_flash_func(save_server_state)(const server_persistent_state
     restore_interrupts(ints);
 }
 
+void set_configuration_devices(uint32_t flash_client_index, uint32_t flash_configuration_index, input_client_data_t *input_client_data){
+    server_persistent_state_t state;
+    load_server_state(&state);
+
+    while(true){
+        uint32_t device_index;
+        read_device_index(&device_index,
+            flash_client_index,
+            &state,
+            &state.clients[flash_client_index].preset_configs[flash_configuration_index]
+        );
+        if (!device_index){
+            return;
+        }
+    
+        uint32_t device_state;
+        read_device_state(&device_state);
+        if (!device_state){
+            return;
+        }
+        device_state %= 2;
+
+        state.clients[flash_client_index].preset_configs[flash_configuration_index].devices[device_index - 1].is_on = device_state;
+
+        save_server_state(&state);
+    }
+}
+
 /**
  * @brief Resets the runtime GPIO configuration for a given client.
  *
@@ -122,6 +155,24 @@ static void server_reset_configuration(client_state_t *client_state){
             client_state->devices[index].is_on = false;
         }
     }
+}
+
+/**
+ * @brief Sends the entire current client state over UART.
+ *
+ * @param pin_pair UART TX/RX pin pair to use.
+ * @param uart UART instance.
+ * @param state Pointer to the client_state_t to send.
+ */
+static void server_send_client_state(uart_pin_pair_t pin_pair, uart_inst_t* uart, const client_state_t* state){
+    uart_init_with_pins(uart, pin_pair, DEFAULT_BAUDRATE);
+    for (uint8_t i = 0; i < MAX_NUMBER_OF_GPIOS; i++) {
+        char msg[8];
+        snprintf(msg, sizeof(msg), "[%d,%d]", state->devices[i].gpio_number, state->devices[i].is_on);
+        uart_puts(uart, msg);
+        sleep_ms(10);
+    }
+    reset_gpio_pins(pin_pair);
 }
 
 /**
@@ -205,43 +256,39 @@ void save_running_configuration_into_preset_configuration(uint32_t flash_configu
 }
 
 /**
- * @brief Sends a single GPIO device state to a client via UART.
+ * @brief Marks UART pins as reserved in the preset configurations.
  *
- * @param pin_pair UART TX/RX pin pair to use.
- * @param uart UART instance.
- * @param gpio_number GPIO number on the client to modify.
- * @param is_on true = turn on, false = turn off.
+ * @param client_list_index Index of the client.
+ * @param server_persistent_state Persistent state pointer.
+ * @param config_index Preset configuration index to modify.
  */
-static void server_send_device_state(uart_pin_pair_t pin_pair, uart_inst_t* uart, uint8_t gpio_number, bool is_on){
-    uart_init_with_pins(uart, pin_pair, DEFAULT_BAUDRATE);
-    char msg[8];
-    snprintf(msg, sizeof(msg), "[%d,%d]", gpio_number, is_on);
-    uart_puts(uart, msg);
-    sleep_ms(10);
-    reset_gpio_pins(pin_pair);
+static void configure_preset_configs_uart_connection_pins(uint8_t client_list_index, server_persistent_state_t *server_persistent_state, uint8_t config_index){
+    for (uint8_t index = 0; index < active_server_connections_number; index++) {
+        client_t *client = &server_persistent_state->clients[client_list_index];
+        if (active_uart_server_connections[index].pin_pair.tx == client->uart_connection.pin_pair.tx){
+            client->preset_configs[config_index].devices[active_uart_server_connections[index].uart_pin_pair_from_client_to_server.tx].gpio_number = UART_CONNECTION_FLAG_NUMBER;
+            client->preset_configs[config_index].devices[active_uart_server_connections[index].uart_pin_pair_from_client_to_server.rx].gpio_number = UART_CONNECTION_FLAG_NUMBER;
+        }
+    }
 }
 
 /**
- * @brief Loads the running state for an active client and sends it over UART.
+ * @brief Initializes all preset configurations for a client.
  *
- * - Marks the client as active
- * - Sends the device states to the client
+ * - Fills in GPIO numbers and disables all.
+ * - Marks UART pins as reserved.
  *
- * @param server_uart_connection Connection info (pin pair + instance).
- * @param server_persistent_state Pointer to loaded flash state.
+ * @param client_list_index Client index.
+ * @param server_persistent_state Persistent state struct.
  */
-static void server_load_client_state(server_uart_connection_t server_uart_connection, server_persistent_state_t *server_persistent_state) {
-    for (uint8_t i = 0; i < MAX_SERVER_CONNECTIONS; i++) {
-        client_t *saved_client = &server_persistent_state->clients[i];
-
-        if (saved_client->uart_connection.pin_pair.tx == server_uart_connection.pin_pair.tx &&
-            saved_client->uart_connection.pin_pair.rx == server_uart_connection.pin_pair.rx &&
-            saved_client->uart_connection.uart_instance == server_uart_connection.uart_instance) {
-            
-            saved_client->is_active = true;
-            server_send_client_state(server_uart_connection.pin_pair, server_uart_connection.uart_instance, &saved_client->running_client_state);
-            return;
+static void configure_preset_configs(uint8_t client_list_index, server_persistent_state_t *server_persistent_state){
+    for (uint8_t config_index = 0; config_index < NUMBER_OF_POSSIBLE_PRESETS; config_index++){
+        for (uint8_t gpio_index = 0; gpio_index < MAX_NUMBER_OF_GPIOS; gpio_index++){
+            server_persistent_state->clients[client_list_index].preset_configs[config_index].devices[gpio_index].gpio_number = gpio_index + ((gpio_index / 23) * 3);
+            server_persistent_state->clients[client_list_index].preset_configs[config_index].devices[gpio_index].is_on = false;
         }
+
+        configure_preset_configs_uart_connection_pins(client_list_index, server_persistent_state, config_index);
     }
 }
 
@@ -280,71 +327,6 @@ static void configure_running_state(uint8_t client_list_index, server_persistent
     }
 
     configure_running_state_uart_connection_pins(client_list_index, server_persistent_state);
-}
-
-void set_configuration_devices(uint32_t flash_client_index, uint32_t flash_configuration_index, input_client_data_t *input_client_data){
-    server_persistent_state_t state;
-    load_server_state(&state);
-
-    while(true){
-        uint32_t device_index;
-        read_device_index(&device_index,
-            flash_client_index,
-            &state,
-            &state.clients[flash_client_index].preset_configs[flash_configuration_index]
-        );
-        if (!device_index){
-            return;
-        }
-    
-        uint32_t device_state;
-        read_device_state(&device_state);
-        if (!device_state){
-            return;
-        }
-        device_state %= 2;
-
-        state.clients[flash_client_index].preset_configs[flash_configuration_index].devices[device_index - 1].is_on = device_state;
-
-        save_server_state(&state);
-    }
-}
-
-/**
- * @brief Marks UART pins as reserved in the preset configurations.
- *
- * @param client_list_index Index of the client.
- * @param server_persistent_state Persistent state pointer.
- * @param config_index Preset configuration index to modify.
- */
-static void configure_preset_configs_uart_connection_pins(uint8_t client_list_index, server_persistent_state_t *server_persistent_state, uint8_t config_index){
-    for (uint8_t index = 0; index < active_server_connections_number; index++) {
-        client_t *client = &server_persistent_state->clients[client_list_index];
-        if (active_uart_server_connections[index].pin_pair.tx == client->uart_connection.pin_pair.tx){
-            client->preset_configs[config_index].devices[active_uart_server_connections[index].uart_pin_pair_from_client_to_server.tx].gpio_number = UART_CONNECTION_FLAG_NUMBER;
-            client->preset_configs[config_index].devices[active_uart_server_connections[index].uart_pin_pair_from_client_to_server.rx].gpio_number = UART_CONNECTION_FLAG_NUMBER;
-        }
-    }
-}
-
-/**
- * @brief Initializes all preset configurations for a client.
- *
- * - Fills in GPIO numbers and disables all.
- * - Marks UART pins as reserved.
- *
- * @param client_list_index Client index.
- * @param server_persistent_state Persistent state struct.
- */
-static void configure_preset_configs(uint8_t client_list_index, server_persistent_state_t *server_persistent_state){
-    for (uint8_t config_index = 0; config_index < NUMBER_OF_POSSIBLE_PRESETS; config_index++){
-        for (uint8_t gpio_index = 0; gpio_index < MAX_NUMBER_OF_GPIOS; gpio_index++){
-            server_persistent_state->clients[client_list_index].preset_configs[config_index].devices[gpio_index].gpio_number = gpio_index + ((gpio_index / 23) * 3);
-            server_persistent_state->clients[client_list_index].preset_configs[config_index].devices[gpio_index].is_on = false;
-        }
-
-        configure_preset_configs_uart_connection_pins(client_list_index, server_persistent_state, config_index);
-    }
 }
 
 /**
@@ -389,26 +371,27 @@ static void server_configure_persistent_state(server_persistent_state_t *server_
     save_server_state(server_persistent_state);
 }
 
-void server_print_state_devices(const client_state_t *client_state){
-    for (uint8_t gpio_index = 0; gpio_index < MAX_NUMBER_OF_GPIOS; gpio_index++){
-        server_print_gpio_state(gpio_index, client_state);
-    }
-}
+/**
+ * @brief Loads the running state for an active client and sends it over UART.
+ *
+ * - Marks the client as active
+ * - Sends the device states to the client
+ *
+ * @param server_uart_connection Connection info (pin pair + instance).
+ * @param server_persistent_state Pointer to loaded flash state.
+ */
+static void server_load_client_state(server_uart_connection_t server_uart_connection, server_persistent_state_t *server_persistent_state) {
+    for (uint8_t i = 0; i < MAX_SERVER_CONNECTIONS; i++) {
+        client_t *saved_client = &server_persistent_state->clients[i];
 
-void server_print_running_client_state(const client_t *client){
-    printf("Running Client State Devices:\n");
-    server_print_state_devices(&client->running_client_state);
-}
-
-void server_print_client_preset_configuration(const client_t *client, uint8_t client_preset_index){
-    printf("Preset Config[%u] Devices:\n", client_preset_index + 1);
-    server_print_state_devices(&client->preset_configs[client_preset_index]);
-}
-
-void server_print_client_preset_configurations(const client_t *client){
-    for (uint32_t preset_config_index = 0; preset_config_index < NUMBER_OF_POSSIBLE_PRESETS; preset_config_index++){
-        server_print_client_preset_configuration(client, preset_config_index);
-        printf("\n");
+        if (saved_client->uart_connection.pin_pair.tx == server_uart_connection.pin_pair.tx &&
+            saved_client->uart_connection.pin_pair.rx == server_uart_connection.pin_pair.rx &&
+            saved_client->uart_connection.uart_instance == server_uart_connection.uart_instance) {
+            
+            saved_client->is_active = true;
+            server_send_client_state(server_uart_connection.pin_pair, server_uart_connection.uart_instance, &saved_client->running_client_state);
+            return;
+        }
     }
 }
 
@@ -427,6 +410,23 @@ void server_load_running_states_to_active_clients(void) {
         printf("CONFIGURATION WAS SUCCESSFULL!\nStarting...\n");
 
     }
+}
+
+/**
+ * @brief Sends a single GPIO device state to a client via UART.
+ *
+ * @param pin_pair UART TX/RX pin pair to use.
+ * @param uart UART instance.
+ * @param gpio_number GPIO number on the client to modify.
+ * @param is_on true = turn on, false = turn off.
+ */
+static void server_send_device_state(uart_pin_pair_t pin_pair, uart_inst_t* uart, uint8_t gpio_number, bool is_on){
+    uart_init_with_pins(uart, pin_pair, DEFAULT_BAUDRATE);
+    char msg[8];
+    snprintf(msg, sizeof(msg), "[%d,%d]", gpio_number, is_on);
+    uart_puts(uart, msg);
+    sleep_ms(10);
+    reset_gpio_pins(pin_pair);
 }
 
 void server_set_device_state_and_update_flash(uart_pin_pair_t pin_pair, uart_inst_t* uart_instance, uint8_t gpio_index, bool device_state, uint32_t flash_client_index){
