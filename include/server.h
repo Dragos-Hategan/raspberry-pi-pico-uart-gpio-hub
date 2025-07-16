@@ -17,6 +17,66 @@
 #include "config.h"
 
 /**
+ * @brief Resets the currently active (running) configuration of a client.
+ *
+ * - Loads the full persistent server state from flash.
+ * - Resets the `running_client_state` using `server_reset_configuration()`.
+ * - Sends the updated state to the client over UART.
+ * - Saves the modified state back to flash.
+ *
+ * @param flash_client_index Index of the client in the persistent flash structure.
+ */
+void reset_running_configuration(uint32_t flash_client_index);
+
+/**
+ * @brief Resets one of the preset configurations for a given client.
+ *
+ * - Loads the full persistent server state from flash.
+ * - Prompts the user to select a valid preset index.
+ * - Resets the selected preset using `server_reset_configuration()`.
+ * - Saves the modified state back to flash.
+ *
+ * @param flash_client_index Index of the client in the persistent flash structure.
+ */
+void reset_preset_configuration(uint32_t flash_client_index, uint32_t flash_configuration_index);
+
+/**
+ * @brief Resets all data associated with a client.
+ *
+ * - Resets the running state of the client and sends it over UART.
+ * - Resets all preset configurations.
+ * - Saves the updated state back to flash.
+ *
+ * @param flash_client_index Index of the client in the persistent flash structure.
+ */
+void reset_all_client_data(uint32_t flash_client_index);
+
+/**
+ * @brief Loads a preset configuration into a client's running state and applies it via UART.
+ *
+ * - Loads the full persistent state from flash.
+ * - Copies the selected preset configuration into the running configuration.
+ * - Sends the new configuration to the client via UART.
+ * - Saves the updated state back to flash.
+ *
+ * @param flash_configuration_index Index of the preset configuration to load (0-based).
+ * @param flash_client_index Index of the client in the flash-stored structure.
+ */
+void load_configuration_into_running_state(uint32_t flash_configuration_index, uint32_t flash_client_index);
+
+/**
+ * @brief Saves the current running configuration of a client into a preset slot.
+ *
+ * Loads the full persistent server state from flash, copies the active running state
+ * of the specified client into the selected preset configuration slot, and saves
+ * the updated structure back to flash.
+ *
+ * @param flash_configuration_index Index of the target preset configuration [0..(NUMBER_OF_POSSIBLE_PRESETS - 1)].
+ * @param flash_client_index Index of the client within the persistent flash state.
+ */
+void save_running_configuration_into_preset_configuration(uint32_t flash_configuration_index, uint32_t flash_client_index);
+
+/**
  * @brief Active UART server connections detected at runtime.
  *
  * Filled after a successful scan in `server_find_connections()`.

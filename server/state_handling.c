@@ -22,6 +22,78 @@
 #include "functions.h"
 #include "input.h"
 
+void reset_running_configuration(uint32_t flash_client_index){
+    server_persistent_state_t state;
+    load_server_state(&state);
+
+    server_reset_configuration(&state.clients[flash_client_index].running_client_state);
+
+    server_send_client_state(state.clients[flash_client_index].uart_connection.pin_pair,
+                            state.clients[flash_client_index].uart_connection.uart_instance,
+                            &state.clients[flash_client_index].running_client_state);
+
+    save_server_state(&state);
+
+    printf("\nRunning Configuration Reset.\n");
+}
+
+void reset_preset_configuration(uint32_t flash_client_index, uint32_t flash_configuration_index){
+    server_persistent_state_t state;
+    load_server_state(&state);
+    server_reset_configuration(&state.clients[flash_client_index].preset_configs[flash_configuration_index - 1]);
+
+    save_server_state(&state);
+    printf("\nPreset Configuration [%u] Reset.\n", flash_configuration_index);
+}
+
+void reset_all_client_data(uint32_t flash_client_index){
+    server_persistent_state_t state;
+    load_server_state(&state);
+    server_reset_configuration(&state.clients[flash_client_index].running_client_state);
+
+    server_send_client_state(state.clients[flash_client_index].uart_connection.pin_pair,
+                            state.clients[flash_client_index].uart_connection.uart_instance,
+                            &state.clients[flash_client_index].running_client_state);
+
+    for (uint8_t configuration_index = 0; configuration_index < NUMBER_OF_POSSIBLE_PRESETS; configuration_index++){
+        server_reset_configuration(&state.clients[flash_client_index].preset_configs[configuration_index]);
+    }
+
+    save_server_state(&state);
+    printf("\nAll Client Data Reset.\n");
+}
+
+void load_configuration_into_running_state(uint32_t flash_configuration_index, uint32_t flash_client_index){
+    server_persistent_state_t state;
+    load_server_state(&state);
+
+    memcpy(
+        &state.clients[flash_client_index].running_client_state,
+        &state.clients[flash_client_index].preset_configs[flash_configuration_index],
+        sizeof(client_state_t)
+    );
+
+    server_send_client_state(state.clients[flash_client_index].uart_connection.pin_pair,
+                            state.clients[flash_client_index].uart_connection.uart_instance,
+                            &state.clients[flash_client_index].running_client_state);
+    save_server_state(&state);
+    printf("\nConfiguration Preset[%u] Loaded!\n", flash_configuration_index + 1);
+}
+
+void save_running_configuration_into_preset_configuration(uint32_t flash_configuration_index, uint32_t flash_client_index){
+    server_persistent_state_t state;
+    load_server_state(&state);
+
+    memcpy(
+        &state.clients[flash_client_index].preset_configs[flash_configuration_index],
+        &state.clients[flash_client_index].running_client_state,
+        sizeof(client_state_t)
+    );
+    
+    save_server_state(&state);
+    printf("\nConfiguration saved in Preset[%u].\n", flash_configuration_index + 1);
+}
+
 /**
  * @brief Computes CRC32 checksum over a block of memory.
  *
@@ -101,6 +173,8 @@ void server_send_client_state(uart_pin_pair_t pin_pair, uart_inst_t* uart, const
     }
     reset_gpio_pins(pin_pair);
 }
+
+
 
 /**
  * @brief Loads the running state for an active client and sends it over UART.
