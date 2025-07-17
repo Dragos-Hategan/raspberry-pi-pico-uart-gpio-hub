@@ -130,7 +130,7 @@ static void toggle_device(void){
         device_state,
         input_client_data.flash_client_index);
     
-        printf("\nDevice[%u] Toggled.\n");
+        printf("\nDevice[%u] Toggled.\n", input_client_data.device_index);
     }
 }
 
