@@ -23,7 +23,8 @@ target_link_libraries(server
     hardware_uart
     hardware_gpio
     hardware_sync
-    common           
+    common
+    hardware_timer           
 )
 
 # Optional Wi-Fi support if using CYW43 chip

@@ -38,26 +38,49 @@ static bool server_uart_read(uart_inst_t* uart_instance, uint32_t timeout_ms){
     char buf[32] = {0};
     uint8_t received_number_pair[2] = {0};
 
+    printf("\n");
+
     sleep_ms(10);
+    absolute_time_t t_start2 = get_absolute_time();
     get_uart_buffer(uart_instance, buf, sizeof(buf), timeout_ms);
+    absolute_time_t t_stop2 = get_absolute_time();
+    int64_t timp_stdio_usb_init2 = absolute_time_diff_us(t_start2, t_stop2);
+    printf("1st server_get_uart_buffer() lasts %lldus\n", timp_stdio_usb_init2);       
 
     uint8_t received_tx_number;
     uint8_t received_rx_number;
     if (strlen(buf) > 1){
+        t_start2 = get_absolute_time();
         get_number_pair(received_number_pair, buf);
+        t_stop2 = get_absolute_time();
+        timp_stdio_usb_init2 = absolute_time_diff_us(t_start2, t_stop2);
+        printf("server_get_number_pair() lasts %lldus\n", timp_stdio_usb_init2);    
+
         received_tx_number = received_number_pair[0];
         received_rx_number = received_number_pair[1];
 
         char received_pair[8];
         snprintf(received_pair, sizeof(received_pair), "[%d,%d]", received_tx_number, received_rx_number);
+
+        t_start2 = get_absolute_time();
         uart_puts(uart_instance, received_pair);
+        t_stop2 = get_absolute_time();
+        uart_tx_wait_blocking(uart_instance);
+        timp_stdio_usb_init2 = absolute_time_diff_us(t_start2, t_stop2);
+        printf("server_uart_puts() lasts %lldus\n", timp_stdio_usb_init2);  
+
     }
     else{
         return false;
     }
 
     char ack_buf[32] = {0};
+
+    t_start2 = get_absolute_time();
     get_uart_buffer(uart_instance, ack_buf, sizeof(ack_buf), timeout_ms);
+    t_stop2 = get_absolute_time();
+    timp_stdio_usb_init2 = absolute_time_diff_us(t_start2, t_stop2);
+    printf("2nd server_get_uart_buffer() lasts %lldus", timp_stdio_usb_init2);     
 
     if (strcmp(ack_buf, "[" CONNECTION_ACCEPTED_MESSAGE "]") == 0){
         actual_client_to_server_pin_pair.tx = received_tx_number;
@@ -77,9 +100,20 @@ static bool server_uart_read(uart_inst_t* uart_instance, uint32_t timeout_ms){
  * @param uart_instance Pointer to the UART peripheral (e.g., uart0 or uart1).
  * @return true if a connection request is successfully detected, false otherwise.
  */
-static inline bool server_check_pin_pair(uart_pin_pair_t pin_pair, uart_inst_t * uart_instance){
+static bool server_check_pin_pair(uart_pin_pair_t pin_pair, uart_inst_t * uart_instance){
+    absolute_time_t t_start2 = get_absolute_time();
     uart_init_with_pins(uart_instance, pin_pair, DEFAULT_BAUDRATE);
-    return server_uart_read(uart_instance, SERVER_TIMEOUT_MS);
+    absolute_time_t t_stop2 = get_absolute_time();
+    int64_t timp_stdio_usb_init2 = absolute_time_diff_us(t_start2, t_stop2);
+    printf("\n\nuart_init_with_pins() lasts %lldus\n", timp_stdio_usb_init2);    
+
+    t_start2 = get_absolute_time();
+    bool result = server_uart_read(uart_instance, SERVER_TIMEOUT_MS);
+    t_stop2 = get_absolute_time();
+    timp_stdio_usb_init2 = absolute_time_diff_us(t_start2, t_stop2);
+    printf("\nserver_uart_read() == %d; lasts %lldus\n", result ? 1 : 0, timp_stdio_usb_init2); 
+
+    return result;
 }
 
 /**
@@ -108,11 +142,27 @@ static inline void server_add_active_pair(uart_pin_pair_t pin_pair, uart_inst_t 
  */
 static void server_check_connections_for_uart0_instance(void){
     for (uint8_t index = 0; index < PIN_PAIRS_UART0_LEN; index++){
-        if(server_check_pin_pair(pin_pairs_uart0[index], uart0)){
+        absolute_time_t t_start2 = get_absolute_time();
+        bool result = server_check_pin_pair(pin_pairs_uart0[index], uart0);
+        absolute_time_t t_stop2 = get_absolute_time();
+        int64_t timp_stdio_usb_init2 = absolute_time_diff_us(t_start2, t_stop2);
+        printf("server_check_pin_pair() lasts %lldus\n", timp_stdio_usb_init2);
+
+        if(result){
+            t_start2 = get_absolute_time();
             server_add_active_pair(pin_pairs_uart0[index], uart0);
+            t_stop2 = get_absolute_time();
+            timp_stdio_usb_init2 = absolute_time_diff_us(t_start2, t_stop2);
+            printf("uart0 - server_add_active_pair() lasts %lldus\n", timp_stdio_usb_init2);
+
             sleep_ms(20);
         }
+        t_start2 = get_absolute_time();
         reset_gpio_pins(pin_pairs_uart0[index]);
+        t_stop2 = get_absolute_time();
+        timp_stdio_usb_init2 = absolute_time_diff_us(t_start2, t_stop2);
+        printf("reset_gpio_pins_uart0() lasts %lldus\n", timp_stdio_usb_init2);
+
     }
 }
 
@@ -124,11 +174,25 @@ static void server_check_connections_for_uart0_instance(void){
  */
 static void server_check_connections_for_uart1_instance(void){
     for (uint8_t index = 0; index < PIN_PAIRS_UART1_LEN; index++){
-        if(server_check_pin_pair(pin_pairs_uart1[index], uart1)){
+        absolute_time_t t_start2 = get_absolute_time();
+        bool result = server_check_pin_pair(pin_pairs_uart1[index], uart1);
+        absolute_time_t t_stop2 = get_absolute_time();
+        int64_t timp_stdio_usb_init2 = absolute_time_diff_us(t_start2, t_stop2);
+        printf("server_check_pin_pair() lasts %lldus\n", timp_stdio_usb_init2);
+        
+        if(result){            
+            t_start2 = get_absolute_time();
             server_add_active_pair(pin_pairs_uart1[index], uart1);
+            t_stop2 = get_absolute_time();
+            timp_stdio_usb_init2 = absolute_time_diff_us(t_start2, t_stop2);
+            printf("uart1 - server_add_active_pair() lasts %lldus\n", timp_stdio_usb_init2);            
             sleep_ms(20);
         }
+        t_start2 = get_absolute_time();
         reset_gpio_pins(pin_pairs_uart1[index]);
+        t_stop2 = get_absolute_time();
+        timp_stdio_usb_init2 = absolute_time_diff_us(t_start2, t_stop2);
+        printf("reset_gpio_pins_uart1() lasts %lldus\n", timp_stdio_usb_init2);
     }
 }
 
@@ -138,8 +202,17 @@ static void server_check_connections_for_uart1_instance(void){
  * Calls the UART0 and UART1 connection checkers to identify all valid connections.
  */
 bool server_find_connections(void){
+    absolute_time_t t_start2 = get_absolute_time();
     server_check_connections_for_uart0_instance();
+    absolute_time_t t_stop2 = get_absolute_time();
+    int64_t timp_stdio_usb_init2 = absolute_time_diff_us(t_start2, t_stop2);
+    printf("server_check_connections_for_uart0_instance() lasts %lldus\n\n", timp_stdio_usb_init2);
+
+    t_start2 = get_absolute_time();
     server_check_connections_for_uart1_instance();
+    t_stop2 = get_absolute_time();
+    timp_stdio_usb_init2 = absolute_time_diff_us(t_start2, t_stop2);
+    printf("server_check_connections_for_uart1_instance() lasts %lldus\n\n", timp_stdio_usb_init2);    
 
     if (active_server_connections_number) return true;
 

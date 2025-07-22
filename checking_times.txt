@@ -1,0 +1,166 @@
+SERVER (pico2_w):
+stdio_usb_init() 			- 147us 		| 0.147ms
+pico_set_led()				- 539552us		| 539.5ms
+
+NO CLIENTS:
+1ST TIME
+server_find_connections() 						- 2550797-2551258us	| 2550.7-2551.2ms
+server_check_connections_for_uart0_instance() 	- 1530297-1530305us	| 1530.2-1530.3ms	
+server_check_connections_for_uart1_instance() 	- 1020188-1020309us	| 1020.1-1020.3ms	
+server_check_pin_pair() 						- 510016-510036us	| 510.0-510.0ms
+reset_gpio_pins_uart0() 						- 1-2us				| 0.001-0.002ms
+
+2ND, 3RD...
+server_find_connections()						- 2550742-2551258us	| 2550.7-2551.2ms
+server_check_connections_for_uart0_instance()	- 1530286-1530317us | 1530.2-1530.3ms
+server_check_connections_for_uart1_instance()	- 1020184-1020309us | 1020.1-1020.3ms
+server_check_pin_pair()							- 510016-510042us	| 510.0-510.0ms
+reset_gpio_pins_uart0() 						- 1-2us				| 0.001-0.002ms
+
+
+1 client [8,9] on uart1:
+1ST TIME:
+server_find_connections() 						- 2203398-2269829us	| 2203.3-2269.8ms
+server_check_connections_for_uart0_instance() 	- 1530533-1530539us | 1530.5-1530.5us
+server_check_connections_for_uart1_instance() 	- 680831-743740us   | 680.8-743.7ms
+server_check_pin_pair() == false				- 510027-510090us   | 510.0-510.0ms
+server_check_pin_pair() == true					- 142217-208564us	| 142.2-208.5ms
+server_add_active_pair() 						- 5-6us		        | 0.005-0.006ms
+reset_gpio_pins_uart0() 						- 1-2us				| 0.001-0.002ms
+
+2ND, 3RD...
+server_find_connections() 						- 2448022-2448795us	| 2448.0-2448.7ms
+server_check_connections_for_uart0_instance() 	- 1530504-1530523us | 1530.5-1530.5ms
+server_check_connections_for_uart1_instance() 	- 917001-918030us   | 917.0-918.0ms 
+server_check_pin_pair() == false				- 510027-510062us   | 510.0-510.0ms 
+server_check_pin_pair() == true					- 386650-387689us	| 386.6-387.6ms
+server_add_active_pair() 						- 5-6us				| 0.005-0.006ms
+reset_gpio_pins_uart0() 						- 1-2us				| 0.001-0.002ms
+
+
+3 clients:
+1ST TIME:
+server_find_connections()						- 1752703-1899740us	| 1752.7-1899.7ms
+server_check_connections_for_uart0_instance()	- 1078891-1223092us | 1078.8-1223.0ms
+server_check_connections_for_uart1_instance()	- 673490-676291us	| 673.4-676.2ms
+server_check_pin_pair() == true              	- 143157-356936us	| 143.2-356.9ms  
+server_check_pin_pair() == false             	- 510022-510028us	| 510.0-510.0ms 
+server_add_active_pair()						- 0-6us				| 0.005-0.006ms
+reset_gpio_pins_uart0() 						- 1-2us				| 0.001-0.002ms
+uart_init_with_pins()                       	- 17-30us           | 0.017-0.030ms
+
+server_uart_read() == 1                      	- 113086-347296us   | 113.1-347.3ms
+server_uart_read() == 0                      	- 510003-510007us   | 510.0-510.0ms
+
+
+2ND, 3RD...
+server_find_connections()                    	- 1647416-2551258us	| 1647.4-2551.3ms
+server_check_connections_for_uart0_instance()	- 975972 -1530317us	| 976.0-1530.3ms
+server_check_connections_for_uart1_instance()	- 671072 -1020309us	| 671.1-1020.3ms
+server_check_pin_pair() == true              	- 104548 -321037us	| 104.5-321.0ms
+server_check_pin_pair() == false             	- 510016 -510042us	| 510.0-510.0ms
+server_add_active_pair()                     	- 0-6us	   			| 0.0-0.0ms
+reset_gpio_pins_uart0() 						- 1-2us				| 0.001-0.002ms
+uart_init_with_pins()                        	- 18-29us           | 0.018-0.029ms
+
+server_uart_read() == 1                      	- 103871-321133us   | 103.9-321.1ms
+server_uart_read() == 0                      	- 510006-510008us   | 510.0-510.0ms
+
+
+1st server_get_uart_buffer() == 1				- [8,9]156807-159938us, [16,17]274195-277420us, [0,1]352210-379440us	| [8,9]156.8-159.9ms, [16,17]274.1-277.4ms, [0,1]352.2-379.4ms
+1st server_get_uart_buffer() == 0				- 500073-500080us	| 500.0-500.0ms
+server_get_number_pair() 						- 5-7us				| 0.006-0.007ms
+
+2nd server_get_uart_buffer() == 1				- [8,9]25763-26257us, [16,17]25939-26076us, [0,1]25290-26114us	| [8,9]25.7-26.2ms, [16,17]25.9-26.0ms, [0,1]25.2-26.1ms
+
+uart_getc(uart)									- 0-1us				| 0.001ms
+
+server_uart_puts() 								- [8,9]	5us, [16,17] 5us, [0,1] 6-7us	| [8,9]	0.005ms, [16,17] 0.005ms, [0,1] 0.007ms
+server_uart_puts_w_blocking() 					- [8,9]	438-439us, [16,17] 612-613us, [0,1] 440-472us	| [8,9]	0.438-0.439ms, [16,17] 0.612-0.613ms, [0,1] 0.440-0.472ms
+
+
+
+
+CLIENT [0,1] (pico):
+pico_led_init()									- 13us				| 0.013ms
+pico_set_led()									- 4us				| 0.004ms
+
+client_detect_uart_connection() loop 			- 2114947-2114972us	| 2114.947-2114.972ms
+
+uart0 - client_test_uart_pair()					- 82813us			| 82.8ms
+uart0 - client_test_uart_pair()					- 82674us			| 82.6ms
+uart0 - client_test_uart_pair()					- 82613us			| 82.6ms
+client_find_connection_for_uart0_instance() 	== false 248117us 	| 248.1ms
+uart1 - client_test_uart_pair()					- 82459us			| 82.4ms
+uart1 - client_test_uart_pair()					- 82445us			| 82.4ms
+client_find_connection_for_uart1_instance() 	== false 164916us 	| 164.9ms
+
+uart0 - client_test_uart_pair()					- 82453us			| 82.4ms
+uart0 - client_test_uart_pair()					- 82610us			| 82.6ms
+uart0 - client_test_uart_pair()					- 82613us			| 82.6ms
+client_find_connection_for_uart0_instance()		== false 247718us 	| 247.7ms
+uart1 - client_test_uart_pair()					- 82445us			| 82.4ms
+uart1 - client_test_uart_pair()					- 82435us			| 82.4ms
+client_find_connection_for_uart1_instance() 	== false 164891us 	| 164.8ms
+
+uart0 - client_test_uart_pair()					- 39342us			| 39.3ms
+uart0 - client_add_connection()					- 6us				| 0.006ms
+client_find_connection_for_uart0_instance() 	== true 39348us 	| 39.3ms
+blink_onboard_led()						 		== 1250016us		| 1250.0ms
+
+
+
+
+CLIENT [8,9] (pico):
+pico_led_init()									- 13us				| 0.013ms
+pico_set_led()									- 4us				| 0.004ms
+
+client_detect_uart_connection() loop 			- 3682712-3682726us	| 3682.7-3682.7ms
+
+client_find_connection_for_uart0_instance() 	- 248123us			| 248.1ms
+client_find_connection_for_uart1_instance() 	- 164908us			| 164.9ms
+
+client_find_connection_for_uart0_instance() 	- 247703us			| 247.7ms
+client_find_connection_for_uart1_instance() 	- 164897us			| 164.8ms
+
+client_find_connection_for_uart0_instance() 	- 247720us			| 247.7ms
+client_find_connection_for_uart1_instance() 	- 164883us			| 164.8ms
+
+client_find_connection_for_uart0_instance() 	- 247724us			| 247.7ms
+client_find_connection_for_uart1_instance() 	- 164898us			| 164.8ms
+
+client_find_connection_for_uart0_instance() 	- 247707us			| 247.7ms
+client_find_connection_for_uart1_instance() 	- 164880us			| 164.8ms
+
+client_find_connection_for_uart0_instance() 	- 247715us			| 247.7ms
+uart1 - client_test_uart_pair() 				- 82453us			| 82.4ms
+uart1 - client_test_uart_pair() 				- 39337us			| 39.3ms
+uart1 - client_add_connection() 				- 5us				| 0.005ms
+client_find_connection_for_uart1_instance()		- 121785us			| 121.7ms
+blink_onboard_led() 							- 1250019us			| 1250.0ms
+
+
+
+
+CLIENT [16,17] (pico_w):
+pico_led_init()									- 189-194us			| 0.189-0.194ms
+pico_set_led()									- 580585-580666us	| 580.5-580.6ms
+
+client_detect_uart_connection() loop 			- 1881614-1881624us	| 1881.6-1881.6ms
+
+uart0 - client_test_uart_pair() 				- 82693us			| 82.6ms
+uart0 - client_test_uart_pair() 				- 82662us			| 82.6ms
+uart0 - client_test_uart_pair() 				- 82640us			| 82.6ms
+client_find_connection_for_uart0_instance() 	- 247974us			| 247.9ms
+uart1 - client_test_uart_pair() 				- 82449us			| 82.4ms
+uart1 - client_test_uart_pair() 				- 82444us			| 82.4ms
+client_find_connection_for_uart1_instance() 	- 164923us			| 164.9ms
+
+uart0 - client_test_uart_pair() 				- 82460us			| 82.4ms
+uart0 - client_test_uart_pair() 				- 82628us			| 82.6ms
+uart0 - client_test_uart_pair() 				- 39513us			| 39.5ms
+uart0 - client_add_connection() 				- 4us				| 0.004ms
+client_find_connection_for_uart0_instance() 	- 204576us			| 204.5ms
+blink_onboard_led()								- 1264286us			| 1264.2ms
+
+

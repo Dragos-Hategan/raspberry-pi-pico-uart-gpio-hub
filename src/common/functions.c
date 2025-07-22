@@ -48,7 +48,8 @@ void get_uart_buffer(uart_inst_t* uart, char* buf, uint8_t buffer_size, uint32_t
 
     while (absolute_time_diff_us(start_time, get_absolute_time()) < timeout_us) {
         if (uart_is_readable(uart)) {
-            char c = uart_getc(uart);
+            char c = uart_getc(uart);              
+
             if (idx < buffer_size - 1) {
                 buf[idx++] = c;
             } 
@@ -61,6 +62,8 @@ void get_uart_buffer(uart_inst_t* uart, char* buf, uint8_t buffer_size, uint32_t
             } 
         }
     }
+
+    printf("%s\n", buf);
 
     buf[idx] = '\0';  
 }

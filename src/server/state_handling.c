@@ -170,7 +170,8 @@ static void server_send_client_state(uart_pin_pair_t pin_pair, uart_inst_t* uart
         char msg[8];
         snprintf(msg, sizeof(msg), "[%d,%d]", state->devices[i].gpio_number, state->devices[i].is_on);
         uart_puts(uart, msg);
-        sleep_ms(10);
+        //uart_tx_wait_blocking(uart);
+        sleep_ms(5);
     }
     reset_gpio_pins(pin_pair);
 }
@@ -425,7 +426,7 @@ static void server_send_device_state(uart_pin_pair_t pin_pair, uart_inst_t* uart
     char msg[8];
     snprintf(msg, sizeof(msg), "[%d,%d]", gpio_number, is_on);
     uart_puts(uart, msg);
-    sleep_ms(10);
+    sleep_ms(5);
     reset_gpio_pins(pin_pair);
 }
 

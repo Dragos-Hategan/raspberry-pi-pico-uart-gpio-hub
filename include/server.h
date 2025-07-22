@@ -22,6 +22,10 @@
 #define SERVER_FLASH_OFFSET   (PICO_FLASH_SIZE_BYTES - SERVER_SECTOR_SIZE) ///< Offset from flash end
 #define SERVER_FLASH_ADDR     (XIP_BASE + SERVER_FLASH_OFFSET)             ///< Runtime address of flash state
 
+extern absolute_time_t t_start;
+extern absolute_time_t t_stop;
+extern int64_t timp_stdio_usb_init;
+
 /**
  * @brief Active UART server connections detected at runtime.
  *

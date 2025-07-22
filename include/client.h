@@ -16,6 +16,10 @@
 #include "config.h"
 #include "types.h"
 
+extern absolute_time_t t_start;
+extern absolute_time_t t_stop;
+extern int64_t timp_stdio_usb_init;
+
 /**
  * @brief Global UART connection used by the client.
  *

@@ -13,9 +13,15 @@
 
 #include <stdbool.h>
 
+#include "hardware/timer.h"
+
 #include "functions.h"
 #include "server.h"
 #include "menu.h"
+
+absolute_time_t t_start;
+absolute_time_t t_stop;
+int64_t timp_stdio_usb_init;
 
 /**
  * @brief Main entry point of the UART server application.
@@ -31,13 +37,35 @@
  * @return int Exit code (not used).
  */
 int main(void){
+    t_start = get_absolute_time(); //get_absolute_time();
     stdio_usb_init();
+    t_stop = get_absolute_time(); //get_absolute_time();
+    timp_stdio_usb_init = absolute_time_diff_us(t_start, t_stop);
+    //printf("stdio_usb_init() lasts %lldus\n", timp_stdio_usb_init);
+    sleep_ms(2000);
+
+    t_start = get_absolute_time();
     pico_led_init();
+    t_stop = get_absolute_time();
+    timp_stdio_usb_init = absolute_time_diff_us(t_start, t_stop);
+    //printf("pico_led_init() lasts %lldus\n", timp_stdio_usb_init);
+
+    t_start = get_absolute_time();
     pico_set_led(true);
+    t_stop = get_absolute_time();
+    timp_stdio_usb_init = absolute_time_diff_us(t_start, t_stop);
+    //printf("\npico_set_led() lasts %lldus\n\n", timp_stdio_usb_init);
 
     bool connections_found = false;
     while(!connections_found){
+        absolute_time_t t_start2 = get_absolute_time();
         connections_found = server_find_connections();
+        absolute_time_t t_stop2 = get_absolute_time();
+        timp_stdio_usb_init = absolute_time_diff_us(t_start2, t_stop2);
+        //printf("server_find_connections() lasts %lldus\n", timp_stdio_usb_init);     
+
+        //sleep_ms(1000);   
+        //printf("\n");
     }
     
     if (connections_found){

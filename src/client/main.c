@@ -11,9 +11,14 @@
  */
 
 #include <stdbool.h>
+#include <stdio.h>
 
 #include "client.h"
 #include "functions.h"
+
+absolute_time_t t_start;
+absolute_time_t t_stop;
+int64_t timp_stdio_usb_init;
 
 /**
  * @brief Main entry point of the UART client program.
@@ -26,12 +31,29 @@
  */
 int main(void){
     stdio_usb_init();
-    pico_led_init();
-    pico_set_led(true);
+    sleep_ms(2000);
 
+    t_start = get_absolute_time();
+    pico_led_init();
+    t_stop = get_absolute_time();
+    timp_stdio_usb_init = absolute_time_diff_us(t_start, t_stop);
+    //printf("pico_led_init() lasts %lldus\n", timp_stdio_usb_init);
+
+    t_start = get_absolute_time();
+    pico_set_led(true);
+    t_stop = get_absolute_time();
+    timp_stdio_usb_init = absolute_time_diff_us(t_start, t_stop);
+    //printf("\npico_set_led() lasts %lldus\n\n", timp_stdio_usb_init);
+
+    t_start = get_absolute_time();
     while(!client_detect_uart_connection()){
         tight_loop_contents();
     }
+    t_stop = get_absolute_time();
+    timp_stdio_usb_init = absolute_time_diff_us(t_start, t_stop);
+    //printf("client_detect_uart_connection() loop lasts %lldus\n", timp_stdio_usb_init);
+
+    //sleep_ms(10000);
 
     client_listen_for_commands();
 }
