@@ -77,7 +77,7 @@ static bool server_uart_read(uart_inst_t* uart_instance, uint32_t timeout_ms){
  * @param uart_instance Pointer to the UART peripheral (e.g., uart0 or uart1).
  * @return true if a connection request is successfully detected, false otherwise.
  */
-static inline bool server_check_pin_pair(uart_pin_pair_t pin_pair, uart_inst_t * uart_instance){
+static bool server_check_pin_pair(uart_pin_pair_t pin_pair, uart_inst_t * uart_instance){
     uart_init_with_pins(uart_instance, pin_pair, DEFAULT_BAUDRATE);
     return server_uart_read(uart_instance, SERVER_TIMEOUT_MS);
 }
