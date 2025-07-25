@@ -23,7 +23,6 @@ target_link_libraries(server
     hardware_watchdog
     hardware_uart
     hardware_gpio
-    hardware_sync
     common           
 )
 

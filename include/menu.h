@@ -38,14 +38,15 @@ inline void clear_screen(){
 inline void display_menu_options(){
     printf(
         "Options:\n"
-        "1. Display clients\n"
-        "2. Set client's device\n"
-        "3. Toggle client's device\n"
-        "4. Save running state into preset configuration\n"
-        "5. Build and save preset configuration\n"
-        "6. Load preset configuration into running state\n"
-        "7. Reset configuration\n"
+        "1. Display Clients\n"
+        "2. Set Client's Device\n"
+        "3. Toggle Client's Device\n"
+        "4. Save Running State Into Preset Configuration\n"
+        "5. Build And Save Preset Configuration\n"
+        "6. Load Preset Configuration Into Running State\n"
+        "7. Reset Configuration\n"
         "8. Clear Screen\n"
+        "9. Restart System\n"
     );
 }
 

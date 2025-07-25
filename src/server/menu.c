@@ -13,6 +13,8 @@
 
 #include <string.h>
 
+#include "hardware/watchdog.h"
+
 #include "input.h"
 #include "server.h"
 #include "menu.h"
@@ -20,6 +22,11 @@
 bool first_display = true;
 
 void server_display_menu(void);
+
+static void restart_application(){
+    signal_reset_for_all_clients();
+    watchdog_reboot(0,0,0);
+}
 
 /**
  * @brief Entry point for resetting client data.
@@ -207,6 +214,9 @@ static void select_action(uint32_t choice){
             break;
         case 8:
             clear_screen();
+            break;
+        case 9:
+            restart_application();
             break;
         default:
             printf("Out of range. Try again.\n");
