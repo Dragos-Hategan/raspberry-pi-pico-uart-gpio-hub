@@ -11,23 +11,29 @@
 #include <stdio.h>
 
 #include "pico/stdlib.h"
+#include "hardware/watchdog.h"
 
 #include "client.h"
 #include "types.h"
 #include "functions.h"
 
 /**
- * @brief Applies a GPIO command by setting a pin's state.
+ * @brief Applies a GPIO command based on a received byte pair.
  *
- * Initializes the given GPIO pin and sets its direction to output,
- * then sets its value to HIGH or LOW based on the second element
- * in the received command array.
+ * If the byte pair matches the reset trigger, a watchdog reset is initiated.
+ * Otherwise, the function initializes the target GPIO pin, sets it as output,
+ * and writes the desired value.
  *
- * @param received_number_pair A pointer to a 2-byte array where:
- *        - index 0 = GPIO number
- *        - index 1 = value (0 = LOW, 1 = HIGH)
+ * @param received_number_pair A pointer to a 2-byte array:
+ *        - [0] = GPIO number
+ *        - [1] = Value (0 = LOW, 1 = HIGH)
  */
 static void apply_command(uint8_t *received_number_pair){
+    if (received_number_pair[0] == TRIGGER_RESET_NUMBER && received_number_pair[1] == TRIGGER_RESET_NUMBER){
+        watchdog_enable(1, 1);
+        while(true);
+    }
+
     gpio_init(received_number_pair[0]);
     gpio_set_dir(received_number_pair[0], GPIO_OUT); 
     gpio_put(received_number_pair[0], received_number_pair[1]);

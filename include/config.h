@@ -76,5 +76,9 @@
 #define EMPTY_MEMORY_MESSAGE "Empty"
 #endif
 
+#ifndef TRIGGER_RESET_NUMBER
+#define TRIGGER_RESET_NUMBER 77
+#endif
+
 
 #endif

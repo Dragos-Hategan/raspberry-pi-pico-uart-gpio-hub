@@ -20,6 +20,7 @@ target_link_libraries(client
     pico_stdlib          # Base I/O functions
     hardware_uart        # UART peripheral access
     hardware_gpio        # GPIO peripheral access
+    hardware_watchdog
     common
 )
 

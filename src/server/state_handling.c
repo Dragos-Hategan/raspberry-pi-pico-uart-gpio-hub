@@ -45,6 +45,20 @@ void server_print_client_preset_configurations(const client_t *client){
     }
 }
 
+void signal_reset_for_all_clients(){
+    for (uint8_t client_index = 0; client_index < active_server_connections_number; client_index++){
+        uart_inst_t* uart_instance = active_uart_server_connections[client_index].uart_instance;
+        uart_pin_pair_t pin_pair = active_uart_server_connections[client_index].pin_pair;
+        uart_init_with_pins(uart_instance, pin_pair, DEFAULT_BAUDRATE);
+
+        char msg[8];
+        snprintf(msg, sizeof(msg), "[%d,%d]", TRIGGER_RESET_NUMBER, TRIGGER_RESET_NUMBER);
+        uart_puts(uart_instance, msg);
+        uart_tx_wait_blocking(uart_instance);
+        reset_gpio_pins(pin_pair);
+    }
+}
+
 /**
  * @brief Computes CRC32 checksum over a block of memory.
  *
@@ -408,7 +422,6 @@ void server_load_running_states_to_active_clients(void) {
         printf("LOADING ATTEMPT FAILED!\nIncorrect CRC, this is the first run after build or might be a flash problem.\nInitializing Configuration...\n");
         server_configure_persistent_state(&server_persistent_state);
         printf("CONFIGURATION WAS SUCCESSFULL!\nStarting...\n");
-
     }
 }
 
@@ -425,7 +438,7 @@ static void server_send_device_state(uart_pin_pair_t pin_pair, uart_inst_t* uart
     char msg[8];
     snprintf(msg, sizeof(msg), "[%d,%d]", gpio_number, is_on);
     uart_puts(uart, msg);
-    sleep_ms(10);
+    uart_tx_wait_blocking(uart);
     reset_gpio_pins(pin_pair);
 }
 

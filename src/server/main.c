@@ -13,9 +13,92 @@
 
 #include <stdbool.h>
 
+#include "hardware/watchdog.h"
+#include "hardware/irq.h"
+#include "hardware/regs/usb.h"
+#include "hardware/structs/usb.h"
+
 #include "functions.h"
 #include "server.h"
 #include "menu.h"
+
+volatile bool usb_connected = false;
+volatile bool usb_disconected = false;
+
+/**
+ * @brief USB interrupt handler for VBUS connection detection.
+ *
+ * Monitors the USB connection status using `usb_hw->sie_status` flags.
+ * - Sets `usb_connected` when USB becomes connected.
+ * - Sets `usb_disconected` when USB is disconnected.
+ * - If a disconnection followed by a reconnection is detected,
+ *   triggers a reset sequence for all clients and enables watchdog reset.
+ */
+static void usb_irq_handler(void) {
+    if (!usb_connected && (usb_hw->sie_status & USB_SIE_STATUS_CONNECTED_BITS)){
+        usb_connected = true;
+    }
+    if (usb_connected && !(usb_hw->sie_status & USB_SIE_STATUS_CONNECTED_BITS)){
+        usb_connected = false;
+        usb_disconected = true;
+    }
+    if (usb_disconected && (usb_hw->sie_status & USB_SIE_STATUS_CONNECTED_BITS)){
+        signal_reset_for_all_clients();
+        watchdog_enable(1, 1);
+        while (true) tight_loop_contents();
+    }
+
+}
+
+/**
+ * @brief Configures USB interrupt handling for VBUS detection.
+ *
+ * Enables the VBUS detect interrupt and attaches `usb_irq_handler`
+ * to the USB controller IRQ with default priority.
+ */
+static void setup_usb_irq(void) {
+    hw_set_bits(&usb_hw->inte, USB_INTE_VBUS_DETECT_BITS);
+    irq_add_shared_handler(USBCTRL_IRQ, usb_irq_handler, PICO_SHARED_IRQ_HANDLER_DEFAULT_ORDER_PRIORITY);
+    if (!irq_is_enabled(USBCTRL_IRQ)){
+        irq_set_enabled(USBCTRL_IRQ, true);
+    }
+}
+
+/**
+ * @brief Attempts to discover all active UART clients.
+ *
+ * Continuously calls `server_find_connections()` until at least
+ * one connection is established. Then:
+ * - Blinks onboard LED.
+ * - Loads saved GPIO states for clients.
+ * - Installs USB IRQ handler.
+ * - Enters USB CLI loop via `server_display_menu()`.
+ */
+static void find_clients(void){
+    while(!server_find_connections()) tight_loop_contents();
+
+    blink_onboard_led();
+    server_load_running_states_to_active_clients();
+
+    setup_usb_irq();
+
+    while(true){
+        if (stdio_usb_connected()){
+            server_display_menu();
+        }
+    }
+}
+
+/**
+ * @brief Initializes onboard LED and USB stdio interface.
+ *
+ * Turns on the onboard LED and sets up the USB serial connection.
+ */
+static inline void init_led_and_usb(void){
+    pico_led_init();
+    pico_set_led(true);    
+    stdio_usb_init();
+}
 
 /**
  * @brief Main entry point of the UART server application.
@@ -31,25 +114,12 @@
  * @return int Exit code (not used).
  */
 int main(void){
-    stdio_usb_init();
-    pico_led_init();
-    pico_set_led(true);
-
-    bool connections_found = false;
-    while(!connections_found){
-        connections_found = server_find_connections();
-    }
-    
-    if (connections_found){
-        blink_onboard_led();
-        server_load_running_states_to_active_clients();
-    }
-
-    while(true){
-        if (stdio_usb_connected()){
-            server_display_menu();
-        }else{
-            tight_loop_contents();
-        }
+    if (watchdog_caused_reboot()){
+        sleep_ms(100);
+        init_led_and_usb();
+        find_clients();
+    }else{
+        init_led_and_usb();
+        find_clients();
     }
 }

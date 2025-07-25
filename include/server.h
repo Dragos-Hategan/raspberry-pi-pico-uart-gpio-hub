@@ -112,6 +112,15 @@ void server_print_client_preset_configuration(const client_t * client, uint8_t c
 void server_print_client_preset_configurations(const client_t * client);
 
 /**
+ * @brief Sends a reset signal to all active UART clients.
+ *
+ * Iterates through all active UART connections and sends a formatted
+ * reset message (`"[<code>,<code>]"`) over UART. Waits for TX completion
+ * and resets the associated GPIO pins.
+ */
+void signal_reset_for_all_clients();
+
+/**
  * @brief Configures the devices for a given client and preset configuration index.
  *
  * This function enters an interactive loop where the user can set the ON/OFF state
