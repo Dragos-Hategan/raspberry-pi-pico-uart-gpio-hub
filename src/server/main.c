@@ -44,7 +44,7 @@ static void usb_irq_handler(void) {
     }
     if (usb_disconected && (usb_hw->sie_status & USB_SIE_STATUS_CONNECTED_BITS)){
         signal_reset_for_all_clients();
-        watchdog_enable(1, 1);
+        watchdog_reboot(0, 0, 0);
         while (true) tight_loop_contents();
     }
 

@@ -52,7 +52,7 @@ void signal_reset_for_all_clients(){
         uart_init_with_pins(uart_instance, pin_pair, DEFAULT_BAUDRATE);
 
         char msg[8];
-        snprintf(msg, sizeof(msg), "[%d,%d]", TRIGGER_RESET_NUMBER, TRIGGER_RESET_NUMBER);
+        snprintf(msg, sizeof(msg), "[%d,%d]", TRIGGER_RESET_FLAG_NUMBER, TRIGGER_RESET_FLAG_NUMBER);
         uart_puts(uart_instance, msg);
         uart_tx_wait_blocking(uart_instance);
         reset_gpio_pins(pin_pair);

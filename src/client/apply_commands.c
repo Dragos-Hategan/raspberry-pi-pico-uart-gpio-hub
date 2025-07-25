@@ -29,8 +29,8 @@
  *        - [1] = Value (0 = LOW, 1 = HIGH)
  */
 static void apply_command(uint8_t *received_number_pair){
-    if (received_number_pair[0] == TRIGGER_RESET_NUMBER && received_number_pair[1] == TRIGGER_RESET_NUMBER){
-        watchdog_enable(1, 1);
+    if (received_number_pair[0] == TRIGGER_RESET_FLAG_NUMBER && received_number_pair[1] == TRIGGER_RESET_FLAG_NUMBER){
+        watchdog_reboot(0, 0, 0);
         while(true);
     }
 
