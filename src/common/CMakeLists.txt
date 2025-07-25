@@ -17,6 +17,7 @@ target_include_directories(common PRIVATE
 # Link against required Pico SDK libraries
 target_link_libraries(common
     pico_stdlib          # Base I/O functions
+    pico_stdio_usb
 )
 
 # Link Wi-Fi driver if supported

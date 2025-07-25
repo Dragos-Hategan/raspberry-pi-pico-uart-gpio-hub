@@ -9,6 +9,8 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "pico/stdio_usb.h"
+
 #include "functions.h"
 #include "config.h"
 
@@ -94,4 +96,10 @@ void blink_onboard_led(void){
         sleep_ms(LED_DELAY_MS);
     }
     pico_set_led(false);
+}
+
+void init_led_and_usb(void){
+    pico_led_init();
+    pico_set_led(true);    
+    stdio_usb_init();
 }

@@ -25,9 +25,7 @@
  * @return Unused (program loops forever).
  */
 int main(void){
-    stdio_usb_init();
-    pico_led_init();
-    pico_set_led(true);
+    init_led_and_usb();
 
     while(!client_detect_uart_connection()){
         tight_loop_contents();

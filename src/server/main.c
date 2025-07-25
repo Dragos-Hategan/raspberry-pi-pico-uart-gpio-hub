@@ -90,17 +90,6 @@ static void find_clients(void){
 }
 
 /**
- * @brief Initializes onboard LED and USB stdio interface.
- *
- * Turns on the onboard LED and sets up the USB serial connection.
- */
-static inline void init_led_and_usb(void){
-    pico_led_init();
-    pico_set_led(true);    
-    stdio_usb_init();
-}
-
-/**
  * @brief Main entry point of the UART server application.
  *
  * Steps:

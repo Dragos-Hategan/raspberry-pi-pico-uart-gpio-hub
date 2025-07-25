@@ -92,4 +92,11 @@ static inline void reset_gpio_pins(uart_pin_pair_t pin_pair){
     gpio_set_function(pin_pair.rx, GPIO_FUNC_SIO);
 }
 
+/**
+ * @brief Initializes onboard LED and USB stdio interface.
+ *
+ * Turns on the onboard LED and sets up the USB serial connection.
+ */
+void init_led_and_usb(void);
+
 #endif
