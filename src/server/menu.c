@@ -43,7 +43,7 @@ void print_and_update_buffer(const char *string){
                     BUFFER_MAX_STRING_SIZE
             );
         }
-        memcpy( (char *)reconnection_buffer[reconnection_buffer_index],
+        memcpy( (char *)reconnection_buffer[reconnection_buffer_index - 1],
                 (const char *)string,
                 strlen(string) + 1
             );
@@ -318,7 +318,6 @@ void print_buffer(){
                 sleep_ms(2); 
             }
         }
-        //printf("\n> ");
     }
 }
 
