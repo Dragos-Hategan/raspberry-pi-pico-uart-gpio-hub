@@ -33,6 +33,14 @@ volatile uint32_t reconnection_buffer_index = 0;
 
 void server_display_menu(void);
 
+/**
+ * @brief Prints a string and stores it into the reconnection buffer.
+ *
+ * Maintains a ring-like buffer of the last printed strings (max BUFFER_MAX_NUMBER_OF_STRINGS).
+ * If the buffer is full, it shifts all entries up to make room for the new one.
+ *
+ * @param string The string to print and store.
+ */
 void print_and_update_buffer(const char *string){
     printf("%s", string);
 
@@ -291,6 +299,16 @@ static void read_menu_option(uint32_t *menu_option){
     }
 }
 
+/**
+ * @brief Periodically checks the USB console connection state.
+ *
+ * This function is called by a repeating timer on core1. It detects USB terminal
+ * disconnection/reconnection and triggers an inter-core message to reprint
+ * the buffered output.
+ *
+ * @param repeating_timer Pointer to the timer structure (unused).
+ * @return Always returns true to keep the repeating timer active.
+ */
 static bool check_console_state(repeating_timer_t *repeating_timer){
     if (console_connected && !stdio_usb_connected()){
         console_connected = false;
@@ -303,11 +321,24 @@ static bool check_console_state(repeating_timer_t *repeating_timer){
     return true;
 }
 
+/**
+ * @brief Sets up a repeating timer to monitor USB console connectivity.
+ *
+ * Initializes the `console_connected` flag and starts a repeating timer that
+ * calls `check_console_state()` every `PERIODIC_CONSOLE_CHECK_TIME_MS` milliseconds
+ * to detect USB terminal reconnections.
+ */
 static void setup_repeating_timer_for_console_activity(){
     console_connected = true;
-    add_repeating_timer_ms(2000, check_console_state, NULL, &repeating_timer);
+    add_repeating_timer_ms(PERIODIC_CONSOLE_CHECK_TIME_MS, check_console_state, NULL, &repeating_timer);
 }
 
+/**
+ * @brief Core1 entry point that waits for print commands and dumps the buffer.
+ *
+ * Blocks using `__wfe()` until it receives an inter-core message via FIFO.
+ * When triggered, it prints the contents of `reconnection_buffer` with a short delay.
+ */
 void print_buffer(){
     while (true) {
         __wfe();
