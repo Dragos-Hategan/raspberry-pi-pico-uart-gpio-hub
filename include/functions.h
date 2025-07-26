@@ -80,6 +80,12 @@ void pico_set_onboard_led(bool state);
  */
 void blink_onboard_led(void);
 
+/**
+ * @brief Performs a quick blink of the onboard LED.
+ *
+ * Turns the onboard LED on, waits for a short delay (`FAST_LED_DELAY_MS`),
+ * then turns it off. Used as a visual indicator for events like client pings.
+ */
 void fast_blink_onboard_led(void);
 
 /**

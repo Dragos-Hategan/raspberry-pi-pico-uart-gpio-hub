@@ -117,14 +117,17 @@ void server_print_client_preset_configuration(const client_t * client, uint8_t c
 void server_print_client_preset_configurations(const client_t * client);
 
 /**
- * @brief Sends a reset signal to all active UART clients.
+ * @brief Sends a reset trigger message to all clients.
  *
- * Iterates through all active UART connections and sends a formatted
- * reset message (`"[<code>,<code>]"`) over UART. Waits for TX completion
- * and resets the associated GPIO pins.
+ * This causes each connected client to perform a full reset of its internal state.
  */
 void signal_reset_for_all_clients();
 
+/**
+ * @brief Sends a fast onboard LED blink signal to all clients.
+ *
+ * Triggers a visual blink (e.g., heartbeat) on each client device.
+ */
 void send_fast_blink_onboard_led_to_clients();
 
 /**

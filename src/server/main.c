@@ -64,32 +64,49 @@ static void setup_usb_irq(void) {
     }
 }
 
+/**
+ * @brief Repeating timer callback to trigger onboard LED blink on core1.
+ *
+ * Pushes an inter-core message to wake up core1 and trigger LED blinking.
+ *
+ * @param repeating_timer Unused.
+ * @return Always true to keep the timer running.
+ */
 static bool short_onboard_led_blink(repeating_timer_t *repeating_timer){
     multicore_fifo_push_blocking(BLINK_LED_WAKEUP_MESSAGE);
     return true;
 }
 
+/**
+ * @brief Initializes a repeating timer for periodic onboard LED blinking.
+ *
+ * Every `PERIODIC_ONBOARD_LED_BLINK_TIME_MS`, a wakeup message is sent
+ * to core1 for triggering a short LED blink.
+ */
 static void setup_repeating_timer_for_periodic_onboard_led_blink(){
     add_repeating_timer_ms(PERIODIC_ONBOARD_LED_BLINK_TIME_MS, short_onboard_led_blink, NULL, &repeating_timer);
 }
 
 /**
- * @brief Attempts to discover all active UART clients.
+ * @brief Detects UART clients and loads their saved GPIO states.
  *
- * Continuously calls `server_find_connections()` until at least
- * one connection is established. Then:
- * - Blinks onboard LED.
- * - Loads saved GPIO states for clients.
- * - Installs USB IRQ handler.
- * - Enters USB CLI loop via `server_display_menu()`.
+ * Loops until at least one UART connection is detected. After that:
+ * - Loads the last saved GPIO states for each client.
+ * - Performs a confirmation blink.
  */
 static void find_clients(void){
     while(!server_find_connections()) tight_loop_contents();
 
-    blink_onboard_led();
     server_load_running_states_to_active_clients();
+    blink_onboard_led();
 }
 
+/**
+ * @brief Final initialization stage and entry into USB CLI display loop.
+ *
+ * Sets up USB IRQs, starts the LED timer, launches core1, and enters a loop
+ * waiting for USB CLI connections to launch the user interface.
+ */
 static void last_inits_and_display_launch(){
     setup_usb_irq();
     setup_repeating_timer_for_periodic_onboard_led_blink();
@@ -103,6 +120,9 @@ static void last_inits_and_display_launch(){
     }
 }
 
+/**
+ * @brief Initializes LED and USB, detects clients, and enters UI loop.
+ */
 static void entry_point(){
     init_onboard_led_and_usb();
     find_clients();
@@ -112,15 +132,10 @@ static void entry_point(){
 /**
  * @brief Main entry point of the UART server application.
  *
- * Steps:
- * - Initializes USB stdio and onboard LED.
- * - Scans for valid client UART connections via `server_find_connections()`.
- * - Once at least one connection is established:
- *   - Blinks the onboard LED.
- *   - Loads previous GPIO states from internal flash.
- * - Enters a USB CLI loop (if connected).
+ * If the system rebooted due to a watchdog reset, applies a short delay
+ * before continuing initialization. Delegates logic to `entry_point()`.
  *
- * @return int Exit code (not used).
+ * @return Exit code (not used).
  */
 int main(void){
     if (watchdog_caused_reboot()){

@@ -47,6 +47,15 @@ void server_print_client_preset_configurations(const client_t *client){
     }
 }
 
+/**
+ * @brief Sends a predefined flag message to all connected clients via UART.
+ *
+ * Iterates through all active client connections and sends a message in the format "[X,X]",
+ * where `X` is the specified flag value. Each UART is initialized before sending,
+ * and its pins are reset afterward.
+ *
+ * @param FLAG_MESSAGE The numeric flag value to send (e.g., reset trigger or blink signal).
+ */
 static void send_flag_message(const uint8_t FLAG_MESSAGE){
        for (uint8_t client_index = 0; client_index < active_server_connections_number; client_index++){
         uart_inst_t* uart_instance = active_uart_server_connections[client_index].uart_instance;

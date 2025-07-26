@@ -65,6 +65,10 @@ void print_and_update_buffer(const char *string){
     }
 }
 
+
+/**
+ * @brief Reboots the server and all clients.
+ */
 static void restart_application(){
     signal_reset_for_all_clients();
     watchdog_reboot(0,0,0);
@@ -241,38 +245,19 @@ static inline void display_active_clients(void){
  */
 static void select_action(uint32_t choice){
     switch (choice){
-        case 1:
-            display_active_clients();
-            break;
-        case 2:
-            set_client_device();
-            break;
-        case 3:
-            toggle_device();
-            break;
-        case 4:
-            save_running_state();
-            break;
-        case 5:
-            build_preset_configuration();
-            break;
-        case 6:
-            load_configuration();
-            break;
-        case 7:
-            reset_configuration();
-            break;
-        case 8:
-            clear_screen();
-            break;
-        case 9:
-            restart_application();
-            break;
-        default:
-            print_and_update_buffer("Out of range. Try again.\n");
-            break;
-        }
+        case 1: display_active_clients(); break;
+        case 2: set_client_device(); break;
+        case 3: toggle_device(); break;
+        case 4: save_running_state(); break;
+        case 5: build_preset_configuration(); break;
+        case 6: load_configuration(); break;
+        case 7: reset_configuration(); break;
+        case 8: clear_screen(); break;
+        case 9: restart_application(); break;
+
+        default: print_and_update_buffer("Out of range. Try again.\n"); break;
     }
+}
     
 /**
  * @brief Reads a menu selection from the user and validates it.
@@ -301,14 +286,13 @@ static void read_menu_option(uint32_t *menu_option){
 }
 
 /**
- * @brief Periodically checks the USB console connection state.
+ * @brief Repeating timer callback to detect USB CLI connection changes.
  *
- * This function is called by a repeating timer on core1. It detects USB terminal
- * disconnection/reconnection and triggers an inter-core message to reprint
- * the buffered output.
+ * Detects disconnection and reconnection. If a reconnect is detected,
+ * sends a message to core1 to dump the buffered output.
  *
- * @param repeating_timer Pointer to the timer structure (unused).
- * @return Always returns true to keep the repeating timer active.
+ * @param repeating_timer Unused.
+ * @return Always true to continue the timer.
  */
 static bool check_console_state(repeating_timer_t *repeating_timer){
     if (console_connected && !stdio_usb_connected()){
@@ -335,10 +319,11 @@ static void setup_repeating_timer_for_console_activity(){
 }
 
 /**
- * @brief Core1 entry point that waits for print commands and dumps the buffer.
+ * @brief Core1 wakeup handler triggered by inter-core messages.
  *
- * Blocks using `__wfe()` until it receives an inter-core message via FIFO.
- * When triggered, it prints the contents of `reconnection_buffer` with a short delay.
+ * Handles two commands:
+ * - `DUMP_BUFFER_WAKEUP_MESSAGE`: Reprints stored output to CLI.
+ * - `BLINK_LED_WAKEUP_MESSAGE`: Triggers fast onboard LED blink and mirrors to clients.
  */
 void periodic_wakeup(){
     while (true) {
@@ -358,10 +343,10 @@ void periodic_wakeup(){
 }
 
 /**
- * @brief Entry point for the USB menu system.
+ * @brief Entry point for the USB CLI menu system.
  *
- * Prints a welcome screen on first call, then shows the menu options.
- * Processes user selection via `select_action(menu_option)`.
+ * Displays welcome and client list on first run, then repeatedly
+ * shows menu options and executes user commands.
  */
 void server_display_menu(void){
     setup_repeating_timer_for_console_activity();
