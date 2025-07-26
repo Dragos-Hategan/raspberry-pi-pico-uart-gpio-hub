@@ -13,6 +13,7 @@
 
 #include <stdbool.h>
 
+#include "pico/multicore.h"
 #include "hardware/watchdog.h"
 #include "hardware/irq.h"
 #include "hardware/regs/usb.h"
@@ -80,6 +81,8 @@ static void find_clients(void){
     server_load_running_states_to_active_clients();
 
     setup_usb_irq();
+
+    multicore_launch_core1(print_buffer);
 
     while(true){
         if (stdio_usb_connected()){

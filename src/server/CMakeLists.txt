@@ -21,10 +21,11 @@ target_include_directories(server PRIVATE
 target_link_libraries(server 
     pico_stdlib
     pico_time
+    pico_multicore
     hardware_watchdog
     hardware_uart
     hardware_gpio
-    common           
+    common
 )
 
 # Optional Wi-Fi support if using CYW43 chip
