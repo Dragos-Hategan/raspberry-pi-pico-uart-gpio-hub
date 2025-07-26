@@ -66,19 +66,27 @@ void get_uart_buffer(uart_inst_t *uart, char *buffer, uint8_t buffer_size, uint3
  *
  * @return int Returns `PICO_OK` on success, or `-1` if no LED config is found.
  */
-int pico_led_init(void);
+int pico_onboard_led_init(void);
 
 /**
  * @brief Turns the onboard LED on or off.
  * 
  * @param led_on true to turn on the LED, false to turn it off
  */
-void pico_set_led(bool state);
+void pico_set_onboard_led(bool state);
 
 /**
  * @brief Blinks the onboard LED 5 times with a defined delay.
  */
 void blink_onboard_led(void);
+
+/**
+ * @brief Performs a quick blink of the onboard LED.
+ *
+ * Turns the onboard LED on, waits for a short delay (`FAST_LED_DELAY_MS`),
+ * then turns it off. Used as a visual indicator for events like client pings.
+ */
+void fast_blink_onboard_led(void);
 
 /**
  * @brief Resets the TX and RX pins to default SIO mode.
@@ -97,6 +105,6 @@ static inline void reset_gpio_pins(uart_pin_pair_t pin_pair){
  *
  * Turns on the onboard LED and sets up the USB serial connection.
  */
-void init_led_and_usb(void);
+void init_onboard_led_and_usb(void);
 
 #endif

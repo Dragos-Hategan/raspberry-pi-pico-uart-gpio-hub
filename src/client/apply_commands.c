@@ -18,24 +18,28 @@
 #include "functions.h"
 
 /**
- * @brief Applies a GPIO command based on a received byte pair.
+ * @brief Applies an action to a GPIO pin or handles control flags based on a received byte pair.
  *
- * If the byte pair matches the reset trigger, a watchdog reset is initiated.
- * Otherwise, the function initializes the target GPIO pin, sets it as output,
- * and writes the desired value.
+ * Interprets the two-byte input and performs one of the following:
+ * - If both bytes match `TRIGGER_RESET_FLAG_NUMBER`, triggers a full system reset via watchdog.
+ * - If both bytes match `BLINK_ONBOARD_LED_FLAG_NUMBER`, performs a fast onboard LED blink.
+ * - Otherwise, treats the bytes as:
+ *    - [0] = GPIO pin number
+ *    - [1] = Logic level (0 = LOW, 1 = HIGH)
+ *   and applies the command by setting the pin direction and value.
  *
- * @param received_number_pair A pointer to a 2-byte array:
- *        - [0] = GPIO number
- *        - [1] = Value (0 = LOW, 1 = HIGH)
+ * @param received_number_pair Pointer to a 2-byte array containing the command.
  */
 static void apply_command(uint8_t *received_number_pair){
     if (received_number_pair[0] == TRIGGER_RESET_FLAG_NUMBER && received_number_pair[1] == TRIGGER_RESET_FLAG_NUMBER){
         watchdog_reboot(0, 0, 0);
+    }else if (received_number_pair[0] == BLINK_ONBOARD_LED_FLAG_NUMBER && received_number_pair[1] == BLINK_ONBOARD_LED_FLAG_NUMBER){
+        fast_blink_onboard_led();
+    }else{
+        gpio_init(received_number_pair[0]);
+        gpio_set_dir(received_number_pair[0], GPIO_OUT); 
+        gpio_put(received_number_pair[0], received_number_pair[1]);
     }
-
-    gpio_init(received_number_pair[0]);
-    gpio_set_dir(received_number_pair[0], GPIO_OUT); 
-    gpio_put(received_number_pair[0], received_number_pair[1]);
 }
 
 void client_listen_for_commands(void){

@@ -67,7 +67,7 @@ void get_uart_buffer(uart_inst_t* uart, char* buf, uint8_t buffer_size, uint32_t
     buf[idx] = '\0';  
 }
 
-int pico_led_init(void) {
+int pico_onboard_led_init(void) {
 #if defined(CYW43_WL_GPIO_LED_PIN)
     return cyw43_arch_init();
 #elif defined(PICO_DEFAULT_LED_PIN)
@@ -79,7 +79,7 @@ int pico_led_init(void) {
 #endif
 }
 
-void pico_set_led(bool led_on) {
+void pico_set_onboard_led(bool led_on) {
 #if defined(CYW43_WL_GPIO_LED_PIN)
     cyw43_arch_gpio_put(CYW43_WL_GPIO_LED_PIN, led_on);
 #elif defined(PICO_DEFAULT_LED_PIN)
@@ -90,16 +90,22 @@ void pico_set_led(bool led_on) {
 void blink_onboard_led(void){
     int blink_iterations = 5;
     while (blink_iterations--){
-        pico_set_led(false);
+        pico_set_onboard_led(false);
         sleep_ms(LED_DELAY_MS);
-        pico_set_led(true);
+        pico_set_onboard_led(true);
         sleep_ms(LED_DELAY_MS);
     }
-    pico_set_led(false);
+    pico_set_onboard_led(false);
 }
 
-void init_led_and_usb(void){
-    pico_led_init();
-    pico_set_led(true);    
+void fast_blink_onboard_led(void){
+    pico_set_onboard_led(true);
+    sleep_ms(FAST_LED_DELAY_MS);
+    pico_set_onboard_led(false);
+}
+
+void init_onboard_led_and_usb(void){
+    pico_onboard_led_init();
+    pico_set_onboard_led(true);    
     stdio_usb_init();
 }

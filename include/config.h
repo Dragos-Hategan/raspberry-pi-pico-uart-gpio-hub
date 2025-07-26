@@ -43,6 +43,10 @@
 #define LED_DELAY_MS 125
 #endif
 
+#ifndef FAST_LED_DELAY_MS
+#define FAST_LED_DELAY_MS 25
+#endif
+
 /// Timeout in milliseconds for receiving a UART connection request.
 /// Minimum effective value is ~300ms. 500ms provides more robustness.
 #ifndef SERVER_TIMEOUT_MS
@@ -80,5 +84,8 @@
 #define TRIGGER_RESET_FLAG_NUMBER 77
 #endif
 
+#ifndef BLINK_ONBOARD_LED_FLAG_NUMBER
+#define BLINK_ONBOARD_LED_FLAG_NUMBER 66
+#endif
 
 #endif

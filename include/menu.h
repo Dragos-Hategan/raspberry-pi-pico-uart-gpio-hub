@@ -21,8 +21,16 @@
 #define PERIODIC_CONSOLE_CHECK_TIME_MS 2000
 #endif
 
-#ifndef INTERCORE_WAKEUP_MESSAGE
-#define INTERCORE_WAKEUP_MESSAGE 0xBFFEBFFE
+#ifndef PERIODIC_ONBOARD_LED_BLINK_TIME_MS
+#define PERIODIC_ONBOARD_LED_BLINK_TIME_MS 2500
+#endif
+
+#ifndef DUMP_BUFFER_WAKEUP_MESSAGE
+#define DUMP_BUFFER_WAKEUP_MESSAGE 0xBFFEBFFE
+#endif
+
+#ifndef BLINK_LED_WAKEUP_MESSAGE
+#define BLINK_LED_WAKEUP_MESSAGE 0xEDEDEDED
 #endif
 
 extern volatile char reconnection_buffer[BUFFER_MAX_NUMBER_OF_STRINGS][BUFFER_MAX_STRING_SIZE];
@@ -38,7 +46,7 @@ extern volatile uint32_t reconnection_buffer_index;
  */
 void server_display_menu(void);
 
-void print_buffer();
+void periodic_wakeup();
 
 void print_and_update_buffer(const char *string);
 
