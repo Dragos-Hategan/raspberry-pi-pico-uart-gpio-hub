@@ -43,6 +43,10 @@
 #define LED_DELAY_MS 125
 #endif
 
+#ifndef FAST_LED_DELAY_MS
+#define FAST_LED_DELAY_MS 25
+#endif
+
 /// Timeout in milliseconds for receiving a UART connection request.
 /// Minimum effective value is ~300ms. 500ms provides more robustness.
 #ifndef SERVER_TIMEOUT_MS

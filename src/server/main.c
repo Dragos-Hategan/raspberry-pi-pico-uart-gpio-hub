@@ -23,6 +23,7 @@
 #include "server.h"
 #include "menu.h"
 
+static repeating_timer_t repeating_timer;
 volatile bool usb_connected = false;
 volatile bool usb_disconected = false;
 
@@ -64,6 +65,15 @@ static void setup_usb_irq(void) {
     }
 }
 
+static bool short_onboard_led_blink(repeating_timer_t *repeating_timer){
+    multicore_fifo_push_blocking(BLINK_LED_WAKEUP_MESSAGE);
+    return true;
+}
+
+static void setup_repeating_timer_for_periodic_onboard_led_blink(){
+    add_repeating_timer_ms(PERIODIC_ONBOARD_LED_BLINK_TIME_MS, short_onboard_led_blink, NULL, &repeating_timer);
+}
+
 /**
  * @brief Attempts to discover all active UART clients.
  *
@@ -81,8 +91,9 @@ static void find_clients(void){
     server_load_running_states_to_active_clients();
 
     setup_usb_irq();
+    setup_repeating_timer_for_periodic_onboard_led_blink();
 
-    multicore_launch_core1(print_buffer);
+    multicore_launch_core1(periodic_wakeup);
 
     while(true){
         if (stdio_usb_connected()){

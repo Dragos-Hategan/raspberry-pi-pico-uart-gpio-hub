@@ -98,6 +98,12 @@ void blink_onboard_led(void){
     pico_set_led(false);
 }
 
+void fast_blink_onboard_led(void){
+    pico_set_led(true);
+    sleep_ms(FAST_LED_DELAY_MS);
+    pico_set_led(false);
+}
+
 void init_led_and_usb(void){
     pico_led_init();
     pico_set_led(true);    

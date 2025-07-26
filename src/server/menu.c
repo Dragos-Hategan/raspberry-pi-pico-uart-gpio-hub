@@ -19,6 +19,7 @@
 #include "hardware/sync.h"
 #include "hardware/watchdog.h"
 
+#include "functions.h"
 #include "input.h"
 #include "server.h"
 #include "menu.h"
@@ -316,7 +317,7 @@ static bool check_console_state(repeating_timer_t *repeating_timer){
     }else if (console_disconnected && stdio_usb_connected()){
         console_connected = true;
         console_disconnected = false;
-        multicore_fifo_push_blocking(INTERCORE_WAKEUP_MESSAGE);
+        multicore_fifo_push_blocking(DUMP_BUFFER_WAKEUP_MESSAGE);
     }
     return true;
 }
@@ -339,15 +340,18 @@ static void setup_repeating_timer_for_console_activity(){
  * Blocks using `__wfe()` until it receives an inter-core message via FIFO.
  * When triggered, it prints the contents of `reconnection_buffer` with a short delay.
  */
-void print_buffer(){
+void periodic_wakeup(){
     while (true) {
         __wfe();
         uint32_t cmd = multicore_fifo_pop_blocking();
-        if (cmd == INTERCORE_WAKEUP_MESSAGE) {
+        if (cmd == DUMP_BUFFER_WAKEUP_MESSAGE) {
             for (uint8_t index = 0; index < reconnection_buffer_index; index++) {
                 printf("%s", reconnection_buffer[index]);
                 sleep_ms(2); 
             }
+        }
+        if (cmd == BLINK_LED_WAKEUP_MESSAGE){
+            fast_blink_onboard_led();
         }
     }
 }

@@ -80,6 +80,8 @@ void pico_set_led(bool state);
  */
 void blink_onboard_led(void);
 
+void fast_blink_onboard_led(void);
+
 /**
  * @brief Resets the TX and RX pins to default SIO mode.
  *
