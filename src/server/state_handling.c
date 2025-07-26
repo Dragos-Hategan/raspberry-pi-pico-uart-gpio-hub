@@ -47,7 +47,7 @@ void server_print_client_preset_configurations(const client_t *client){
     }
 }
 
-void send_flag_message(const uint8_t FLAG_MESSAGE){
+static void send_flag_message(const uint8_t FLAG_MESSAGE){
        for (uint8_t client_index = 0; client_index < active_server_connections_number; client_index++){
         uart_inst_t* uart_instance = active_uart_server_connections[client_index].uart_instance;
         uart_pin_pair_t pin_pair = active_uart_server_connections[client_index].pin_pair;

@@ -25,7 +25,7 @@
  * @return Unused (program loops forever).
  */
 int main(void){
-    init_led_and_usb();
+    init_onboard_led_and_usb();
 
     while(!client_detect_uart_connection()){
         tight_loop_contents();

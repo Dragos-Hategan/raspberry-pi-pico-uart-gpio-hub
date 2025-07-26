@@ -125,6 +125,8 @@ void server_print_client_preset_configurations(const client_t * client);
  */
 void signal_reset_for_all_clients();
 
+void send_fast_blink_onboard_led_to_clients();
+
 /**
  * @brief Configures the devices for a given client and preset configuration index.
  *

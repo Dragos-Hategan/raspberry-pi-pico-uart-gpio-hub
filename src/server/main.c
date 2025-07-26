@@ -48,7 +48,6 @@ static void usb_irq_handler(void) {
         signal_reset_for_all_clients();
         watchdog_reboot(0, 0, 0);
     }
-
 }
 
 /**
@@ -89,7 +88,9 @@ static void find_clients(void){
 
     blink_onboard_led();
     server_load_running_states_to_active_clients();
+}
 
+static void last_inits_and_display_launch(){
     setup_usb_irq();
     setup_repeating_timer_for_periodic_onboard_led_blink();
 
@@ -100,6 +101,12 @@ static void find_clients(void){
             server_display_menu();
         }
     }
+}
+
+static void entry_point(){
+    init_onboard_led_and_usb();
+    find_clients();
+    last_inits_and_display_launch();
 }
 
 /**
@@ -118,10 +125,8 @@ static void find_clients(void){
 int main(void){
     if (watchdog_caused_reboot()){
         sleep_ms(100);
-        init_led_and_usb();
-        find_clients();
+        entry_point();
     }else{
-        init_led_and_usb();
-        find_clients();
+        entry_point();
     }
 }
