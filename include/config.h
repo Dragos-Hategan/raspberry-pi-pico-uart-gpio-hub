@@ -84,5 +84,8 @@
 #define TRIGGER_RESET_FLAG_NUMBER 77
 #endif
 
+#ifndef BLINK_ONBOARD_LED_FLAG_NUMBER
+#define BLINK_ONBOARD_LED_FLAG_NUMBER 66
+#endif
 
 #endif

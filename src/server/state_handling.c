@@ -47,18 +47,26 @@ void server_print_client_preset_configurations(const client_t *client){
     }
 }
 
-void signal_reset_for_all_clients(){
-    for (uint8_t client_index = 0; client_index < active_server_connections_number; client_index++){
+void send_flag_message(const uint8_t FLAG_MESSAGE){
+       for (uint8_t client_index = 0; client_index < active_server_connections_number; client_index++){
         uart_inst_t* uart_instance = active_uart_server_connections[client_index].uart_instance;
         uart_pin_pair_t pin_pair = active_uart_server_connections[client_index].pin_pair;
         uart_init_with_pins(uart_instance, pin_pair, DEFAULT_BAUDRATE);
 
         char msg[8];
-        snprintf(msg, sizeof(msg), "[%d,%d]", TRIGGER_RESET_FLAG_NUMBER, TRIGGER_RESET_FLAG_NUMBER);
+        snprintf(msg, sizeof(msg), "[%d,%d]", FLAG_MESSAGE, FLAG_MESSAGE);
         uart_puts(uart_instance, msg);
         uart_tx_wait_blocking(uart_instance);
         reset_gpio_pins(pin_pair);
-    }
+    } 
+}
+
+void signal_reset_for_all_clients(){
+    send_flag_message(TRIGGER_RESET_FLAG_NUMBER);
+}
+
+void send_fast_blink_onboard_led_to_clients(){
+    send_flag_message(BLINK_ONBOARD_LED_FLAG_NUMBER);
 }
 
 /**

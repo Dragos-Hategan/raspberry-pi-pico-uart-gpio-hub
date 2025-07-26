@@ -31,11 +31,13 @@
 static void apply_command(uint8_t *received_number_pair){
     if (received_number_pair[0] == TRIGGER_RESET_FLAG_NUMBER && received_number_pair[1] == TRIGGER_RESET_FLAG_NUMBER){
         watchdog_reboot(0, 0, 0);
+    }else if (received_number_pair[0] == BLINK_ONBOARD_LED_FLAG_NUMBER && received_number_pair[1] == BLINK_ONBOARD_LED_FLAG_NUMBER){
+        fast_blink_onboard_led();
+    }else{
+        gpio_init(received_number_pair[0]);
+        gpio_set_dir(received_number_pair[0], GPIO_OUT); 
+        gpio_put(received_number_pair[0], received_number_pair[1]);
     }
-
-    gpio_init(received_number_pair[0]);
-    gpio_set_dir(received_number_pair[0], GPIO_OUT); 
-    gpio_put(received_number_pair[0], received_number_pair[1]);
 }
 
 void client_listen_for_commands(void){
