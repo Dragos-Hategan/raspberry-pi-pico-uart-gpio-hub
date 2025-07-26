@@ -13,6 +13,7 @@
 
 #include <stdbool.h>
 
+#include "pico/multicore.h"
 #include "hardware/watchdog.h"
 #include "hardware/irq.h"
 #include "hardware/regs/usb.h"
@@ -44,8 +45,7 @@ static void usb_irq_handler(void) {
     }
     if (usb_disconected && (usb_hw->sie_status & USB_SIE_STATUS_CONNECTED_BITS)){
         signal_reset_for_all_clients();
-        watchdog_enable(1, 1);
-        while (true) tight_loop_contents();
+        watchdog_reboot(0, 0, 0);
     }
 
 }
@@ -81,6 +81,8 @@ static void find_clients(void){
     server_load_running_states_to_active_clients();
 
     setup_usb_irq();
+
+    multicore_launch_core1(print_buffer);
 
     while(true){
         if (stdio_usb_connected()){

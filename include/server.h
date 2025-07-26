@@ -13,6 +13,7 @@
 
 #include "hardware/uart.h"
 
+#include "menu.h"
 #include "types.h"
 #include "config.h"
 
@@ -64,13 +65,17 @@ inline void find_corect_client_index_from_flash(uint32_t *flash_client_index, ui
  */
 inline void server_print_gpio_state(uint8_t gpio_index, const client_state_t *client_state){
     if (client_state->devices[gpio_index].gpio_number == UART_CONNECTION_FLAG_NUMBER){
-        printf("%2u. UART connection, no access.\n", gpio_index + 1);
+        char string[BUFFER_MAX_STRING_SIZE];
+        snprintf(string, sizeof(string), "%2u. UART connection, no access.\n", gpio_index + 1);
+        print_and_update_buffer(string);
     }else{
-        printf("%2u. GPIO_NO: %2u  Power: %s\n",
+        char string[BUFFER_MAX_STRING_SIZE];
+        snprintf(string, sizeof(string), "%2u. GPIO_NO: %2u  Power: %s\n",
             gpio_index + 1,
             client_state->devices[gpio_index].gpio_number,
             client_state->devices[gpio_index].is_on ? "ON" : "OFF"
         );
+        print_and_update_buffer(string);
     }
 }
 
