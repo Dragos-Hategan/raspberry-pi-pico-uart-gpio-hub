@@ -103,11 +103,12 @@ static bool read_uint32_line(uint32_t *out){
             if (len < (int)(sizeof(buffer) - 1)) {
                 buffer[len++] = (char)ch;
                 buffer[len] = '\0';
-                putchar(ch);
+                char tmp[2] = {(char)ch, '\0'};
+                print_and_update_buffer(tmp);
             }
         }
     }
-    putchar('\n');
+    print_and_update_buffer("\n");
     return string_to_uint32(buffer, out);
 }
 
@@ -218,7 +219,8 @@ bool choose_client(uint32_t *client_index){
             index + 1,
             index + 1,
             active_uart_server_connections[index].pin_pair.tx,
-            active_uart_server_connections[index].pin_pair.rx);
+            active_uart_server_connections[index].pin_pair.rx
+        );
         print_and_update_buffer(string);
     }
 
