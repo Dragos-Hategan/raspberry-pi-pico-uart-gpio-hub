@@ -9,6 +9,10 @@
 #ifndef MENU_H
 #define MENU_H
 
+extern volatile char reconnection_buffer[10][10];
+extern volatile uint32_t reconnection_buffer_len;
+extern volatile uint32_t reconnection_buffer_index;
+
 /**
  * @brief Displays the UART server's command-line interface menu.
  *
@@ -48,6 +52,11 @@ inline void display_menu_options(){
         "8. Clear Screen\n"
         "9. Restart System\n"
     );
+}
+
+void print_and_update_buffer(char *string){
+    printf(string);
+    
 }
 
 #endif

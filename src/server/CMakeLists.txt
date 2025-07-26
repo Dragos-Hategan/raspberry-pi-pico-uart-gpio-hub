@@ -20,6 +20,7 @@ target_include_directories(server PRIVATE
 # Link libraries: SDK + peripherals + common logic
 target_link_libraries(server 
     pico_stdlib
+    pico_time
     hardware_watchdog
     hardware_uart
     hardware_gpio

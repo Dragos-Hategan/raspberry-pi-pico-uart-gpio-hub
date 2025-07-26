@@ -13,13 +13,21 @@
 
 #include <string.h>
 
+#include "pico/time.h"
+#include "pico/stdio_usb.h"
 #include "hardware/watchdog.h"
 
 #include "input.h"
 #include "server.h"
 #include "menu.h"
 
-bool first_display = true;
+static bool first_display = true;
+static volatile bool console_connected = false;
+static volatile bool console_disconnected = false;
+static repeating_timer_t repeating_timer;
+volatile char reconnection_buffer[10][10] = {0};
+volatile uint32_t reconnection_buffer_len = 0;
+volatile uint32_t reconnection_buffer_index = 0;
 
 void server_display_menu(void);
 
@@ -250,6 +258,23 @@ static void read_menu_option(uint32_t *menu_option){
     }
 }
 
+static bool check_console_state(repeating_timer_t *repeating_timer){
+    if (console_connected && !stdio_usb_connected()){
+        console_connected = false;
+        console_disconnected = true;
+    }else if (console_disconnected && stdio_usb_connected()){
+        // print buffer
+        console_connected = true;
+        console_disconnected = false;
+    }
+    return true;
+}
+
+static void setup_repeating_timer_for_console_activity(){
+    console_connected = true;
+    add_repeating_timer_ms(2000, check_console_state, NULL, &repeating_timer);
+}
+
 /**
  * @brief Entry point for the USB menu system.
  *
@@ -257,6 +282,8 @@ static void read_menu_option(uint32_t *menu_option){
  * Processes user selection via `select_action(menu_option)`.
  */
 void server_display_menu(void){
+    setup_repeating_timer_for_console_activity();
+
     if (first_display){ 
         first_display = false;
         print_delimitor();
