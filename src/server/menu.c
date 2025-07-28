@@ -336,8 +336,13 @@ void periodic_wakeup(){
             }
         }
         if (cmd == BLINK_LED_WAKEUP_MESSAGE){
-            fast_blink_onboard_led();
-            send_fast_blink_onboard_led_to_clients();
+            #if PERIODIC_ONBOARD_LED_BLINK_SERVER
+                fast_blink_onboard_led();
+            #endif
+            
+            #if PERIODIC_ONBOARD_LED_BLINK_ALL_CLIENTS
+                send_fast_blink_onboard_led_to_clients();
+            #endif
         }
     }
 }

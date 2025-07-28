@@ -112,7 +112,9 @@ static void last_inits_and_display_launch(){
         setup_usb_irq();
     #endif
 
-    setup_repeating_timer_for_periodic_onboard_led_blink();
+    #if PERIODIC_ONBOARD_LED_BLINK_SERVER || PERIODIC_ONBOARD_LED_BLINK_ALL_CLIENTS
+        setup_repeating_timer_for_periodic_onboard_led_blink();
+    #endif
 
     multicore_launch_core1(periodic_wakeup);
 
