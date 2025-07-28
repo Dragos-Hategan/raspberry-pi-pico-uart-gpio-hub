@@ -42,7 +42,7 @@ void server_display_menu(void);
  *
  * @param string The string to print and store.
  */
-void print_and_update_buffer(const char *string){
+void printf_and_update_buffer(const char *string){
     printf("%s", string);
 
     if (BUFFER_MAX_NUMBER_OF_STRINGS - 1 == reconnection_buffer_index){
@@ -136,7 +136,7 @@ static void build_preset_configuration(void){
     client_input_flags.is_building_preset = true;
     read_client_data(&input_client_data, client_input_flags);
 
-    print_and_update_buffer("\nBuilding Configuration Complete.\n");
+    printf_and_update_buffer("\nBuilding Configuration Complete.\n");
 }
 
 /**
@@ -185,7 +185,7 @@ static void toggle_device(void){
     
         char string[BUFFER_MAX_STRING_SIZE];
         snprintf(string, sizeof(string), "\nDevice[%u] Toggled.\n", input_client_data.device_index);
-        print_and_update_buffer(string);
+        printf_and_update_buffer(string);
     }
 }
 
@@ -217,7 +217,7 @@ static void set_client_device(void){
         snprintf(string, sizeof(string), "\nDevice[%u] %s.\n",
             input_client_data.device_index,
             input_client_data.device_state == 1 ? "ON" : "OFF");
-        print_and_update_buffer(string);
+        printf_and_update_buffer(string);
     }
 }
 
@@ -227,14 +227,14 @@ static void set_client_device(void){
  * Displays each valid UART connection with its associated TX/RX pins and UART instance number.
  */
 static inline void display_active_clients(void){    
-    print_and_update_buffer("\nThese are the active client connections:\n");
+    printf_and_update_buffer("\nThese are the active client connections:\n");
     for (uint8_t index = 1; index <= active_server_connections_number; index++){
         char string[BUFFER_MAX_STRING_SIZE];
         snprintf(string, sizeof(string), "%u. GPIO Pin Pair=[%u,%u]. UART Instance=uart%d.\n", index, 
             active_uart_server_connections[index - 1].pin_pair.tx,
             active_uart_server_connections[index - 1].pin_pair.rx,
             UART_NUM(active_uart_server_connections[index - 1].uart_instance));
-        print_and_update_buffer(string);
+        printf_and_update_buffer(string);
     }
 }
 
@@ -255,7 +255,7 @@ static void select_action(uint32_t choice){
         case 8: clear_screen(); break;
         case 9: restart_application(); break;
 
-        default: print_and_update_buffer("Out of range. Try again.\n"); break;
+        default: printf_and_update_buffer("Out of range. Try again.\n"); break;
     }
 }
     
@@ -280,7 +280,7 @@ static void read_menu_option(uint32_t *menu_option){
             }
         }else{
             print_input_error();
-            print_and_update_buffer("\n");
+            printf_and_update_buffer("\n");
         }
     }
 }
@@ -336,8 +336,13 @@ void periodic_wakeup(){
             }
         }
         if (cmd == BLINK_LED_WAKEUP_MESSAGE){
-            fast_blink_onboard_led();
-            send_fast_blink_onboard_led_to_clients();
+            #if PERIODIC_ONBOARD_LED_BLINK_SERVER
+                fast_blink_onboard_led();
+            #endif
+            
+            #if PERIODIC_ONBOARD_LED_BLINK_ALL_CLIENTS
+                send_fast_blink_onboard_led_to_clients();
+            #endif
         }
     }
 }
@@ -354,9 +359,9 @@ void server_display_menu(void){
     if (first_display){ 
         first_display = false;
         print_delimitor();
-        print_and_update_buffer("Welcome!");
+        printf_and_update_buffer("Welcome!");
         display_active_clients();
-        print_and_update_buffer("\n");
+        printf_and_update_buffer("\n");
     }
 
     uint32_t menu_option;

@@ -48,36 +48,36 @@ void server_display_menu(void);
 
 void periodic_wakeup();
 
-void print_and_update_buffer(const char *string);
+void printf_and_update_buffer(const char *string);
 
 inline void print_cancel_message(void){
-    print_and_update_buffer("0. cancel\n");
+    printf_and_update_buffer("0. cancel\n");
 }
 
 inline void print_input_error(void){
-    print_and_update_buffer("Invalid input or overflow. Try again.\n");
+    printf_and_update_buffer("Invalid input or overflow. Try again.\n");
 }
 
 inline void print_delimitor(void){
-    print_and_update_buffer("\n****************************************************\n\n");
+    printf_and_update_buffer("\n****************************************************\n\n");
 }
 
 inline void clear_screen(){
-    print_and_update_buffer("\033[2J");    // delete screen
-    print_and_update_buffer("\033[H");     // move cursor to upper left screen
+    printf_and_update_buffer("\033[2J");    // delete screen
+    printf_and_update_buffer("\033[H");     // move cursor to upper left screen
 }
 
 inline void display_menu_options(){
-    print_and_update_buffer("Options:\n");
-    print_and_update_buffer("1. Display Clients\n");
-    print_and_update_buffer("2. Set Client's Device\n");
-    print_and_update_buffer("3. Toggle Client's Device\n");
-    print_and_update_buffer("4. Save Running State Into Preset Configuration\n");
-    print_and_update_buffer("5. Build And Save Preset Configuration\n");
-    print_and_update_buffer("6. Load Preset Configuration Into Running State\n");
-    print_and_update_buffer("7. Reset Configuration\n");
-    print_and_update_buffer("8. Clear Screen\n");
-    print_and_update_buffer("9. Restart System\n");
+    printf_and_update_buffer("Options:\n");
+    printf_and_update_buffer("1. Display Clients\n");
+    printf_and_update_buffer("2. Set Client's Device\n");
+    printf_and_update_buffer("3. Toggle Client's Device\n");
+    printf_and_update_buffer("4. Save Running State Into Preset Configuration\n");
+    printf_and_update_buffer("5. Build And Save Preset Configuration\n");
+    printf_and_update_buffer("6. Load Preset Configuration Into Running State\n");
+    printf_and_update_buffer("7. Reset Configuration\n");
+    printf_and_update_buffer("8. Clear Screen\n");
+    printf_and_update_buffer("9. Restart System\n");
 }
 
 #endif

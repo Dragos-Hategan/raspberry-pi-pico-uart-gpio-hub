@@ -67,7 +67,7 @@ inline void server_print_gpio_state(uint8_t gpio_index, const client_state_t *cl
     if (client_state->devices[gpio_index].gpio_number == UART_CONNECTION_FLAG_NUMBER){
         char string[BUFFER_MAX_STRING_SIZE];
         snprintf(string, sizeof(string), "%2u. UART connection, no access.\n", gpio_index + 1);
-        print_and_update_buffer(string);
+        printf_and_update_buffer(string);
     }else{
         char string[BUFFER_MAX_STRING_SIZE];
         snprintf(string, sizeof(string), "%2u. GPIO_NO: %2u  Power: %s\n",
@@ -75,7 +75,7 @@ inline void server_print_gpio_state(uint8_t gpio_index, const client_state_t *cl
             client_state->devices[gpio_index].gpio_number,
             client_state->devices[gpio_index].is_on ? "ON" : "OFF"
         );
-        print_and_update_buffer(string);
+        printf_and_update_buffer(string);
     }
 }
 

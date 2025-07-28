@@ -29,21 +29,21 @@ void server_print_state_devices(const client_state_t *client_state){
 }
 
 void server_print_running_client_state(const client_t *client){
-    print_and_update_buffer("Running Client State Devices:\n");
+    printf_and_update_buffer("Running Client State Devices:\n");
     server_print_state_devices(&client->running_client_state);
 }
 
 void server_print_client_preset_configuration(const client_t *client, uint8_t client_preset_index){
     char string[BUFFER_MAX_STRING_SIZE];
     snprintf(string, sizeof(string), "Preset Config[%u] Devices:\n", client_preset_index + 1);
-    print_and_update_buffer(string);
+    printf_and_update_buffer(string);
     server_print_state_devices(&client->preset_configs[client_preset_index]);
 }
 
 void server_print_client_preset_configurations(const client_t *client){
     for (uint32_t preset_config_index = 0; preset_config_index < NUMBER_OF_POSSIBLE_PRESETS; preset_config_index++){
         server_print_client_preset_configuration(client, preset_config_index);
-        print_and_update_buffer("\n");
+        printf_and_update_buffer("\n");
     }
 }
 
@@ -228,7 +228,7 @@ void reset_running_configuration(uint32_t flash_client_index){
 
     save_server_state(&state);
 
-    print_and_update_buffer("\nRunning Configuration Reset.\n");
+    printf_and_update_buffer("\nRunning Configuration Reset.\n");
 }
 
 void reset_preset_configuration(uint32_t flash_client_index, uint32_t flash_configuration_index){
@@ -240,7 +240,7 @@ void reset_preset_configuration(uint32_t flash_client_index, uint32_t flash_conf
 
     char string[BUFFER_MAX_STRING_SIZE];
     snprintf(string, sizeof(string), "\nPreset Configuration [%u] Reset.\n", flash_configuration_index);
-    print_and_update_buffer(string);
+    printf_and_update_buffer(string);
 }
 
 void reset_all_client_data(uint32_t flash_client_index){
@@ -257,7 +257,7 @@ void reset_all_client_data(uint32_t flash_client_index){
     }
 
     save_server_state(&state);
-    print_and_update_buffer("\nAll Client Data Reset.\n");
+    printf_and_update_buffer("\nAll Client Data Reset.\n");
 }
 
 void load_configuration_into_running_state(uint32_t flash_configuration_index, uint32_t flash_client_index){
@@ -277,7 +277,7 @@ void load_configuration_into_running_state(uint32_t flash_configuration_index, u
 
     char string[BUFFER_MAX_STRING_SIZE];
     snprintf(string, sizeof(string), "\nConfiguration Preset[%u] Loaded!\n", flash_configuration_index + 1);
-    print_and_update_buffer(string);
+    printf_and_update_buffer(string);
 }
 
 void save_running_configuration_into_preset_configuration(uint32_t flash_configuration_index, uint32_t flash_client_index){
@@ -294,7 +294,7 @@ void save_running_configuration_into_preset_configuration(uint32_t flash_configu
 
     char string[BUFFER_MAX_STRING_SIZE];
     snprintf(string, sizeof(string), "\nConfiguration saved in Preset[%u].\n", flash_configuration_index + 1);
-    print_and_update_buffer(string);
+    printf_and_update_buffer(string);
 }
 
 /**

@@ -108,8 +108,13 @@ static void find_clients(void){
  * waiting for USB CLI connections to launch the user interface.
  */
 static void last_inits_and_display_launch(){
-    setup_usb_irq();
-    setup_repeating_timer_for_periodic_onboard_led_blink();
+    #if RESTART_SYSTEM_AT_USB_RECONNECTION
+        setup_usb_irq();
+    #endif
+
+    #if PERIODIC_ONBOARD_LED_BLINK_SERVER || PERIODIC_ONBOARD_LED_BLINK_ALL_CLIENTS
+        setup_repeating_timer_for_periodic_onboard_led_blink();
+    #endif
 
     multicore_launch_core1(periodic_wakeup);
 
