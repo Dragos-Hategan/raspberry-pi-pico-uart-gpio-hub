@@ -28,6 +28,18 @@ target_link_libraries(server
     common
 )
 
+if(DEFINED PERIODIC_ONBOARD_LED_BLINK_SERVER)
+    target_compile_definitions(server PRIVATE PERIODIC_ONBOARD_LED_BLINK_SERVER=${PERIODIC_ONBOARD_LED_BLINK_SERVER})
+endif()
+
+if(DEFINED RESTART_SYSTEM_AT_USB_RECONNECTION)
+    target_compile_definitions(server PRIVATE RESTART_SYSTEM_AT_USB_RECONNECTION=${RESTART_SYSTEM_AT_USB_RECONNECTION})
+endif()
+
+if(DEFINED PERIODIC_ONBOARD_LED_BLINK_ALL_CLIENTS)
+    target_compile_definitions(server PRIVATE PERIODIC_ONBOARD_LED_BLINK_ALL_CLIENTS=${PERIODIC_ONBOARD_LED_BLINK_ALL_CLIENTS})
+endif()
+
 # Optional Wi-Fi support if using CYW43 chip
 if(PICO_CYW43_SUPPORTED)
     target_link_libraries(server pico_cyw43_arch_none)
