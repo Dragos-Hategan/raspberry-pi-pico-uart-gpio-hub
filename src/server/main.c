@@ -108,7 +108,10 @@ static void find_clients(void){
  * waiting for USB CLI connections to launch the user interface.
  */
 static void last_inits_and_display_launch(){
-    setup_usb_irq();
+    #if RESTART_SYSTEM_AT_USB_RECONNECTION
+        setup_usb_irq();
+    #endif
+
     setup_repeating_timer_for_periodic_onboard_led_blink();
 
     multicore_launch_core1(periodic_wakeup);
