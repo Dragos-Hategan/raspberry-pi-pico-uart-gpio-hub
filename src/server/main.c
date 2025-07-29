@@ -24,45 +24,6 @@
 #include "menu.h"
 
 static repeating_timer_t repeating_timer;
-volatile bool usb_connected = false;
-volatile bool usb_disconected = false;
-
-/**
- * @brief USB interrupt handler for VBUS connection detection.
- *
- * Monitors the USB connection status using `usb_hw->sie_status` flags.
- * - Sets `usb_connected` when USB becomes connected.
- * - Sets `usb_disconected` when USB is disconnected.
- * - If a disconnection followed by a reconnection is detected,
- *   triggers a reset sequence for all clients and enables watchdog reset.
- */
-static void usb_irq_handler(void) {
-    if (!usb_connected && (usb_hw->sie_status & USB_SIE_STATUS_CONNECTED_BITS)){
-        usb_connected = true;
-    }
-    if (usb_connected && !(usb_hw->sie_status & USB_SIE_STATUS_CONNECTED_BITS)){
-        usb_connected = false;
-        usb_disconected = true;
-    }
-    if (usb_disconected && (usb_hw->sie_status & USB_SIE_STATUS_CONNECTED_BITS)){
-        signal_reset_for_all_clients();
-        watchdog_reboot(0, 0, 0);
-    }
-}
-
-/**
- * @brief Configures USB interrupt handling for VBUS detection.
- *
- * Enables the VBUS detect interrupt and attaches `usb_irq_handler`
- * to the USB controller IRQ with default priority.
- */
-static void setup_usb_irq(void) {
-    hw_set_bits(&usb_hw->inte, USB_INTE_VBUS_DETECT_BITS);
-    irq_add_shared_handler(USBCTRL_IRQ, usb_irq_handler, PICO_SHARED_IRQ_HANDLER_DEFAULT_ORDER_PRIORITY);
-    if (!irq_is_enabled(USBCTRL_IRQ)){
-        irq_set_enabled(USBCTRL_IRQ, true);
-    }
-}
 
 /**
  * @brief Repeating timer callback to trigger onboard LED blink on core1.
@@ -104,14 +65,10 @@ static void find_clients(void){
 /**
  * @brief Final initialization stage and entry into USB CLI display loop.
  *
- * Sets up USB IRQs, starts the LED timer, launches core1, and enters a loop
+ * Starts the LED timer, launches core1, and enters a loop
  * waiting for USB CLI connections to launch the user interface.
  */
 static void last_inits_and_display_launch(){
-    #if RESTART_SYSTEM_AT_USB_RECONNECTION
-        setup_usb_irq();
-    #endif
-
     #if PERIODIC_ONBOARD_LED_BLINK_SERVER || PERIODIC_ONBOARD_LED_BLINK_ALL_CLIENTS
         setup_repeating_timer_for_periodic_onboard_led_blink();
     #endif
