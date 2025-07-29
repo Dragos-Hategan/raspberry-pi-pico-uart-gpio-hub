@@ -306,14 +306,7 @@ static bool check_console_state(repeating_timer_t *repeating_timer){
     return true;
 }
 
-/**
- * @brief Sets up a repeating timer to monitor USB console connectivity.
- *
- * Initializes the `console_connected` flag and starts a repeating timer that
- * calls `check_console_state()` every `PERIODIC_CONSOLE_CHECK_TIME_MS` milliseconds
- * to detect USB terminal reconnections.
- */
-static void setup_repeating_timer_for_console_activity(){
+void setup_repeating_timer_for_console_activity(){
     console_connected = true;
     add_repeating_timer_ms(PERIODIC_CONSOLE_CHECK_TIME_MS, check_console_state, NULL, &repeating_timer);
 }
@@ -353,9 +346,7 @@ void periodic_wakeup(){
  * Displays welcome and client list on first run, then repeatedly
  * shows menu options and executes user commands.
  */
-void server_display_menu(void){
-    setup_repeating_timer_for_console_activity();
-    
+void server_display_menu(void){    
     if (first_display){ 
         first_display = false;
         print_delimitor();

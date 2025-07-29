@@ -45,8 +45,10 @@ static void usb_irq_handler(void) {
         usb_disconected = true;
     }
     if (usb_disconected && (usb_hw->sie_status & USB_SIE_STATUS_CONNECTED_BITS)){
-        signal_reset_for_all_clients();
-        watchdog_reboot(0, 0, 0);
+        #if RESTART_SYSTEM_AT_USB_RECONNECTION
+            signal_reset_for_all_clients();
+            watchdog_reboot(0, 0, 0);
+        #endif
     }
 }
 
@@ -108,20 +110,22 @@ static void find_clients(void){
  * waiting for USB CLI connections to launch the user interface.
  */
 static void last_inits_and_display_launch(){
-    #if RESTART_SYSTEM_AT_USB_RECONNECTION
-        setup_usb_irq();
-    #endif
+    //setup_usb_irq();
 
     #if PERIODIC_ONBOARD_LED_BLINK_SERVER || PERIODIC_ONBOARD_LED_BLINK_ALL_CLIENTS
-        setup_repeating_timer_for_periodic_onboard_led_blink();
+        //setup_repeating_timer_for_periodic_onboard_led_blink();
     #endif
 
-    multicore_launch_core1(periodic_wakeup);
+    //multicore_launch_core1(periodic_wakeup);
 
+    __wfi();
+    setup_repeating_timer_for_console_activity();
     while(true){
         if (stdio_usb_connected()){
             server_display_menu();
         }
+        blink_onboard_led();
+        blink_onboard_led();
     }
 }
 

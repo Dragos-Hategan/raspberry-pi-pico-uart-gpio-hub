@@ -48,6 +48,15 @@ void server_display_menu(void);
 
 void periodic_wakeup();
 
+/**
+ * @brief Sets up a repeating timer to monitor USB console connectivity.
+ *
+ * Initializes the `console_connected` flag and starts a repeating timer that
+ * calls `check_console_state()` every `PERIODIC_CONSOLE_CHECK_TIME_MS` milliseconds
+ * to detect USB terminal reconnections.
+ */
+void setup_repeating_timer_for_console_activity();
+
 void printf_and_update_buffer(const char *string);
 
 inline void print_cancel_message(void){
