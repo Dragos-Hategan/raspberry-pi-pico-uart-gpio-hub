@@ -353,10 +353,9 @@ void periodic_wakeup(){
  * Displays welcome and client list on first run, then repeatedly
  * shows menu options and executes user commands.
  */
-void server_display_menu(void){
-    setup_repeating_timer_for_console_activity();
-    
+void server_display_menu(void){    
     if (first_display){ 
+        setup_repeating_timer_for_console_activity();
         first_display = false;
         print_delimitor();
         printf_and_update_buffer("Welcome!");
