@@ -22,6 +22,12 @@
 #include "functions.h"
 #include "input.h"
 
+void wake_up_client(uint8_t client_index){
+    gpio_put(active_uart_server_connections[client_index].pin_pair.rx, true);
+    sleep_ms(5);
+    gpio_put(active_uart_server_connections[client_index].pin_pair.rx, false);
+}
+
 void server_print_state_devices(const client_state_t *client_state){
     for (uint8_t gpio_index = 0; gpio_index < MAX_NUMBER_OF_GPIOS; gpio_index++){
         server_print_gpio_state(gpio_index, client_state);
@@ -47,6 +53,16 @@ void server_print_client_preset_configurations(const client_t *client){
     }
 }
 
+static void send_flag_message(const uint8_t FLAG_MESSAGE, uart_inst_t* uart_instance, uart_pin_pair_t pin_pair){
+    uart_init_with_pins(uart_instance, pin_pair, DEFAULT_BAUDRATE);
+
+    char msg[8];
+    snprintf(msg, sizeof(msg), "[%d,%d]", FLAG_MESSAGE, FLAG_MESSAGE);
+    uart_puts(uart_instance, msg);
+    uart_tx_wait_blocking(uart_instance);
+    reset_gpio_pins(pin_pair);
+}
+
 /**
  * @brief Sends a predefined flag message to all connected clients via UART.
  *
@@ -56,26 +72,21 @@ void server_print_client_preset_configurations(const client_t *client){
  *
  * @param FLAG_MESSAGE The numeric flag value to send (e.g., reset trigger or blink signal).
  */
-static void send_flag_message(const uint8_t FLAG_MESSAGE){
+static void send_flag_message_to_all_clients(const uint8_t FLAG_MESSAGE){
        for (uint8_t client_index = 0; client_index < active_server_connections_number; client_index++){
-        uart_inst_t* uart_instance = active_uart_server_connections[client_index].uart_instance;
-        uart_pin_pair_t pin_pair = active_uart_server_connections[client_index].pin_pair;
-        uart_init_with_pins(uart_instance, pin_pair, DEFAULT_BAUDRATE);
-
-        char msg[8];
-        snprintf(msg, sizeof(msg), "[%d,%d]", FLAG_MESSAGE, FLAG_MESSAGE);
-        uart_puts(uart_instance, msg);
-        uart_tx_wait_blocking(uart_instance);
-        reset_gpio_pins(pin_pair);
-    } 
+            wake_up_client(client_index);   
+            uart_inst_t* uart_instance = active_uart_server_connections[client_index].uart_instance;
+            uart_pin_pair_t pin_pair = active_uart_server_connections[client_index].pin_pair;
+            send_flag_message(FLAG_MESSAGE, uart_instance, pin_pair);
+        } 
 }
 
 void signal_reset_for_all_clients(){
-    send_flag_message(TRIGGER_RESET_FLAG_NUMBER);
+    send_flag_message_to_all_clients(TRIGGER_RESET_FLAG_NUMBER);
 }
 
 void send_fast_blink_onboard_led_to_clients(){
-    send_flag_message(BLINK_ONBOARD_LED_FLAG_NUMBER);
+    send_flag_message_to_all_clients(BLINK_ONBOARD_LED_FLAG_NUMBER);
 }
 
 /**

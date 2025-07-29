@@ -107,4 +107,10 @@ static inline void reset_gpio_pins(uart_pin_pair_t pin_pair){
  */
 void init_onboard_led_and_usb(void);
 
+void sleep_run_from_rosc();
+
+void sleep_goto_dormant_until_pin(uint gpio_pin);
+
+void sleep_power_up(void);
+
 #endif

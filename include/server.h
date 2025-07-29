@@ -80,6 +80,17 @@ inline void server_print_gpio_state(uint8_t gpio_index, const client_state_t *cl
 }
 
 /**
+ * @brief Wakes up a connected client by pulsing its RX pin high.
+ *
+ * This function simulates a wake-up signal by briefly setting the specified
+ * client's RX pin to HIGH for 1 millisecond, then setting it back to LOW.
+ * The client is expected to detect the rising edge and exit power saving mode.
+ *
+ * @param client_index Index of the client in the active_uart_server_connections array.
+ */
+void wake_up_client(uint8_t client_index);
+
+/**
  * @brief Prints the state of all devices from a given client state structure.
  *
  * - Iterates through all available GPIO devices.
