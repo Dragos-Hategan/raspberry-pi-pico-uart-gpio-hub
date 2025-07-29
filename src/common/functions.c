@@ -68,23 +68,23 @@ void get_uart_buffer(uart_inst_t* uart, char* buf, uint8_t buffer_size, uint32_t
 }
 
 int pico_onboard_led_init(void) {
-#if defined(CYW43_WL_GPIO_LED_PIN)
-    return cyw43_arch_init();
-#elif defined(PICO_DEFAULT_LED_PIN)
-    gpio_init(PICO_DEFAULT_LED_PIN);
-    gpio_set_dir(PICO_DEFAULT_LED_PIN, GPIO_OUT);
-    return PICO_OK;
-#else
-    return -1;
-#endif
+    #if defined(CYW43_WL_GPIO_LED_PIN)
+        return cyw43_arch_init();
+    #elif defined(PICO_DEFAULT_LED_PIN)
+        gpio_init(PICO_DEFAULT_LED_PIN);
+        gpio_set_dir(PICO_DEFAULT_LED_PIN, GPIO_OUT);
+        return PICO_OK;
+    #else
+        return -1;
+    #endif
 }
 
 void pico_set_onboard_led(bool led_on) {
-#if defined(CYW43_WL_GPIO_LED_PIN)
-    cyw43_arch_gpio_put(CYW43_WL_GPIO_LED_PIN, led_on);
-#elif defined(PICO_DEFAULT_LED_PIN)
-    gpio_put(PICO_DEFAULT_LED_PIN, led_on);    
-#endif
+    #if defined(CYW43_WL_GPIO_LED_PIN)
+        cyw43_arch_gpio_put(CYW43_WL_GPIO_LED_PIN, led_on);
+    #elif defined(PICO_DEFAULT_LED_PIN)
+        gpio_put(PICO_DEFAULT_LED_PIN, led_on);    
+    #endif
 }
 
 void blink_onboard_led(void){
