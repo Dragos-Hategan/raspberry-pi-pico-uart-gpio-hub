@@ -16,6 +16,7 @@
 #include "hardware/flash.h"
 #include "pico/stdlib.h"
 #include "hardware/sync.h"
+#include "pico/multicore.h"
 
 #include "types.h"
 #include "server.h"
@@ -57,13 +58,14 @@ void server_print_client_preset_configurations(const client_t *client){
  * @param FLAG_MESSAGE The numeric flag value to send (e.g., reset trigger or blink signal).
  */
 static void send_flag_message(const uint8_t FLAG_MESSAGE){
-       for (uint8_t client_index = 0; client_index < active_server_connections_number; client_index++){
+    for (uint8_t client_index = 0; client_index < active_server_connections_number; client_index++){
         uart_inst_t* uart_instance = active_uart_server_connections[client_index].uart_instance;
         uart_pin_pair_t pin_pair = active_uart_server_connections[client_index].pin_pair;
         uart_init_with_pins(uart_instance, pin_pair, DEFAULT_BAUDRATE);
 
         char msg[8];
         snprintf(msg, sizeof(msg), "[%d,%d]", FLAG_MESSAGE, FLAG_MESSAGE);
+
         uart_puts(uart_instance, msg);
         uart_tx_wait_blocking(uart_instance);
         reset_gpio_pins(pin_pair);
@@ -198,14 +200,19 @@ static void server_reset_configuration(client_state_t *client_state){
  * @param state Pointer to the client_state_t to send.
  */
 static void server_send_client_state(uart_pin_pair_t pin_pair, uart_inst_t* uart, const client_state_t* state){
+    spin_lock_unsafe_blocking(uart_lock);
+    
     uart_init_with_pins(uart, pin_pair, DEFAULT_BAUDRATE);
     for (uint8_t i = 0; i < MAX_NUMBER_OF_GPIOS; i++) {
         char msg[8];
         snprintf(msg, sizeof(msg), "[%d,%d]", state->devices[i].gpio_number, state->devices[i].is_on);
+
         uart_puts(uart, msg);
-        sleep_ms(10);
+        uart_tx_wait_blocking(uart);
     }
     reset_gpio_pins(pin_pair);
+
+    spin_unlock_unsafe(uart_lock);
 }
 
 /**
@@ -437,7 +444,7 @@ static void server_load_client_state(server_uart_connection_t server_uart_connec
     }
 }
 
-void server_load_running_states_to_active_clients(void) {
+void server_load_running_states_to_active_clients(void){
     server_persistent_state_t server_persistent_state = {0};
     bool valid_crc = load_server_state(&server_persistent_state);
 
@@ -462,12 +469,18 @@ void server_load_running_states_to_active_clients(void) {
  * @param is_on true = turn on, false = turn off.
  */
 static void server_send_device_state(uart_pin_pair_t pin_pair, uart_inst_t* uart, uint8_t gpio_number, bool is_on){
+    spin_lock_unsafe_blocking(uart_lock);
+    
     uart_init_with_pins(uart, pin_pair, DEFAULT_BAUDRATE);
+
     char msg[8];
     snprintf(msg, sizeof(msg), "[%d,%d]", gpio_number, is_on);
+
     uart_puts(uart, msg);
     uart_tx_wait_blocking(uart);
     reset_gpio_pins(pin_pair);
+
+    spin_unlock_unsafe(uart_lock);
 }
 
 void server_set_device_state_and_update_flash(uart_pin_pair_t pin_pair, uart_inst_t* uart_instance, uint8_t gpio_index, bool device_state, uint32_t flash_client_index){

@@ -24,6 +24,7 @@
 #include "menu.h"
 
 static repeating_timer_t repeating_timer;
+spin_lock_t *uart_lock = NULL;
 
 /**
  * @brief Repeating timer callback to trigger onboard LED blink on core1.
@@ -68,7 +69,7 @@ static void find_clients(void){
  * Starts the LED timer, launches core1, and enters a loop
  * waiting for USB CLI connections to launch the user interface.
  */
-static void last_inits_and_display_launch(){
+static void last_inits_and_display_launch(){    
     #if PERIODIC_ONBOARD_LED_BLINK_SERVER || PERIODIC_ONBOARD_LED_BLINK_ALL_CLIENTS
         setup_repeating_timer_for_periodic_onboard_led_blink();
     #endif
@@ -100,6 +101,8 @@ static void entry_point(){
  * @return Exit code (not used).
  */
 int main(void){
+    uart_lock = spin_lock_instance(UART_SPINLOCK_ID);
+
     if (watchdog_caused_reboot()){
         sleep_ms(100);
         entry_point();

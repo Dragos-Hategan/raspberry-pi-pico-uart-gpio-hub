@@ -12,6 +12,7 @@
 #include <stdio.h>
 
 #include "hardware/uart.h"
+#include "pico/multicore.h"
 
 #include "menu.h"
 #include "types.h"
@@ -22,6 +23,12 @@
 #define SERVER_PAGE_SIZE      256
 #define SERVER_FLASH_OFFSET   (PICO_FLASH_SIZE_BYTES - SERVER_SECTOR_SIZE) ///< Offset from flash end
 #define SERVER_FLASH_ADDR     (XIP_BASE + SERVER_FLASH_OFFSET)             ///< Runtime address of flash state
+
+#ifndef UART_SPINLOCK_ID
+#define UART_SPINLOCK_ID 0
+#endif
+
+extern spin_lock_t *uart_lock;
 
 /**
  * @brief Active UART server connections detected at runtime.

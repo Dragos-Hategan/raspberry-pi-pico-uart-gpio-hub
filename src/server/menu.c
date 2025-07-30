@@ -334,8 +334,10 @@ void periodic_wakeup(){
                 printf("%s", reconnection_buffer[index]);
                 sleep_ms(2); 
             }
-        }
+        } 
+
         if (cmd == BLINK_LED_WAKEUP_MESSAGE){
+            spin_lock_unsafe_blocking(uart_lock);
             #if PERIODIC_ONBOARD_LED_BLINK_SERVER
                 fast_blink_onboard_led();
             #endif
@@ -343,7 +345,9 @@ void periodic_wakeup(){
             #if PERIODIC_ONBOARD_LED_BLINK_ALL_CLIENTS
                 send_fast_blink_onboard_led_to_clients();
             #endif
+            spin_unlock_unsafe(uart_lock);
         }
+
     }
 }
 
