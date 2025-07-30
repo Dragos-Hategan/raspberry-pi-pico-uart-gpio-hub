@@ -62,22 +62,4 @@ inline void print_delimitor(void){
     printf_and_update_buffer("\n****************************************************\n\n");
 }
 
-inline void clear_screen(){
-    printf_and_update_buffer("\033[2J");    // delete screen
-    printf_and_update_buffer("\033[H");     // move cursor to upper left screen
-}
-
-inline void display_menu_options(){
-    printf_and_update_buffer("Options:\n");
-    printf_and_update_buffer("1. Display Clients\n");
-    printf_and_update_buffer("2. Set Client's Device\n");
-    printf_and_update_buffer("3. Toggle Client's Device\n");
-    printf_and_update_buffer("4. Save Running State Into Preset Configuration\n");
-    printf_and_update_buffer("5. Build And Save Preset Configuration\n");
-    printf_and_update_buffer("6. Load Preset Configuration Into Running State\n");
-    printf_and_update_buffer("7. Reset Configuration\n");
-    printf_and_update_buffer("8. Clear Screen\n");
-    printf_and_update_buffer("9. Restart System\n");
-}
-
 #endif

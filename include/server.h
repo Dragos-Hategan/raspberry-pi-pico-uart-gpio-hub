@@ -62,31 +62,6 @@ inline void find_corect_client_index_from_flash(uint32_t *flash_client_index, ui
 }
 
 /**
- * @brief Prints the GPIO state of a device at the given index in a client.
- *
- * This is an inline helper function. If the GPIO is used for UART, it is
- * marked as restricted.
- *
- * @param gpio_index Index of the device in the client_state array.
- * @param client_state Pointer to the client_state_t structure.
- */
-inline void server_print_gpio_state(uint8_t gpio_index, const client_state_t *client_state){
-    if (client_state->devices[gpio_index].gpio_number == UART_CONNECTION_FLAG_NUMBER){
-        char string[BUFFER_MAX_STRING_SIZE];
-        snprintf(string, sizeof(string), "%2u. UART connection, no access.\n", gpio_index + 1);
-        printf_and_update_buffer(string);
-    }else{
-        char string[BUFFER_MAX_STRING_SIZE];
-        snprintf(string, sizeof(string), "%2u. GPIO_NO: %2u  Power: %s\n",
-            gpio_index + 1,
-            client_state->devices[gpio_index].gpio_number,
-            client_state->devices[gpio_index].is_on ? "ON" : "OFF"
-        );
-        printf_and_update_buffer(string);
-    }
-}
-
-/**
  * @brief Prints the state of all devices from a given client state structure.
  *
  * - Iterates through all available GPIO devices.
