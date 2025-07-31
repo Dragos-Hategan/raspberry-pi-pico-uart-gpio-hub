@@ -23,7 +23,18 @@
 #include "functions.h"
 #include "input.h"
 
-void send_uart_message_safe(uart_inst_t* uart, uart_pin_pair_t pins, const char* msg) {
+/**
+ * @brief Sends a UART message safely using spinlock protection.
+ *
+ * Initializes the specified UART instance with the given TX/RX pins and baudrate,
+ * sends the message, waits for transmission to complete, and then resets the GPIO pins.
+ * All operations are protected by a spinlock to ensure thread/core safety.
+ *
+ * @param uart Pointer to the UART instance to use (e.g., uart0 or uart1).
+ * @param pins Struct containing the TX and RX GPIO pin numbers.
+ * @param msg Null-terminated string to be sent via UART.
+ */
+static void send_uart_message_safe(uart_inst_t* uart, uart_pin_pair_t pins, const char* msg) {
     uint32_t irq = spin_lock_blocking(uart_lock);
     uart_init_with_pins(uart, pins, DEFAULT_BAUDRATE);
     uart_puts(uart, msg);
