@@ -35,14 +35,25 @@ extern uart_connection_t active_uart_client_connection;
 bool client_detect_uart_connection(void);
 
 /**
- * @brief Continuously listens for incoming UART GPIO commands.
+ * @brief Continuously listens for UART commands from the server.
  *
- * This function blocks in a loop, waiting for `[gpio, value]` messages
- * over the active UART connection. It parses and applies the received
- * command by toggling the corresponding GPIO pin.
+ * This function enters an infinite loop where it waits for and processes
+ * incoming UART commands from the server using `receive_data()`.
+ * Power saving mode is enabled between checks.
  *
- * Timeout is handled internally via `CLIENT_TIMEOUT_MS`.
+ * @note This function blocks indefinitely.
  */
 void client_listen_for_commands(void);
+
+/**
+ * @brief Applies the last known running state to all client GPIO devices.
+ *
+ * This function listens for and applies commands over UART to restore
+ * the previous state of all GPIO devices. It calls `receive_data()` repeatedly
+ * until it has received and processed `MAX_NUMBER_OF_GPIOS` valid commands.
+ *
+ * @note This function assumes the server sends exactly MAX_NUMBER_OF_GPIOS commands.
+ */
+void client_apply_last_running_state(void);
 
 #endif

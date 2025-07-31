@@ -16,13 +16,13 @@
 #include "functions.h"
 
 /**
- * @brief Main entry point of the UART client program.
+ * @brief Entry point for the UART client application.
  *
- * - Initializes USB stdio and onboard LED.
- * - Repeatedly scans for a UART connection with the server.
- * - Once connected, enters an infinite loop to listen for incoming GPIO control commands.
+ * Initializes the onboard LED and USB interface, then waits for a valid UART
+ * connection with the server. Once connected, the client restores the last
+ * known GPIO states and enters the main loop to listen for further commands.
  *
- * @return Unused (program loops forever).
+ * @return Unused. This function never returns.
  */
 int main(void){
     init_onboard_led_and_usb();
@@ -31,6 +31,7 @@ int main(void){
         tight_loop_contents();
     }
 
+    client_apply_last_running_state();
     client_listen_for_commands();
 }
 

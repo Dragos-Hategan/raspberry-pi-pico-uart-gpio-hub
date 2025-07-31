@@ -74,16 +74,43 @@ static void apply_command(uint8_t *received_number_pair){
     }
 }
 
+/**
+ * @brief Receives and processes a UART command.
+ *
+ * This function attempts to read a UART message into a buffer and parse it
+ * into a numeric command. If the buffer is not empty, it applies the
+ * corresponding command using the parsed number pair.
+ *
+ * @return true if a valid command was received and processed, false otherwise.
+ */
+static bool receive_data(){
+    char buf[8] = {0};
+    uint8_t received_number_pair[2] = {0};
+
+    get_uart_buffer(active_uart_client_connection.uart_instance, buf, sizeof(buf), CLIENT_TIMEOUT_MS);
+    get_number_pair(received_number_pair, buf);
+
+    if (buf[0] != '\0'){
+        apply_command(received_number_pair);
+        return 1;
+    }
+
+    return 0;
+}
+
 void client_listen_for_commands(void){
     while(true){
-        char buf[8] = {0};
-        uint8_t received_number_pair[2] = {0};
-
-        get_uart_buffer(active_uart_client_connection.uart_instance, buf, sizeof(buf), CLIENT_TIMEOUT_MS);
-        get_number_pair(received_number_pair, buf);
-
-        if (buf[0] != '\0'){
-            apply_command(received_number_pair);
-        }
+        //enter_power_saving_mode();
+        receive_data();
     }
+}
+
+void client_apply_last_running_state(void){
+    uint8_t devices_received = 0;
+
+    while(devices_received < MAX_NUMBER_OF_GPIOS){
+        if (receive_data()){
+            devices_received++;
+        }
+    }    
 }
