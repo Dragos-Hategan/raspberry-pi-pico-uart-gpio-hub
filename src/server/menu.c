@@ -344,6 +344,7 @@ static void setup_repeating_timer_for_console_activity(){
  * - `BLINK_LED_WAKEUP_MESSAGE`: Triggers fast onboard LED blink and mirrors to clients.
  */
 void periodic_wakeup(){
+    multicore_fifo_drain();
     while (true) {
         __wfe();
         if (multicore_fifo_rvalid()) {
@@ -355,8 +356,7 @@ void periodic_wakeup(){
                     sleep_ms(2); 
                 }
             } 
-    
-            if (cmd == BLINK_LED_WAKEUP_MESSAGE){
+            else if (cmd == BLINK_LED_WAKEUP_MESSAGE){
                 #if PERIODIC_ONBOARD_LED_BLINK_SERVER
                     fast_blink_onboard_led();
                 #endif
