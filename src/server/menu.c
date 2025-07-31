@@ -346,26 +346,26 @@ static void setup_repeating_timer_for_console_activity(){
 void periodic_wakeup(){
     while (true) {
         __wfe();
-        uint32_t cmd = multicore_fifo_pop_blocking();
-        if (cmd == DUMP_BUFFER_WAKEUP_MESSAGE) {
-            for (uint8_t index = 0; index < reconnection_buffer_index; index++) {
-                printf("%s", reconnection_buffer[index]);
-                sleep_ms(2); 
+        if (multicore_fifo_rvalid()) {
+            uint32_t cmd = multicore_fifo_pop_blocking();
+
+            if (cmd == DUMP_BUFFER_WAKEUP_MESSAGE) {
+                for (uint8_t index = 0; index < reconnection_buffer_index; index++) {
+                    printf("%s", reconnection_buffer[index]);
+                    sleep_ms(2); 
+                }
+            } 
+    
+            if (cmd == BLINK_LED_WAKEUP_MESSAGE){
+                #if PERIODIC_ONBOARD_LED_BLINK_SERVER
+                    fast_blink_onboard_led();
+                #endif
+                
+                #if PERIODIC_ONBOARD_LED_BLINK_ALL_CLIENTS
+                    send_fast_blink_onboard_led_to_clients();
+                #endif
             }
-        } 
-
-        if (cmd == BLINK_LED_WAKEUP_MESSAGE){
-            spin_lock_unsafe_blocking(uart_lock);
-            #if PERIODIC_ONBOARD_LED_BLINK_SERVER
-                fast_blink_onboard_led();
-            #endif
-            
-            #if PERIODIC_ONBOARD_LED_BLINK_ALL_CLIENTS
-                send_fast_blink_onboard_led_to_clients();
-            #endif
-            spin_unlock_unsafe(uart_lock);
         }
-
     }
 }
 

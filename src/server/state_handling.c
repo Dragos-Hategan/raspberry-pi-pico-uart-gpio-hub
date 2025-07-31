@@ -23,6 +23,15 @@
 #include "functions.h"
 #include "input.h"
 
+void send_uart_message_safe(uart_inst_t* uart, uart_pin_pair_t pins, const char* msg) {
+    uint32_t irq = spin_lock_blocking(uart_lock);
+    uart_init_with_pins(uart, pins, DEFAULT_BAUDRATE);
+    uart_puts(uart, msg);
+    uart_tx_wait_blocking(uart);
+    reset_gpio_pins(pins);
+    spin_unlock(uart_lock, irq);
+}
+
 /**
  * @brief Prints the GPIO state of a device at the given index in a client.
  *
@@ -84,16 +93,12 @@ void server_print_client_preset_configurations(const client_t *client){
  */
 static void send_flag_message(const uint8_t FLAG_MESSAGE){
     for (uint8_t client_index = 0; client_index < active_server_connections_number; client_index++){
-        uart_inst_t* uart_instance = active_uart_server_connections[client_index].uart_instance;
-        uart_pin_pair_t pin_pair = active_uart_server_connections[client_index].pin_pair;
-        uart_init_with_pins(uart_instance, pin_pair, DEFAULT_BAUDRATE);
-
         char msg[8];
         snprintf(msg, sizeof(msg), "[%d,%d]", FLAG_MESSAGE, FLAG_MESSAGE);
-
-        uart_puts(uart_instance, msg);
-        uart_tx_wait_blocking(uart_instance);
-        reset_gpio_pins(pin_pair);
+        send_uart_message_safe(active_uart_server_connections[client_index].uart_instance,
+            active_uart_server_connections[client_index].pin_pair,
+            msg
+        );
     } 
 }
 
@@ -225,19 +230,11 @@ static void server_reset_configuration(client_state_t *client_state){
  * @param state Pointer to the client_state_t to send.
  */
 static void server_send_client_state(uart_pin_pair_t pin_pair, uart_inst_t* uart, const client_state_t* state){
-    spin_lock_unsafe_blocking(uart_lock);
-    
-    uart_init_with_pins(uart, pin_pair, DEFAULT_BAUDRATE);
     for (uint8_t i = 0; i < MAX_NUMBER_OF_GPIOS; i++) {
         char msg[8];
         snprintf(msg, sizeof(msg), "[%d,%d]", state->devices[i].gpio_number, state->devices[i].is_on);
-
-        uart_puts(uart, msg);
-        uart_tx_wait_blocking(uart);
+        send_uart_message_safe(uart, pin_pair, msg);
     }
-    reset_gpio_pins(pin_pair);
-
-    spin_unlock_unsafe(uart_lock);
 }
 
 /**
@@ -494,18 +491,9 @@ void server_load_running_states_to_active_clients(void){
  * @param is_on true = turn on, false = turn off.
  */
 static void server_send_device_state(uart_pin_pair_t pin_pair, uart_inst_t* uart, uint8_t gpio_number, bool is_on){
-    spin_lock_unsafe_blocking(uart_lock);
-    
-    uart_init_with_pins(uart, pin_pair, DEFAULT_BAUDRATE);
-
     char msg[8];
     snprintf(msg, sizeof(msg), "[%d,%d]", gpio_number, is_on);
-
-    uart_puts(uart, msg);
-    uart_tx_wait_blocking(uart);
-    reset_gpio_pins(pin_pair);
-
-    spin_unlock_unsafe(uart_lock);
+    send_uart_message_safe(uart, pin_pair, msg);
 }
 
 void server_set_device_state_and_update_flash(uart_pin_pair_t pin_pair, uart_inst_t* uart_instance, uint8_t gpio_index, bool device_state, uint32_t flash_client_index){

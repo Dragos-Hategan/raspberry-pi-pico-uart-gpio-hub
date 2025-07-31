@@ -68,7 +68,7 @@ static void change_gpio(uint8_t *gpio_state_pair){
 static void apply_command(uint8_t *received_number_pair){
     switch(received_number_pair[0]){
         case TRIGGER_RESET_FLAG_NUMBER: watchdog_reboot(0, 0, 0); break;
-        case BLINK_ONBOARD_LED_FLAG_NUMBER: fast_blink_onboard_led(); break;
+        case BLINK_ONBOARD_LED_FLAG_NUMBER: fast_blink_onboard_led_blocking(); break;
 
         default: change_gpio(received_number_pair); break;
     }

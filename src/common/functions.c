@@ -87,7 +87,7 @@ void pico_set_onboard_led(bool led_on) {
     #endif
 }
 
-void blink_onboard_led(void){
+void blink_onboard_led_blocking(void){
     int blink_iterations = 5;
     while (blink_iterations--){
         pico_set_onboard_led(false);
@@ -98,7 +98,17 @@ void blink_onboard_led(void){
     pico_set_onboard_led(false);
 }
 
+int64_t my_alarm_cb(alarm_id_t id, void *user_data) {
+    pico_set_onboard_led(false);
+    return 0;
+}
+
 void fast_blink_onboard_led(void){
+    pico_set_onboard_led(true);
+    add_alarm_in_us(FAST_LED_DELAY_MS * 1000, my_alarm_cb, NULL, false);
+}
+
+void fast_blink_onboard_led_blocking(void){
     pico_set_onboard_led(true);
     sleep_ms(FAST_LED_DELAY_MS);
     pico_set_onboard_led(false);
