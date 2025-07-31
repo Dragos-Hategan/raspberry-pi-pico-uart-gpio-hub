@@ -104,6 +104,7 @@ int main(void){
     uart_lock = spin_lock_instance(UART_SPINLOCK_ID);
 
     if (watchdog_caused_reboot()){
+        multicore_fifo_drain();
         sleep_ms(100);
         entry_point();
     }else{
