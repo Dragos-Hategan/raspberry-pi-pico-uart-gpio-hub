@@ -78,7 +78,15 @@ void pico_set_onboard_led(bool state);
 /**
  * @brief Blinks the onboard LED 5 times with a defined delay.
  */
-void blink_onboard_led(void);
+void blink_onboard_led_blocking(void);
+
+/**
+ * @brief Performs a quick blink of the onboard LED.
+ *
+ * Turns the onboard LED on and sets a timer for turning it off(`FAST_LED_DELAY_MS`).
+ * Used as a visual indicator for events like client pings.
+ */
+void fast_blink_onboard_led(void);
 
 /**
  * @brief Performs a quick blink of the onboard LED.
@@ -86,7 +94,7 @@ void blink_onboard_led(void);
  * Turns the onboard LED on, waits for a short delay (`FAST_LED_DELAY_MS`),
  * then turns it off. Used as a visual indicator for events like client pings.
  */
-void fast_blink_onboard_led(void);
+void fast_blink_onboard_led_blocking(void);
 
 /**
  * @brief Resets the TX and RX pins to default SIO mode.

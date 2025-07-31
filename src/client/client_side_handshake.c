@@ -138,7 +138,7 @@ bool client_detect_uart_connection(void){
         connection_found = client_find_connection_for_uart1_instance();
     }
     if (connection_found){
-        blink_onboard_led();
+        blink_onboard_led_blocking();
     }
 
     return connection_found;
