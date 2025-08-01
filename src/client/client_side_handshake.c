@@ -72,7 +72,6 @@ static bool client_uart_read(uart_inst_t* uart_instance, uart_pin_pair_t pin_pai
  */
 static bool client_test_uart_pair(uart_pin_pair_t pin_pair, uart_inst_t * uart_instance) {
     uart_init_with_pins(uart_instance, pin_pair, DEFAULT_BAUDRATE);
-    sleep_ms(10);
 
     char message_with_pin_pair[32];
     snprintf(message_with_pin_pair, sizeof(message_with_pin_pair), "%s-[%d,%d]", CONNECTION_REQUEST_MESSAGE, pin_pair.tx, pin_pair.rx);
