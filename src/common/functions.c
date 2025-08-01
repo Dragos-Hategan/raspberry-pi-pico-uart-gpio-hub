@@ -23,6 +23,7 @@ void uart_init_with_pins(uart_inst_t* uart, uart_pin_pair_t pin_pair, uint32_t b
     gpio_set_function(pin_pair.tx, GPIO_FUNC_UART);
     gpio_set_function(pin_pair.rx, GPIO_FUNC_UART);
     uart_init(uart, baudrate);
+    sleep_ms(1);
 }
 
 void get_number_pair(uint8_t *received_number_pair, char *buf){
