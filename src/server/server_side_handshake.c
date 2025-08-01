@@ -51,6 +51,7 @@ static bool server_uart_read(uart_inst_t* uart_instance, uint32_t timeout_ms){
         char received_pair[8];
         snprintf(received_pair, sizeof(received_pair), "[%d,%d]", received_tx_number, received_rx_number);
         uart_puts(uart_instance, received_pair);
+        uart_tx_wait_blocking(uart_instance);
     }
     else{
         return false;
