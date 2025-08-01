@@ -38,7 +38,6 @@ static bool client_uart_read(uart_inst_t* uart_instance, uart_pin_pair_t pin_pai
     char buf[32] = {0};
     uint8_t received_number_pair[2] = {0};
 
-    sleep_ms(10); 
     get_uart_buffer(uart_instance, buf, sizeof(buf), timeout_ms);
     get_number_pair(received_number_pair, buf);
 
@@ -47,10 +46,9 @@ static bool client_uart_read(uart_inst_t* uart_instance, uart_pin_pair_t pin_pai
 
     if (expected_tx_number == pin_pair.tx && expected_rx_number == pin_pair.rx){
         char accepted[strlen(CONNECTION_ACCEPTED_MESSAGE) + 3];
-        snprintf(accepted, sizeof(accepted), "[%s]", CONNECTION_ACCEPTED_MESSAGE);
-        sleep_ms(5);  
-        
+        snprintf(accepted, sizeof(accepted), "[%s]", CONNECTION_ACCEPTED_MESSAGE); 
         uart_puts(uart_instance, accepted);
+        uart_tx_wait_blocking(uart_instance);
         return true;
     }
 
@@ -76,8 +74,8 @@ static bool client_test_uart_pair(uart_pin_pair_t pin_pair, uart_inst_t * uart_i
     char message_with_pin_pair[32];
     snprintf(message_with_pin_pair, sizeof(message_with_pin_pair), "%s-[%d,%d]", CONNECTION_REQUEST_MESSAGE, pin_pair.tx, pin_pair.rx);
     uart_puts(uart_instance, message_with_pin_pair);
-    
-    sleep_ms(10);
+    uart_tx_wait_blocking(uart_instance);
+
     return client_uart_read(uart_instance, pin_pair, CLIENT_TIMEOUT_MS);
 }
 
