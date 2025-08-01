@@ -41,7 +41,7 @@ bool client_detect_uart_connection(void);
  * If not, the system enters low-power mode (`dormant`) and waits to be woken up.
  * After waking up, it resumes listening for commands.
  *
- * @note The `waked_up` flag should be managed externally to reflect the wake-up status.
+ * @note The `go_dormant` flag should be managed externally to reflect the wake-up status.
  *
  * @warning This loop runs indefinitely. Ensure that `receive_data()` is non-blocking
  *          or times out appropriately to allow power-saving checks.

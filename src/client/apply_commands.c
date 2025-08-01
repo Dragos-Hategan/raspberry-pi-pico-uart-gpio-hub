@@ -21,7 +21,7 @@
 #include "pico/cyw43_arch.h"
 #endif
 
-static bool waked_up = true;
+static bool go_dormant = false;
 static bool value = true;
 
 /**
@@ -113,8 +113,8 @@ static bool wake_up(){
  * Supported command flags:
  * - `TRIGGER_RESET_FLAG_NUMBER` → Soft reset using watchdog
  * - `BLINK_ONBOARD_LED_FLAG_NUMBER` → Blink onboard LED (blocking)
- * - `WAKE_UP_FLAG_NUMBER` → Set `waked_up = true`
- * - `DORMANT_FLAG_NUMBER` → Set `waked_up = false`
+ * - `WAKE_UP_FLAG_NUMBER` → Set `go_dormant = false`
+ * - `DORMANT_FLAG_NUMBER` → Set `go_dormant = true`
  * - Any other value → Delegated to `change_gpio()`
  *
  * @note This function includes debug output via `printf()` for logging purposes.
@@ -127,8 +127,8 @@ static void apply_command(uint8_t *received_number_pair){
     switch(received_number_pair[0]){
         case TRIGGER_RESET_FLAG_NUMBER: watchdog_reboot(0, 0, 0); break;
         case BLINK_ONBOARD_LED_FLAG_NUMBER: fast_blink_onboard_led_blocking(); printf("periodic blink!\n"); break;
-        case WAKE_UP_FLAG_NUMBER: waked_up = true; printf("woke up!\n"); break;//pico_set_onboard_led(value); value = !value; break;
-        case DORMANT_FLAG_NUMBER: waked_up = false; printf("getting sleepy!\n"); break;
+        case WAKE_UP_FLAG_NUMBER: go_dormant = false; printf("woke up!\n"); break;//pico_set_onboard_led(value); value = !value; break;
+        case DORMANT_FLAG_NUMBER: go_dormant = true; printf("getting dormant!\n"); break;
 
         default: change_gpio(received_number_pair); printf("gpio change!\n"); break;
     }
@@ -161,7 +161,7 @@ static bool receive_data(){
 void client_listen_for_commands(void){
     while(true){
         receive_data();
-        if (!waked_up){
+        if (go_dormant){
             enter_power_saving_mode();
             wake_up();
         }
