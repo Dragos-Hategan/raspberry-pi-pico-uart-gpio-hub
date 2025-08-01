@@ -35,13 +35,20 @@ extern uart_connection_t active_uart_client_connection;
 bool client_detect_uart_connection(void);
 
 /**
- * @brief Continuously listens for UART commands from the server.
+ * @brief Main loop that listens for UART commands and manages power-saving state.
  *
- * This function enters an infinite loop where it waits for and processes
- * incoming UART commands from the server using `receive_data()`.
- * Power saving mode is enabled between checks.
+ * Continuously receives data over UART and checks if the client is in a wake-up state.
+ * If not, the system enters low-power mode (`dormant`) and waits to be woken up.
+ * After waking up, it resumes listening for commands.
  *
- * @note This function blocks indefinitely.
+ * @note The `waked_up` flag should be managed externally to reflect the wake-up status.
+ *
+ * @warning This loop runs indefinitely. Ensure that `receive_data()` is non-blocking
+ *          or times out appropriately to allow power-saving checks.
+ *
+ * @see enter_power_saving_mode()
+ * @see wake_up()
+ * @see receive_data()
  */
 void client_listen_for_commands(void);
 

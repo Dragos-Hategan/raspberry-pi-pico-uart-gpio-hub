@@ -17,6 +17,13 @@
 #include "types.h"
 #include "functions.h"
 
+#ifdef CYW43_WL_GPIO_LED_PIN
+#include "pico/cyw43_arch.h"
+#endif
+
+static bool waked_up = true;
+static bool value = true;
+
 /**
  * @brief Sets or clears a GPIO pin based on a 2-byte command.
  *
@@ -49,28 +56,81 @@ static void change_gpio(uint8_t *gpio_state_pair){
 }
 
 /**
- * @brief Executes a command based on a 2-byte input pair.
+ * @brief Enters low-power dormant mode using ROSC as the clock source.
  *
- * Interprets the first byte of the pair as a command flag:
+ * Configures the system to use the ROSC oscillator, then enters dormant mode.
+ * The system will remain in dormant state until a high level is detected
+ * on the RX pin of the active UART connection.
  *
- * - If it matches `TRIGGER_RESET_FLAG_NUMBER`:  
- *   → Triggers a full system reset via the watchdog.
+ * @note Assumes `active_uart_client_connection` is correctly initialized.
+ *       The RX pin is used as the wake-up source.
  *
- * - If it matches `BLINK_ONBOARD_LED_FLAG_NUMBER`:  
- *   → Executes a fast blink on the onboard LED.
+ * @warning GPIO configuration for the wake-up pin must be compatible with
+ *          level-high wake detection, or the system may fail to resume.
  *
- * - Otherwise, treats the pair as a GPIO control command and calls `change_gpio()`, where:
- *   - Byte [0] = GPIO pin number
- *   - Byte [1] = Logic level (0 = LOW, 1 = HIGH)
+ * @see sleep_run_from_dormant_source()
+ * @see sleep_goto_dormant_until_pin()
+ */
+static void enter_power_saving_mode(){
+    //reset_gpio_pins(active_uart_client_connection.pin_pair);
+    sleep_run_from_dormant_source(DORMANT_SOURCE_ROSC);
+    sleep_goto_dormant_until_pin(active_uart_client_connection.pin_pair.rx, IO_BANK0_DORMANT_WAKE_INTE0_GPIO0_LEVEL_HIGH_BITS, true);
+}
+
+/**
+ * @brief Wakes up the system from dormant mode and reinitializes UART.
  *
- * @param received_number_pair Pointer to a 2-byte array representing the command.
+ * Calls `sleep_power_up()` to restore clocks and peripherals,
+ * then reinitializes the UART with the previously stored configuration,
+ * including UART instance, TX/RX pins, and default baud rate.
+ *
+ * @return Always returns `true` (currently unused).
+ *
+ * @note Assumes that `active_uart_client_connection` is valid and preconfigured.
+ *
+ * @see sleep_power_up()
+ * @see uart_init_with_pins()
+ */
+static bool wake_up(){
+    sleep_power_up();
+
+    uart_init_with_pins(active_uart_client_connection.uart_instance,
+            active_uart_client_connection.pin_pair,
+            DEFAULT_BAUDRATE
+    );
+}
+
+/**
+ * @brief Applies a command based on a received UART message.
+ *
+ * Interprets the first byte of the received number pair as a command flag
+ * and performs the corresponding action, such as resetting the device,
+ * blinking the onboard LED, toggling the power state, or changing GPIO state.
+ *
+ * @param received_number_pair Pointer to an array of two `uint8_t` values.
+ *        The first element is interpreted as a command flag.
+ *
+ * Supported command flags:
+ * - `TRIGGER_RESET_FLAG_NUMBER` → Soft reset using watchdog
+ * - `BLINK_ONBOARD_LED_FLAG_NUMBER` → Blink onboard LED (blocking)
+ * - `WAKE_UP_FLAG_NUMBER` → Set `waked_up = true`
+ * - `DORMANT_FLAG_NUMBER` → Set `waked_up = false`
+ * - Any other value → Delegated to `change_gpio()`
+ *
+ * @note This function includes debug output via `printf()` for logging purposes.
+ *
+ * @see change_gpio()
+ * @see watchdog_reboot()
+ * @see fast_blink_onboard_led_blocking()
  */
 static void apply_command(uint8_t *received_number_pair){
     switch(received_number_pair[0]){
         case TRIGGER_RESET_FLAG_NUMBER: watchdog_reboot(0, 0, 0); break;
-        case BLINK_ONBOARD_LED_FLAG_NUMBER: fast_blink_onboard_led_blocking(); break;
+        case BLINK_ONBOARD_LED_FLAG_NUMBER: fast_blink_onboard_led_blocking(); printf("periodic blink!\n"); break;
+        case WAKE_UP_FLAG_NUMBER: waked_up = true; printf("woke up!\n"); break;//pico_set_onboard_led(value); value = !value; break;
+        case DORMANT_FLAG_NUMBER: waked_up = false; printf("getting sleepy!\n"); break;
 
-        default: change_gpio(received_number_pair); break;
+        default: change_gpio(received_number_pair); printf("gpio change!\n"); break;
     }
 }
 
@@ -100,17 +160,10 @@ static bool receive_data(){
 
 void client_listen_for_commands(void){
     while(true){
-        //enter_power_saving_mode();
         receive_data();
-    }
-}
-
-void client_apply_last_running_state(void){
-    uint8_t devices_received = 0;
-
-    while(devices_received < MAX_NUMBER_OF_GPIOS){
-        if (receive_data()){
-            devices_received++;
+        if (!waked_up){
+            enter_power_saving_mode();
+            wake_up();
         }
-    }    
+    }
 }

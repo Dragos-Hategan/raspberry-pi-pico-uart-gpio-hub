@@ -60,6 +60,7 @@ static void find_clients(void){
     while(!server_find_connections()) tight_loop_contents();
 
     blink_onboard_led_blocking();
+    
     server_load_running_states_to_active_clients();
 }
 

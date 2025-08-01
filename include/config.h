@@ -96,4 +96,12 @@
 #define BLINK_ONBOARD_LED_FLAG_NUMBER 66
 #endif
 
+#ifndef WAKE_UP_FLAG_NUMBER
+#define WAKE_UP_FLAG_NUMBER 55
+#endif
+
+#ifndef DORMANT_FLAG_NUMBER
+#define DORMANT_FLAG_NUMBER 44
+#endif
+
 #endif

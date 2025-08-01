@@ -115,4 +115,83 @@ static inline void reset_gpio_pins(uart_pin_pair_t pin_pair){
  */
 void init_onboard_led_and_usb(void);
 
+
+extern absolute_time_t t_start;
+extern absolute_time_t t_stop;
+extern absolute_time_t t_start2;
+extern absolute_time_t t_stop2;
+
+typedef enum {
+    DORMANT_SOURCE_NONE,
+    DORMANT_SOURCE_XOSC,
+    DORMANT_SOURCE_ROSC,
+    DORMANT_SOURCE_LPOSC, // rp2350 only
+} dormant_source_t;
+
+/**
+ * @brief Prepares the system clocks for low-power dormant wake-up and reinitializes UART.
+ *
+ * Configures the clock sources and stops unused clocks (USB, ADC, etc.) to allow
+ * the RP2040 to safely enter and resume from dormant mode. Selects a low-power 
+ * clock source (XOSC or ROSC), disables the unused oscillator, and reinitializes
+ * the default UART with the new clock configuration.
+ *
+ * @param dormant_source The clock source to be used during and after dormant mode.
+ *                       Supported values:
+ *                       - DORMANT_SOURCE_XOSC (external crystal oscillator)
+ *                       - DORMANT_SOURCE_ROSC (ring oscillator)
+ *                       - DORMANT_SOURCE_LPOSC (low-power oscillator, if available)
+ *
+ * @note This function updates global `_dormant_source`, disables PLLs, and stops
+ *       clocks not needed in low-power state. It must be called **before** entering dormant mode.
+ *
+ * @warning The function assumes both XOSC and ROSC are active initially. It will
+ *          disable the unused oscillator depending on the selected source.
+ *
+ * @see setup_default_uart()
+ */
+void sleep_run_from_dormant_source(dormant_source_t dormant_source);
+
+/**
+ * @brief Puts the system into dormant mode until a specified GPIO pin triggers a wake-up event.
+ *
+ * Configures a GPIO pin as the wake-up source using either edge or level detection,
+ * then enters dormant mode. Execution resumes only when the pin event occurs.
+ * After wake-up, the interrupt is acknowledged and the pin is deactivated.
+ *
+ * @param gpio_pin The GPIO number to monitor (must be < NUM_BANK0_GPIOS).
+ * @param edge     If true, the wake-up will occur on edge detection (rising/falling).
+ *                 If false, level detection (high/low) is used instead.
+ * @param high     Determines the polarity:
+ *                 - If true: rising edge or high level
+ *                 - If false: falling edge or low level
+ *
+ * @note This function blocks until the wake-up event is triggered on the specified pin.
+ *
+ * @warning The pin must not be driven with unstable signals during dormant mode,
+ *          or false wake-ups may occur.
+ *
+ * @see gpio_set_dormant_irq_enabled()
+ * @see _go_dormant()
+ */
+void sleep_goto_dormant_until_pin(uint gpio_pin, bool edge, bool high);
+
+/**
+ * @brief Restores system clocks and peripherals after wake-up from dormant mode.
+ *
+ * Re-enables the ring oscillator (ROSC), resets the sleep enable registers,
+ * reinitializes all clock domains, and restores the UART for standard output.
+ * On RP2350, also reconfigures the power management timer to use XOSC as source.
+ *
+ * @note This function must be called after waking from dormant mode to restore
+ *       full functionality of peripherals and system clocks.
+ *
+ * @warning Failure to call this function after wake-up may result in malfunctioning
+ *          peripherals or missing UART output.
+ *
+ * @see clocks_init()
+ * @see setup_default_uart()
+ */
+void sleep_power_up(void);
+
 #endif

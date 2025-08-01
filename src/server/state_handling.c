@@ -26,9 +26,10 @@
 /**
  * @brief Sends a UART message safely using spinlock protection.
  *
- * Initializes the specified UART instance with the given TX/RX pins and baudrate,
- * sends the message, waits for transmission to complete, and then resets the GPIO pins.
- * All operations are protected by a spinlock to ensure thread/core safety.
+ * This function first wakes up the client by sending a pulse on its RX pin.
+ * Then it initializes the UART peripheral with the specified TX/RX pins and baudrate,
+ * sends the message, waits for the transmission to complete, and resets the GPIO pins.
+ * All UART operations are protected by a spinlock to ensure thread/core safety.
  *
  * @param uart Pointer to the UART instance to use (e.g., uart0 or uart1).
  * @param pins Struct containing the TX and RX GPIO pin numbers.
@@ -40,8 +41,43 @@ static void send_uart_message_safe(uart_inst_t* uart, uart_pin_pair_t pins, cons
     uart_puts(uart, msg);
     uart_tx_wait_blocking(uart);
     reset_gpio_pins(pins);
+    //uart_deinit(uart);
     spin_unlock(uart_lock, irq);
 }
+
+/**
+ * @brief Sends a wake-up pulse and message to a client device over UART.
+ *
+ * This function drives the TX pin high for 5 milliseconds, then low for 5 milliseconds
+ * to generate a wake-up pulse on the client's RX line. After the pulse, it sends a
+ * predefined wake-up message in the format "[X,X]" where X is `WAKE_UP_FLAG_NUMBER`.
+ *
+ * Typically used to bring a client device out of dormant or low-power mode
+ * and confirm the wake-up via UART.
+ *
+ * @param pin_pair The UART TX/RX pin pair used for communication.
+ * @param uart     Pointer to the UART instance used for sending the message.
+ *
+ * @note TX pin is temporarily reconfigured as SIO output to generate the pulse.
+ *       Make sure this matches the client’s wake-up detection mechanism.
+ *
+ * @see send_uart_message_safe()
+ */
+static void wake_up_client(uart_pin_pair_t pin_pair, uart_inst_t* uart){
+    //gpio_init(pin_pair.tx);
+    gpio_set_function(pin_pair.tx, GPIO_FUNC_SIO);
+    gpio_set_dir(pin_pair.tx, GPIO_OUT);
+
+    gpio_put(pin_pair.tx, true);
+    sleep_ms(5);
+    gpio_put(pin_pair.tx, false);
+    sleep_ms(5);
+
+    char msg[8];
+    snprintf(msg, sizeof(msg), "[%d,%d]", WAKE_UP_FLAG_NUMBER, WAKE_UP_FLAG_NUMBER);
+    send_uart_message_safe(uart, pin_pair, msg);
+}
+
 
 /**
  * @brief Prints the GPIO state of a device at the given index in a client.
@@ -94,31 +130,58 @@ void server_print_client_preset_configurations(const client_t *client){
 }
 
 /**
+ * @brief Sends a predefined flag message to a specific client via UART.
+ *
+ * Constructs a message of the form "[X,X]" using the given flag value
+ * and sends it to the specified client over its associated UART instance.
+ *
+ * @param FLAG_MESSAGE The numeric flag to send (e.g., blink, reset, etc.).
+ * @param client_index Index of the client in the active connection list.
+ */
+static void send_flag_message_to_client(const uint8_t FLAG_MESSAGE, uint8_t client_index){
+    char msg[8];
+    snprintf(msg, sizeof(msg), "[%d,%d]", FLAG_MESSAGE, FLAG_MESSAGE);
+    send_uart_message_safe(active_uart_server_connections[client_index].uart_instance,
+        active_uart_server_connections[client_index].pin_pair,
+        msg
+    );
+
+    char msg_power_saving[8];
+    snprintf(msg_power_saving, sizeof(msg), "[%d,%d]", DORMANT_FLAG_NUMBER, DORMANT_FLAG_NUMBER);
+        send_uart_message_safe(active_uart_server_connections[client_index].uart_instance,
+        active_uart_server_connections[client_index].pin_pair,
+        msg_power_saving
+    );
+}
+
+/**
  * @brief Sends a predefined flag message to all connected clients via UART.
  *
- * Iterates through all active client connections and sends a message in the format "[X,X]",
- * where `X` is the specified flag value. Each UART is initialized before sending,
- * and its pins are reset afterward.
+ * Iterates through all active UART client connections. Each client is first
+ * woken up, then receives a flag message of the form "[X,X]", where X is the
+ * specified flag value.
  *
- * @param FLAG_MESSAGE The numeric flag value to send (e.g., reset trigger or blink signal).
+ * @param FLAG_MESSAGE The numeric flag to send to each client.
  */
-static void send_flag_message(const uint8_t FLAG_MESSAGE){
+static void send_flag_message_to_all_clients(const uint8_t FLAG_MESSAGE){
     for (uint8_t client_index = 0; client_index < active_server_connections_number; client_index++){
-        char msg[8];
-        snprintf(msg, sizeof(msg), "[%d,%d]", FLAG_MESSAGE, FLAG_MESSAGE);
-        send_uart_message_safe(active_uart_server_connections[client_index].uart_instance,
-            active_uart_server_connections[client_index].pin_pair,
-            msg
+        wake_up_client(active_uart_server_connections[client_index].pin_pair,
+            active_uart_server_connections[client_index].uart_instance
         );
+        send_flag_message_to_client(FLAG_MESSAGE, client_index);
     } 
 }
 
 void signal_reset_for_all_clients(){
-    send_flag_message(TRIGGER_RESET_FLAG_NUMBER);
+    send_flag_message_to_all_clients(TRIGGER_RESET_FLAG_NUMBER);
 }
 
 void send_fast_blink_onboard_led_to_clients(){
-    send_flag_message(BLINK_ONBOARD_LED_FLAG_NUMBER);
+    send_flag_message_to_all_clients(BLINK_ONBOARD_LED_FLAG_NUMBER);
+}
+
+void send_dormant_to_standby_clients(){
+    send_flag_message_to_all_clients(DORMANT_FLAG_NUMBER);
 }
 
 /**
@@ -241,11 +304,21 @@ static void server_reset_configuration(client_state_t *client_state){
  * @param state Pointer to the client_state_t to send.
  */
 static void server_send_client_state(uart_pin_pair_t pin_pair, uart_inst_t* uart, const client_state_t* state){
+    wake_up_client(pin_pair, uart);
+    uint32_t irq = spin_lock_blocking(uart_lock);
+    uart_init_with_pins(uart, pin_pair, DEFAULT_BAUDRATE);
+
     for (uint8_t i = 0; i < MAX_NUMBER_OF_GPIOS; i++) {
         char msg[8];
         snprintf(msg, sizeof(msg), "[%d,%d]", state->devices[i].gpio_number, state->devices[i].is_on);
-        send_uart_message_safe(uart, pin_pair, msg);
+        uart_puts(uart, msg);
+        uart_tx_wait_blocking(uart);
+        sleep_us(500);
     }
+
+    reset_gpio_pins(pin_pair);
+    //uart_deinit(uart);
+    spin_unlock(uart_lock, irq);
 }
 
 /**
@@ -465,11 +538,11 @@ static void server_configure_persistent_state(server_persistent_state_t *server_
 static void server_load_client_state(server_uart_connection_t server_uart_connection, server_persistent_state_t *server_persistent_state) {
     for (uint8_t i = 0; i < MAX_SERVER_CONNECTIONS; i++) {
         client_t *saved_client = &server_persistent_state->clients[i];
-
+        
         if (saved_client->uart_connection.pin_pair.tx == server_uart_connection.pin_pair.tx &&
             saved_client->uart_connection.pin_pair.rx == server_uart_connection.pin_pair.rx &&
             saved_client->uart_connection.uart_instance == server_uart_connection.uart_instance) {
-            
+                
             saved_client->is_active = true;
             server_send_client_state(server_uart_connection.pin_pair, server_uart_connection.uart_instance, &saved_client->running_client_state);
             return;
@@ -491,17 +564,30 @@ void server_load_running_states_to_active_clients(void){
         server_configure_persistent_state(&server_persistent_state);
         printf("CONFIGURATION WAS SUCCESSFULL!\nStarting...\n");
     }
+
+    send_dormant_to_standby_clients();
 }
 
 /**
- * @brief Sends a single GPIO device state to a client via UART.
+ * @brief Sends the current state of a GPIO to a client device via UART.
  *
- * @param pin_pair UART TX/RX pin pair to use.
- * @param uart UART instance.
- * @param gpio_number GPIO number on the client to modify.
- * @param is_on true = turn on, false = turn off.
+ * Wakes up the specified client using a TX pulse and then sends a message
+ * representing the GPIO number and its current state (ON or OFF) in the format "[N,S]",
+ * where `N` is the GPIO number and `S` is 1 (ON) or 0 (OFF).
+ *
+ * @param pin_pair     UART TX/RX pin pair used for the target client.
+ * @param uart         Pointer to the UART instance used for transmission.
+ * @param gpio_number  The GPIO number whose state is being sent.
+ * @param is_on        The current state of the GPIO (`true` for ON, `false` for OFF).
+ *
+ * @note This function uses `wake_up_client()` before sending the state,
+ *       ensuring the client is awake before communication.
+ *
+ * @see wake_up_client()
+ * @see send_uart_message_safe()
  */
 static void server_send_device_state(uart_pin_pair_t pin_pair, uart_inst_t* uart, uint8_t gpio_number, bool is_on){
+    wake_up_client(pin_pair, uart);
     char msg[8];
     snprintf(msg, sizeof(msg), "[%d,%d]", gpio_number, is_on);
     send_uart_message_safe(uart, pin_pair, msg);
