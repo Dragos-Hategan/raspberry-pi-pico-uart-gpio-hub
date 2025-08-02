@@ -60,21 +60,48 @@ static void find_clients(void){
     while(!server_find_connections()) tight_loop_contents();
 
     blink_onboard_led_blocking();
+    
     server_load_running_states_to_active_clients();
+}
+
+/**
+ * @brief Configures all RX pins of active server UART connections as outputs set to LOW.
+ *
+ * This is used before entering low-power modes where these pins
+ * are repurposed (to trigger wakeup signals).
+ *
+ * The function:
+ * - Deinitializes each RX pin (removing previous uart)
+ * - Re-initializes it as a standard GPIO
+ * - Sets it as output and drives it LOW
+ */
+static void set_pins_as_output_for_wakeup(){
+    for (uint8_t connection_index = 0; connection_index < active_server_connections_number; connection_index++){
+        uint8_t pin = active_uart_server_connections[connection_index].pin_pair.rx;
+        gpio_deinit(pin);
+        gpio_init(pin);
+        gpio_set_dir(pin, GPIO_OUT);
+        gpio_put(pin, 0);
+    }
 }
 
 /**
  * @brief Final initialization stage and entry into USB CLI display loop.
  *
- * Starts the LED timer, launches core1, and enters a loop
- * waiting for USB CLI connections to launch the user interface.
+ * Performs the last setup steps before the main server loop:
+ * - Sets RX pins as GPIO outputs for wakeup handling
+ * - Starts a periodic onboard LED blink timer (if enabled)
+ * - Launches core 1 to handle periodic wakeup tasks
+ * - Waits for a USB CLI connection and launches the server menu UI
  */
-static void last_inits_and_display_launch(){    
+static void last_inits_and_display_launch(){        
     #if PERIODIC_ONBOARD_LED_BLINK_SERVER || PERIODIC_ONBOARD_LED_BLINK_ALL_CLIENTS
         setup_repeating_timer_for_periodic_onboard_led_blink();
     #endif
 
     multicore_launch_core1(periodic_wakeup);
+
+    set_pins_as_output_for_wakeup();
 
     while(true){
         if (stdio_usb_connected()){

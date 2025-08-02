@@ -200,6 +200,16 @@ static void toggle_device(void){
         gpio_index,
         device_state,
         input_client_data.flash_client_index);
+
+        if (!device_state){
+            const server_persistent_state_t *flash_state = (const server_persistent_state_t *)SERVER_FLASH_ADDR;
+            if (!client_has_active_devices(flash_state->clients[input_client_data.flash_client_index])){
+                    send_dormant_flag_to_client(input_client_data.client_index - 1);
+                    active_uart_server_connections[input_client_data.client_index - 1].is_dormant = true;
+            }
+        }else{
+            active_uart_server_connections[input_client_data.client_index - 1].is_dormant = false;
+        }
     
         char string[BUFFER_MAX_STRING_SIZE];
         snprintf(string, sizeof(string), "\nDevice[%u] Toggled.\n", input_client_data.device_index);
@@ -208,10 +218,18 @@ static void toggle_device(void){
 }
 
 /**
- * @brief Sets the state of a selected GPIO device for a selected client.
+ * @brief Sets the ON/OFF state of a selected GPIO device for a specified client.
  *
- * Prompts the user to select a client, one of its devices, and a desired state (ON/OFF),
- * then sends the state to the client via UART and updates the flash accordingly.
+ * Prompts the user to:
+ * - Select a client
+ * - Select one of the client's devices
+ * - Choose a desired state (ON or OFF)
+ *
+ * Then:
+ * - Sends the new state to the client over UART
+ * - Updates the persistent flash state
+ * - If all devices are OFF after the update, marks the client as dormant
+ * - Prints a confirmation message to the USB CLI
  */
 static void set_client_device(void){    
     input_client_data_t input_client_data = {0};
@@ -230,6 +248,16 @@ static void set_client_device(void){
             gpio_index,
             input_client_data.device_state,
             input_client_data.flash_client_index);
+
+        if (input_client_data.device_state == 0){
+            const server_persistent_state_t *flash_state = (const server_persistent_state_t *)SERVER_FLASH_ADDR;
+            if (!client_has_active_devices(flash_state->clients[input_client_data.flash_client_index])){
+                send_dormant_flag_to_client(input_client_data.client_index - 1);
+                active_uart_server_connections[input_client_data.client_index - 1].is_dormant = true;
+            }
+        }else{
+            active_uart_server_connections[input_client_data.client_index - 1].is_dormant = false;
+        }
     
         char string[BUFFER_MAX_STRING_SIZE];
         snprintf(string, sizeof(string), "\nDevice[%u] %s.\n",
@@ -263,17 +291,27 @@ static inline void display_active_clients(void){
  */
 static void select_action(uint32_t choice){
     switch (choice){
-        case 1: display_active_clients(); break;
-        case 2: set_client_device(); break;
-        case 3: toggle_device(); break;
-        case 4: save_running_state(); break;
-        case 5: build_preset_configuration(); break;
-        case 6: load_configuration(); break;
-        case 7: reset_configuration(); break;
-        case 8: clear_screen(); break;
-        case 9: restart_application(); break;
+        case 1: display_active_clients();
+            break;
+        case 2: set_client_device();
+            break;
+        case 3: toggle_device();
+            break;
+        case 4: save_running_state();
+            break;
+        case 5: build_preset_configuration();
+            break;
+        case 6: load_configuration();
+            break;
+        case 7: reset_configuration();
+            break;
+        case 8: clear_screen();
+            break;
+        case 9: restart_application();  
+            break;
 
-        default: printf_and_update_buffer("Out of range. Try again.\n"); break;
+        default: printf_and_update_buffer("Out of range. Try again.\n");
+            break;
     }
 }
     

@@ -37,8 +37,7 @@ uart_pin_pair_t actual_client_to_server_pin_pair;
 static bool server_uart_read(uart_inst_t* uart_instance, uint32_t timeout_ms){
     char buf[32] = {0};
     uint8_t received_number_pair[2] = {0};
-
-    //sleep_ms(10);
+    
     get_uart_buffer(uart_instance, buf, sizeof(buf), timeout_ms);
 
     uint8_t received_tx_number;
@@ -111,7 +110,6 @@ static void server_check_connections_for_uart0_instance(void){
     for (uint8_t index = 0; index < PIN_PAIRS_UART0_LEN; index++){
         if(server_check_pin_pair(pin_pairs_uart0[index], uart0)){
             server_add_active_pair(pin_pairs_uart0[index], uart0);
-            //sleep_ms(20);
         }
         reset_gpio_pins(pin_pairs_uart0[index]);
     }
@@ -127,7 +125,6 @@ static void server_check_connections_for_uart1_instance(void){
     for (uint8_t index = 0; index < PIN_PAIRS_UART1_LEN; index++){
         if(server_check_pin_pair(pin_pairs_uart1[index], uart1)){
             server_add_active_pair(pin_pairs_uart1[index], uart1);
-            //sleep_ms(20);
         }
         reset_gpio_pins(pin_pairs_uart1[index]);
     }

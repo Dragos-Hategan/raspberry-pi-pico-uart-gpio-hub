@@ -18,6 +18,8 @@ target_include_directories(common PRIVATE
 target_link_libraries(common
     pico_stdlib          # Base I/O functions
     pico_stdio_usb
+    hardware_clocks
+    hardware_powman #used only for RP2350
 )
 
 # Link Wi-Fi driver if supported

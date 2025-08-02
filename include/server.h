@@ -23,6 +23,7 @@
 #define SERVER_PAGE_SIZE      256
 #define SERVER_FLASH_OFFSET   (PICO_FLASH_SIZE_BYTES - SERVER_SECTOR_SIZE) ///< Offset from flash end
 #define SERVER_FLASH_ADDR     (XIP_BASE + SERVER_FLASH_OFFSET)             ///< Runtime address of flash state
+#define INVALID_CLIENT_INDEX -1
 
 #ifndef UART_SPINLOCK_ID
 #define UART_SPINLOCK_ID 0
@@ -113,6 +114,27 @@ void signal_reset_for_all_clients();
 void send_fast_blink_onboard_led_to_clients();
 
 /**
+ * @brief Sends a dormant flag message to a specific client over UART.
+ *
+ * Constructs a message with the dormant flag number and sends it
+ * via the UART instance and pin pair assigned to the specified client.
+ *
+ * @param client_index Index of the client in the active server connections.
+ */
+void send_dormant_flag_to_client(uint8_t client_index);
+
+/**
+ * @brief Checks if a client has any active (ON) devices.
+ *
+ * Iterates through the client's GPIO-controlled devices and returns true
+ * if at least one is currently turned ON.
+ *
+ * @param client The client structure to inspect.
+ * @return true if any device is ON; false otherwise.
+ */
+bool client_has_active_devices(client_t client);
+
+/**
  * @brief Configures the devices for a given client and preset configuration index.
  *
  * This function enters an interactive loop where the user can set the ON/OFF state
@@ -130,14 +152,13 @@ void set_configuration_devices(uint32_t flash_client_index, uint32_t flash_confi
 
 
 /**
- * @brief Resets the currently active (running) configuration of a client.
+ * @brief Resets the running configuration of a specified client to its default state.
  *
- * - Loads the full persistent server state from flash.
- * - Resets the `running_client_state` using `server_reset_configuration()`.
- * - Sends the updated state to the client over UART.
- * - Saves the modified state back to flash.
+ * Loads the server's persistent state, resets the client's current configuration,
+ * sends the updated state to the client, marks the client as dormant, and saves
+ * the updated state back to flash.
  *
- * @param flash_client_index Index of the client in the persistent flash structure.
+ * @param flash_client_index Index of the client in the persistent flash state array.
  */
 void reset_running_configuration(uint32_t flash_client_index);
 
@@ -154,26 +175,31 @@ void reset_running_configuration(uint32_t flash_client_index);
 void reset_preset_configuration(uint32_t flash_client_index, uint32_t flash_configuration_index);
 
 /**
- * @brief Resets all data associated with a client.
+ * @brief Resets all configuration data for a specified client.
  *
- * - Resets the running state of the client and sends it over UART.
- * - Resets all preset configurations.
- * - Saves the updated state back to flash.
+ * This includes:
+ * - Resetting the client's current (running) configuration
+ * - Sending the reset state to the client via UART
+ * - Marking the client as dormant
+ * - Resetting all preset configurations associated with the client
+ * - Saving the updated state to flash
  *
- * @param flash_client_index Index of the client in the persistent flash structure.
+ * @param flash_client_index Index of the client in the persistent flash state array.
  */
 void reset_all_client_data(uint32_t flash_client_index);
 
 /**
- * @brief Loads a preset configuration into a client's running state and applies it via UART.
+ * @brief Loads a saved preset configuration into a client's running state.
  *
- * - Loads the full persistent state from flash.
- * - Copies the selected preset configuration into the running configuration.
- * - Sends the new configuration to the client via UART.
- * - Saves the updated state back to flash.
+ * Copies the selected preset configuration into the client's current state,
+ * sends the new state to the client via UART, and updates the persistent flash.
+ * If the loaded configuration results in all devices being OFF, the client is
+ * marked as dormant.
  *
- * @param flash_configuration_index Index of the preset configuration to load (0-based).
- * @param flash_client_index Index of the client in the flash-stored structure.
+ * A confirmation message is printed to the USB CLI.
+ *
+ * @param flash_configuration_index Index of the preset configuration to load.
+ * @param flash_client_index Index of the target client in the persistent flash state.
  */
 void load_configuration_into_running_state(uint32_t flash_configuration_index, uint32_t flash_client_index);
 
