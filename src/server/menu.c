@@ -263,17 +263,27 @@ static inline void display_active_clients(void){
  */
 static void select_action(uint32_t choice){
     switch (choice){
-        case 1: display_active_clients(); break;
-        case 2: set_client_device(); break;
-        case 3: toggle_device(); break;
-        case 4: save_running_state(); break;
-        case 5: build_preset_configuration(); break;
-        case 6: load_configuration(); break;
-        case 7: reset_configuration(); break;
-        case 8: clear_screen(); break;
-        case 9: restart_application(); break;
+        case 1: display_active_clients();
+            break;
+        case 2: set_client_device();
+            break;
+        case 3: toggle_device();
+            break;
+        case 4: save_running_state();
+            break;
+        case 5: build_preset_configuration();
+            break;
+        case 6: load_configuration();
+            break;
+        case 7: reset_configuration();
+            break;
+        case 8: clear_screen();
+            break;
+        case 9: restart_application();  
+            break;
 
-        default: printf_and_update_buffer("Out of range. Try again.\n"); break;
+        default: printf_and_update_buffer("Out of range. Try again.\n");
+            break;
     }
 }
     

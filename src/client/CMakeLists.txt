@@ -21,6 +21,7 @@ target_link_libraries(client
     hardware_uart        # UART peripheral access
     hardware_gpio        # GPIO peripheral access
     hardware_watchdog
+    hardware_clocks
     common
 )
 

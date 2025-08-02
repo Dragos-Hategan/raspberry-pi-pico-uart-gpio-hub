@@ -12,6 +12,7 @@
 
 #include "pico/stdlib.h"
 #include "hardware/watchdog.h"
+#include "hardware/sync.h"
 
 #include "client.h"
 #include "types.h"
@@ -125,12 +126,17 @@ static bool wake_up(){
  */
 static void apply_command(uint8_t *received_number_pair){
     switch(received_number_pair[0]){
-        case TRIGGER_RESET_FLAG_NUMBER: watchdog_reboot(0, 0, 0); break;
-        case BLINK_ONBOARD_LED_FLAG_NUMBER: fast_blink_onboard_led_blocking(); printf("periodic blink!\n"); break;
-        case WAKE_UP_FLAG_NUMBER: go_dormant = false; printf("woke up!\n"); break;//pico_set_onboard_led(value); value = !value; break;
-        case DORMANT_FLAG_NUMBER: go_dormant = true; printf("getting dormant!\n"); break;
+        case TRIGGER_RESET_FLAG_NUMBER: watchdog_reboot(0, 0, 0);
+            break;
+        case BLINK_ONBOARD_LED_FLAG_NUMBER: fast_blink_onboard_led_blocking();//fast_blink_onboard_led();//
+            break;
+        case WAKE_UP_FLAG_NUMBER: go_dormant = false;
+            break;
+        case DORMANT_FLAG_NUMBER: go_dormant = true;
+            break;
 
-        default: change_gpio(received_number_pair); printf("gpio change!\n"); break;
+        default: change_gpio(received_number_pair);
+            break;
     }
 }
 
@@ -154,16 +160,20 @@ static bool receive_data(){
         apply_command(received_number_pair);
         return 1;
     }
-
+    
     return 0;
 }
 
 void client_listen_for_commands(void){
+    uart_set_irq_enables(active_uart_client_connection.uart_instance, true, false);
+    
     while(true){
         receive_data();
         if (go_dormant){
             enter_power_saving_mode();
             wake_up();
+        }else{
+            //__wfi();
         }
     }
 }
