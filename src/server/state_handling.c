@@ -407,14 +407,6 @@ static uint32_t get_active_client_connections_index_from_flash_client_index(uint
     return INVALID_CLIENT_INDEX;
 }
 
-/**
- * @brief Resets the GPIO state of a client.
- *
- * Iterates through all devices in the given `client_state_t` and sets their
- * `is_on` state to false, skipping devices marked as UART connection pins.
- *
- * @param client_state Pointer to the client state structure to reset.
- */
 void reset_running_configuration(uint32_t flash_client_index){
     server_persistent_state_t state;
     load_server_state(&state);
@@ -425,8 +417,10 @@ void reset_running_configuration(uint32_t flash_client_index){
                             state.clients[flash_client_index].uart_connection.uart_instance,
                             &state.clients[flash_client_index].running_client_state);
 
-    send_dormant_flag_to_client(get_active_client_connections_index_from_flash_client_index(flash_client_index, state));
-
+    uint8_t active_client_index = get_active_client_connections_index_from_flash_client_index(flash_client_index, state);
+    send_dormant_flag_to_client(active_client_index);
+    active_uart_server_connections[active_client_index].is_dormant = true;
+    
     save_server_state(&state);
 
     printf_and_update_buffer("\nRunning Configuration Reset.\n");
@@ -453,7 +447,9 @@ void reset_all_client_data(uint32_t flash_client_index){
                             state.clients[flash_client_index].uart_connection.uart_instance,
                             &state.clients[flash_client_index].running_client_state);
 
-    send_dormant_flag_to_client(get_active_client_connections_index_from_flash_client_index(flash_client_index, state));
+    uint8_t active_client_index = get_active_client_connections_index_from_flash_client_index(flash_client_index, state);
+    send_dormant_flag_to_client(active_client_index);
+    active_uart_server_connections[active_client_index].is_dormant = true;
 
     for (uint8_t configuration_index = 0; configuration_index < NUMBER_OF_POSSIBLE_PRESETS; configuration_index++){
         server_reset_configuration(&state.clients[flash_client_index].preset_configs[configuration_index]);

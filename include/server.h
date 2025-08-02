@@ -131,14 +131,13 @@ void set_configuration_devices(uint32_t flash_client_index, uint32_t flash_confi
 
 
 /**
- * @brief Resets the currently active (running) configuration of a client.
+ * @brief Resets the running configuration of a specified client to its default state.
  *
- * - Loads the full persistent server state from flash.
- * - Resets the `running_client_state` using `server_reset_configuration()`.
- * - Sends the updated state to the client over UART.
- * - Saves the modified state back to flash.
+ * Loads the server's persistent state, resets the client's current configuration,
+ * sends the updated state to the client, marks the client as dormant, and saves
+ * the updated state back to flash.
  *
- * @param flash_client_index Index of the client in the persistent flash structure.
+ * @param flash_client_index Index of the client in the persistent flash state array.
  */
 void reset_running_configuration(uint32_t flash_client_index);
 
@@ -155,13 +154,16 @@ void reset_running_configuration(uint32_t flash_client_index);
 void reset_preset_configuration(uint32_t flash_client_index, uint32_t flash_configuration_index);
 
 /**
- * @brief Resets all data associated with a client.
+ * @brief Resets all configuration data for a specified client.
  *
- * - Resets the running state of the client and sends it over UART.
- * - Resets all preset configurations.
- * - Saves the updated state back to flash.
+ * This includes:
+ * - Resetting the client's current (running) configuration
+ * - Sending the reset state to the client via UART
+ * - Marking the client as dormant
+ * - Resetting all preset configurations associated with the client
+ * - Saving the updated state to flash
  *
- * @param flash_client_index Index of the client in the persistent flash structure.
+ * @param flash_client_index Index of the client in the persistent flash state array.
  */
 void reset_all_client_data(uint32_t flash_client_index);
 
