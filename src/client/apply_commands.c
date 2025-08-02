@@ -75,7 +75,7 @@ static void change_gpio(uint8_t *gpio_state_pair){
 static void enter_power_saving_mode(){
     //reset_gpio_pins(active_uart_client_connection.pin_pair);
     sleep_run_from_dormant_source(DORMANT_SOURCE_ROSC);
-    sleep_goto_dormant_until_pin(active_uart_client_connection.pin_pair.rx, false, true);
+    sleep_goto_dormant_until_pin(active_uart_client_connection.pin_pair.tx, false, true);
 }
 
 /**
@@ -165,7 +165,7 @@ static bool receive_data(){
 }
 
 void client_listen_for_commands(void){
-    uart_set_irq_enables(active_uart_client_connection.uart_instance, true, false);
+    //uart_set_irq_enables(active_uart_client_connection.uart_instance, true, false);
     
     while(true){
         receive_data();

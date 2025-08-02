@@ -57,6 +57,7 @@ typedef struct{
     uart_pin_pair_t pin_pair;
     uart_inst_t* uart_instance;
     uart_pin_pair_t uart_pin_pair_from_client_to_server; ///< Reverse pin mapping from client
+    bool is_dormant;
 }server_uart_connection_t;
 
 /**
@@ -88,7 +89,6 @@ typedef struct{
     client_state_t running_client_state;
     client_state_t preset_configs[NUMBER_OF_POSSIBLE_PRESETS];
     uart_connection_t uart_connection;
-    bool is_active;
 }client_t;
 
 /**

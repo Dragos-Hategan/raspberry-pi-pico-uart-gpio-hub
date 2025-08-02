@@ -64,13 +64,9 @@ static void send_uart_message_safe(uart_inst_t* uart, uart_pin_pair_t pins, cons
  * @see send_uart_message_safe()
  */
 static void wake_up_client(uart_pin_pair_t pin_pair, uart_inst_t* uart){
-    //gpio_init(pin_pair.tx);
-    gpio_set_function(pin_pair.tx, GPIO_FUNC_SIO);
-    gpio_set_dir(pin_pair.tx, GPIO_OUT);
-
-    gpio_put(pin_pair.tx, true);
+    gpio_put(pin_pair.rx, true);
     sleep_ms(5);
-    gpio_put(pin_pair.tx, false);
+    gpio_put(pin_pair.rx, false);
     sleep_ms(5);
 
     char msg[8];
@@ -146,12 +142,15 @@ static void send_flag_message_to_client(const uint8_t FLAG_MESSAGE, uint8_t clie
         msg
     );
 
-    char msg_power_saving[8];
-    snprintf(msg_power_saving, sizeof(msg), "[%d,%d]", DORMANT_FLAG_NUMBER, DORMANT_FLAG_NUMBER);
-        send_uart_message_safe(active_uart_server_connections[client_index].uart_instance,
-        active_uart_server_connections[client_index].pin_pair,
-        msg_power_saving
-    );
+    // works with dormant!!!!!!
+    // now let's make it work with sleep and let dormant for clients with no active devices...
+    // and that's it:)
+    // char msg_power_saving[8];
+    // snprintf(msg_power_saving, sizeof(msg), "[%d,%d]", DORMANT_FLAG_NUMBER, DORMANT_FLAG_NUMBER);
+    //     send_uart_message_safe(active_uart_server_connections[client_index].uart_instance,
+    //     active_uart_server_connections[client_index].pin_pair,
+    //     msg_power_saving
+    // );
 }
 
 /**
@@ -180,8 +179,31 @@ void send_fast_blink_onboard_led_to_clients(){
     send_flag_message_to_all_clients(BLINK_ONBOARD_LED_FLAG_NUMBER);
 }
 
-void send_dormant_to_standby_clients(){
-    send_flag_message_to_all_clients(DORMANT_FLAG_NUMBER);
+static void send_dormant_to_standby_clients(void){
+    for (uint8_t active_connection_index = 0; active_connection_index < active_server_connections_number; active_connection_index++){
+        if (active_uart_server_connections[active_connection_index].is_dormant){
+            send_flag_message_to_client(DORMANT_FLAG_NUMBER, active_connection_index);
+        }
+    }
+}
+
+static bool client_has_active_devices(client_t client){
+    for (uint8_t device_index = 0; device_index < MAX_NUMBER_OF_GPIOS; device_index++){
+        if (client.running_client_state.devices[device_index].is_on){
+            return true;
+        }
+    }
+    return false;
+}
+
+static void set_dormant_flag_to_standby_clients(server_persistent_state_t *server_persistent_state){
+    for (uint8_t active_client_index = 0; active_client_index < active_server_connections_number; active_client_index++){
+        for (uint8_t persistent_state_client_index = 0; persistent_state_client_index < MAX_SERVER_CONNECTIONS; persistent_state_client_index++){
+            if (active_uart_server_connections[active_client_index].pin_pair.tx == server_persistent_state->clients[persistent_state_client_index].uart_connection.pin_pair.tx){
+                active_uart_server_connections[active_client_index].is_dormant = !client_has_active_devices(server_persistent_state->clients[persistent_state_client_index]);
+            }
+        }
+    }
 }
 
 /**
@@ -461,7 +483,6 @@ static void configure_running_state_uart_connection_pins(uint8_t client_list_ind
         if (active_uart_server_connections[index].pin_pair.tx == client->uart_connection.pin_pair.tx){
             client->running_client_state.devices[active_uart_server_connections[index].uart_pin_pair_from_client_to_server.tx].gpio_number = UART_CONNECTION_FLAG_NUMBER;
             client->running_client_state.devices[active_uart_server_connections[index].uart_pin_pair_from_client_to_server.rx].gpio_number = UART_CONNECTION_FLAG_NUMBER;
-            client->is_active = true;
         }
     }
 }
@@ -488,7 +509,7 @@ static void configure_running_state(uint8_t client_list_index, server_persistent
  * @brief Initializes a client entry in the persistent state.
  *
  * - Saves UART pin pair and instance.
- * - Sets is_active to false.
+ * - Sets is_dormant to true.
  * - Calls config functions.
  *
  * @param uart_pin_pair TX/RX pin pair for the client.
@@ -499,7 +520,6 @@ static void configure_running_state(uint8_t client_list_index, server_persistent
 static void configure_client(uart_pin_pair_t uart_pin_pair, uint8_t client_list_index, server_persistent_state_t *server_persistent_state, uart_inst_t* uart_inst){
     server_persistent_state->clients[client_list_index].uart_connection.pin_pair = uart_pin_pair;
     server_persistent_state->clients[client_list_index].uart_connection.uart_instance = uart_inst;
-    server_persistent_state->clients[client_list_index].is_active = false;
 
     configure_running_state(client_list_index, server_persistent_state);
     configure_preset_configs(client_list_index, server_persistent_state);
@@ -543,7 +563,6 @@ static void server_load_client_state(server_uart_connection_t server_uart_connec
             saved_client->uart_connection.pin_pair.rx == server_uart_connection.pin_pair.rx &&
             saved_client->uart_connection.uart_instance == server_uart_connection.uart_instance) {
                 
-            saved_client->is_active = true;
             server_send_client_state(server_uart_connection.pin_pair, server_uart_connection.uart_instance, &saved_client->running_client_state);
             return;
         }
@@ -565,6 +584,7 @@ void server_load_running_states_to_active_clients(void){
         printf("CONFIGURATION WAS SUCCESSFULL!\nStarting...\n");
     }
 
+    set_dormant_flag_to_standby_clients(&server_persistent_state);
     send_dormant_to_standby_clients();
 }
 
