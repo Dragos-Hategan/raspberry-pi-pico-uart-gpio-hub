@@ -46,22 +46,14 @@ static void send_uart_message_safe(uart_inst_t* uart, uart_pin_pair_t pins, cons
 }
 
 /**
- * @brief Sends a wake-up pulse and message to a client device over UART.
+ * @brief Wakes up a client device by toggling RX pin and sending a wake-up message.
  *
- * This function drives the TX pin high for 5 milliseconds, then low for 5 milliseconds
- * to generate a wake-up pulse on the client's RX line. After the pulse, it sends a
- * predefined wake-up message in the format "[X,X]" where X is `WAKE_UP_FLAG_NUMBER`.
+ * This function:
+ * - Drives the client's RX pin high for 5 ms, then low for 5 ms (to exit dormant mode)
+ * - Sends a predefined wake-up flag message over UART to ensure proper synchronization
  *
- * Typically used to bring a client device out of dormant or low-power mode
- * and confirm the wake-up via UART.
- *
- * @param pin_pair The UART TX/RX pin pair used for communication.
- * @param uart     Pointer to the UART instance used for sending the message.
- *
- * @note TX pin is temporarily reconfigured as SIO output to generate the pulse.
- *       Make sure this matches the client’s wake-up detection mechanism.
- *
- * @see send_uart_message_safe()
+ * @param pin_pair The TX/RX pin pair used for communication with the client.
+ * @param uart     UART instance used to send the message.
  */
 static void wake_up_client(uart_pin_pair_t pin_pair, uart_inst_t* uart){
     gpio_put(pin_pair.rx, true);
@@ -126,6 +118,26 @@ void server_print_client_preset_configurations(const client_t *client){
 }
 
 /**
+ * @brief Sends a dormant flag message to the specified client if it is marked as dormant.
+ *
+ * If the client at the given index has its `is_dormant` flag set, this function
+ * constructs a predefined message containing the dormant flag number and sends it
+ * safely over UART to that client.
+ *
+ * @param client_index Index of the client in the active connections array.
+ */
+static void send_dormant_if_flag_is_active(uint8_t client_index){
+    if(active_uart_server_connections[client_index].is_dormant){
+        char msg[8];
+        snprintf(msg, sizeof(msg), "[%d,%d]", DORMANT_FLAG_NUMBER, DORMANT_FLAG_NUMBER);
+            send_uart_message_safe(active_uart_server_connections[client_index].uart_instance,
+            active_uart_server_connections[client_index].pin_pair,
+            msg
+        );
+    }
+}
+
+/**
  * @brief Sends a predefined flag message to a specific client via UART.
  *
  * Constructs a message of the form "[X,X]" using the given flag value
@@ -141,6 +153,8 @@ static void send_flag_message_to_client(const uint8_t FLAG_MESSAGE, uint8_t clie
         active_uart_server_connections[client_index].pin_pair,
         msg
     );
+
+    send_dormant_if_flag_is_active(client_index);
 
     // works with dormant!!!!!!
     // now let's make it work with sleep and let dormant for clients with no active devices...
@@ -179,14 +193,27 @@ void send_fast_blink_onboard_led_to_clients(){
     send_flag_message_to_all_clients(BLINK_ONBOARD_LED_FLAG_NUMBER);
 }
 
+/**
+ * @brief Sends a dormant message to all clients marked as dormant.
+ *
+ * Iterates through all active UART connections and sends a predefined
+ * dormant flag message to each client with the `is_dormant` flag set.
+ */
 static void send_dormant_to_standby_clients(void){
     for (uint8_t active_connection_index = 0; active_connection_index < active_server_connections_number; active_connection_index++){
-        if (active_uart_server_connections[active_connection_index].is_dormant){
-            send_flag_message_to_client(DORMANT_FLAG_NUMBER, active_connection_index);
-        }
+        send_dormant_if_flag_is_active(active_connection_index);
     }
 }
 
+/**
+ * @brief Checks if a client has any active (ON) devices.
+ *
+ * Iterates through the client's GPIO-controlled devices and returns true
+ * if at least one is currently turned ON.
+ *
+ * @param client The client structure to inspect.
+ * @return true if any device is ON; false otherwise.
+ */
 static bool client_has_active_devices(client_t client){
     for (uint8_t device_index = 0; device_index < MAX_NUMBER_OF_GPIOS; device_index++){
         if (client.running_client_state.devices[device_index].is_on){
@@ -196,6 +223,14 @@ static bool client_has_active_devices(client_t client){
     return false;
 }
 
+/**
+ * @brief Updates the dormant status of all connected clients based on their active devices.
+ *
+ * For each active UART client, this function compares its TX pin with the
+ * persistent state list and sets its `is_dormant` flag to true if all devices are OFF.
+ *
+ * @param server_persistent_state Pointer to the saved state containing all client info.
+ */
 static void set_dormant_flag_to_standby_clients(server_persistent_state_t *server_persistent_state){
     for (uint8_t active_client_index = 0; active_client_index < active_server_connections_number; active_client_index++){
         for (uint8_t persistent_state_client_index = 0; persistent_state_client_index < MAX_SERVER_CONNECTIONS; persistent_state_client_index++){

@@ -67,11 +67,11 @@ static void find_clients(void){
 /**
  * @brief Configures all RX pins of active server UART connections as outputs set to LOW.
  *
- * This is typically used before entering low-power modes where these pins
- * are repurposed (e.g., to trigger wakeup signals or avoid floating inputs).
+ * This is used before entering low-power modes where these pins
+ * are repurposed (to trigger wakeup signals).
  *
  * The function:
- * - Deinitializes each RX pin (removing any previous function)
+ * - Deinitializes each RX pin (removing previous uart)
  * - Re-initializes it as a standard GPIO
  * - Sets it as output and drives it LOW
  */

@@ -21,6 +21,15 @@
 #include "hardware/regs/clocks.h"
 #include "hardware/pll.h"
 
+/**
+ * @brief Reduces power consumption by disabling unused clocks and reconfiguring system clocks.
+ *
+ * This function turns off unnecessary peripherals and clock outputs (e.g., ADC, RTC, GPOUT),
+ * switches to lower-frequency XOSC-based system clocks (12 MHz), disables the system PLL,
+ * and enables only essential clock domains for sleep mode operation.
+ *
+ * It also reinitializes the active UART interface with the appropriate pins and baudrate.
+ */
 static void client_turn_off_unused_power_consumers(void){
     //clocks_hw->clk[clk_usb].ctrl &= ~CLOCKS_CLK_USB_CTRL_ENABLE_BITS;
     clocks_hw->clk[clk_adc].ctrl &= ~CLOCKS_CLK_ADC_CTRL_ENABLE_BITS;
@@ -53,10 +62,10 @@ static void client_turn_off_unused_power_consumers(void){
         CLOCKS_SLEEP_EN0_CLK_SYS_BUSFABRIC_BITS |
         CLOCKS_SLEEP_EN0_CLK_SYS_CLOCKS_BITS |
         #if PICO_RP2040
-        CLOCKS_SLEEP_EN0_CLK_SYS_VREG_AND_CHIP_RESET_BITS;
+            CLOCKS_SLEEP_EN0_CLK_SYS_VREG_AND_CHIP_RESET_BITS;
         #endif
         #if PICO_RP2350
-        CLOCKS_SLEEP_EN0_CLK_SYS_GLITCH_DETECTOR_BITS;
+            CLOCKS_SLEEP_EN0_CLK_SYS_GLITCH_DETECTOR_BITS;
         #endif
 
     #if PICO_RP2040
@@ -82,6 +91,13 @@ static void client_turn_off_unused_power_consumers(void){
     );
 }
 
+/**
+ * @brief Configures the TX pin as input with pull-down for wakeup detection.
+ *
+ * Deinitializes any previous function on the TX pin, sets it as a GPIO input,
+ * and enables an internal pull-down resistor to detect incoming high signals.
+ * This setup is typically used for wakeup from dormant mode.
+ */
 static void set_pin_as_input_for_wakeup(){
     uint8_t pin = active_uart_client_connection.pin_pair.tx;
     gpio_deinit(pin);
