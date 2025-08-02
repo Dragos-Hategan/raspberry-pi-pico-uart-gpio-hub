@@ -200,6 +200,14 @@ static void toggle_device(void){
         gpio_index,
         device_state,
         input_client_data.flash_client_index);
+
+        if (!device_state){
+            const server_persistent_state_t *flash_state = (const server_persistent_state_t *)SERVER_FLASH_ADDR;
+            if (!client_has_active_devices(flash_state->clients[input_client_data.flash_client_index])){
+                    send_dormant_flag_to_client(input_client_data.client_index - 1);
+                    active_uart_server_connections[input_client_data.client_index - 1].is_dormant = true;
+            }
+        }
     
         char string[BUFFER_MAX_STRING_SIZE];
         snprintf(string, sizeof(string), "\nDevice[%u] Toggled.\n", input_client_data.device_index);
@@ -208,10 +216,18 @@ static void toggle_device(void){
 }
 
 /**
- * @brief Sets the state of a selected GPIO device for a selected client.
+ * @brief Sets the ON/OFF state of a selected GPIO device for a specified client.
  *
- * Prompts the user to select a client, one of its devices, and a desired state (ON/OFF),
- * then sends the state to the client via UART and updates the flash accordingly.
+ * Prompts the user to:
+ * - Select a client
+ * - Select one of the client's devices
+ * - Choose a desired state (ON or OFF)
+ *
+ * Then:
+ * - Sends the new state to the client over UART
+ * - Updates the persistent flash state
+ * - If all devices are OFF after the update, marks the client as dormant
+ * - Prints a confirmation message to the USB CLI
  */
 static void set_client_device(void){    
     input_client_data_t input_client_data = {0};
@@ -230,6 +246,14 @@ static void set_client_device(void){
             gpio_index,
             input_client_data.device_state,
             input_client_data.flash_client_index);
+
+        if (input_client_data.device_state == 0){
+            const server_persistent_state_t *flash_state = (const server_persistent_state_t *)SERVER_FLASH_ADDR;
+            if (!client_has_active_devices(flash_state->clients[input_client_data.flash_client_index])){
+                send_dormant_flag_to_client(input_client_data.client_index - 1);
+                active_uart_server_connections[input_client_data.client_index - 1].is_dormant = true;
+            }
+        }
     
         char string[BUFFER_MAX_STRING_SIZE];
         snprintf(string, sizeof(string), "\nDevice[%u] %s.\n",

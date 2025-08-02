@@ -117,15 +117,7 @@ void server_print_client_preset_configurations(const client_t *client){
     }
 }
 
-/**
- * @brief Sends a dormant flag message to a specific client over UART.
- *
- * Constructs a message with the dormant flag number and sends it
- * via the UART instance and pin pair assigned to the specified client.
- *
- * @param client_index Index of the client in the active server connections.
- */
-static void send_dormant_flag_to_client(uint8_t client_index){
+void send_dormant_flag_to_client(uint8_t client_index){
     char msg[8];
     snprintf(msg, sizeof(msg), "[%d,%d]", DORMANT_FLAG_NUMBER, DORMANT_FLAG_NUMBER);
     send_uart_message_safe(active_uart_server_connections[client_index].uart_instance,
@@ -166,16 +158,6 @@ static void send_flag_message_to_client(const uint8_t FLAG_MESSAGE, uint8_t clie
     );
 
     send_dormant_if_is_dormant_is_true(client_index);
-
-    // works with dormant!!!!!!
-    // now let's make it work with sleep and let dormant for clients with no active devices...
-    // and that's it:)
-    // char msg_power_saving[8];
-    // snprintf(msg_power_saving, sizeof(msg), "[%d,%d]", DORMANT_FLAG_NUMBER, DORMANT_FLAG_NUMBER);
-    //     send_uart_message_safe(active_uart_server_connections[client_index].uart_instance,
-    //     active_uart_server_connections[client_index].pin_pair,
-    //     msg_power_saving
-    // );
 }
 
 /**
@@ -216,16 +198,7 @@ static void send_dormant_to_standby_clients(void){
     }
 }
 
-/**
- * @brief Checks if a client has any active (ON) devices.
- *
- * Iterates through the client's GPIO-controlled devices and returns true
- * if at least one is currently turned ON.
- *
- * @param client The client structure to inspect.
- * @return true if any device is ON; false otherwise.
- */
-static bool client_has_active_devices(client_t client){
+bool client_has_active_devices(client_t client){
     for (uint8_t device_index = 0; device_index < MAX_NUMBER_OF_GPIOS; device_index++){
         if (client.running_client_state.devices[device_index].is_on){
             return true;

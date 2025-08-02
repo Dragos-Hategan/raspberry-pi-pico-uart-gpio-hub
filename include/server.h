@@ -114,6 +114,27 @@ void signal_reset_for_all_clients();
 void send_fast_blink_onboard_led_to_clients();
 
 /**
+ * @brief Sends a dormant flag message to a specific client over UART.
+ *
+ * Constructs a message with the dormant flag number and sends it
+ * via the UART instance and pin pair assigned to the specified client.
+ *
+ * @param client_index Index of the client in the active server connections.
+ */
+void send_dormant_flag_to_client(uint8_t client_index);
+
+/**
+ * @brief Checks if a client has any active (ON) devices.
+ *
+ * Iterates through the client's GPIO-controlled devices and returns true
+ * if at least one is currently turned ON.
+ *
+ * @param client The client structure to inspect.
+ * @return true if any device is ON; false otherwise.
+ */
+bool client_has_active_devices(client_t client);
+
+/**
  * @brief Configures the devices for a given client and preset configuration index.
  *
  * This function enters an interactive loop where the user can set the ON/OFF state
