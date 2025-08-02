@@ -118,22 +118,33 @@ void server_print_client_preset_configurations(const client_t *client){
 }
 
 /**
- * @brief Sends a dormant flag message to the specified client if it is marked as dormant.
+ * @brief Sends a dormant flag message to a specific client over UART.
  *
- * If the client at the given index has its `is_dormant` flag set, this function
- * constructs a predefined message containing the dormant flag number and sends it
- * safely over UART to that client.
+ * Constructs a message with the dormant flag number and sends it
+ * via the UART instance and pin pair assigned to the specified client.
  *
- * @param client_index Index of the client in the active connections array.
+ * @param client_index Index of the client in the active server connections.
  */
-static void send_dormant_if_flag_is_active(uint8_t client_index){
+static void send_dormant_flag_to_client(uint8_t client_index){
+    char msg[8];
+    snprintf(msg, sizeof(msg), "[%d,%d]", DORMANT_FLAG_NUMBER, DORMANT_FLAG_NUMBER);
+    send_uart_message_safe(active_uart_server_connections[client_index].uart_instance,
+        active_uart_server_connections[client_index].pin_pair,
+        msg
+    );
+}
+
+/**
+ * @brief Sends a dormant flag message if the client is marked as dormant.
+ *
+ * Checks the `is_dormant` flag for the client at the given index, and if true,
+ * calls the function to send a dormant message via UART.
+ *
+ * @param client_index Index of the client in the active server connections.
+ */
+static void send_dormant_if_is_dormant_is_true(uint8_t client_index){
     if(active_uart_server_connections[client_index].is_dormant){
-        char msg[8];
-        snprintf(msg, sizeof(msg), "[%d,%d]", DORMANT_FLAG_NUMBER, DORMANT_FLAG_NUMBER);
-            send_uart_message_safe(active_uart_server_connections[client_index].uart_instance,
-            active_uart_server_connections[client_index].pin_pair,
-            msg
-        );
+        send_dormant_flag_to_client(client_index);
     }
 }
 
@@ -154,7 +165,7 @@ static void send_flag_message_to_client(const uint8_t FLAG_MESSAGE, uint8_t clie
         msg
     );
 
-    send_dormant_if_flag_is_active(client_index);
+    send_dormant_if_is_dormant_is_true(client_index);
 
     // works with dormant!!!!!!
     // now let's make it work with sleep and let dormant for clients with no active devices...
@@ -201,7 +212,7 @@ void send_fast_blink_onboard_led_to_clients(){
  */
 static void send_dormant_to_standby_clients(void){
     for (uint8_t active_connection_index = 0; active_connection_index < active_server_connections_number; active_connection_index++){
-        send_dormant_if_flag_is_active(active_connection_index);
+        send_dormant_if_is_dormant_is_true(active_connection_index);
     }
 }
 
@@ -374,8 +385,26 @@ static void server_send_client_state(uart_pin_pair_t pin_pair, uart_inst_t* uart
     }
 
     reset_gpio_pins(pin_pair);
-    //uart_deinit(uart);
     spin_unlock(uart_lock, irq);
+}
+
+/**
+ * @brief Retrieves the index of an active client connection matching a flash-stored client.
+ *
+ * Iterates through active UART server connections and compares their TX pins
+ * with the TX pin of the client at the specified index in the persistent flash state.
+ *
+ * @param flash_client_index Index of the client in the persistent flash state array.
+ * @param state The loaded persistent server state.
+ * @return Index of the matching active connection, or INVALID_CLIENT_INDEX if not found.
+ */
+static uint32_t get_active_client_connections_index_from_flash_client_index(uint32_t flash_client_index, server_persistent_state_t state){
+    for (uint8_t active_client_index = 0; active_client_index < active_server_connections_number; active_client_index++){
+        if (active_uart_server_connections[active_client_index].pin_pair.tx == state.clients[flash_client_index].uart_connection.pin_pair.tx){
+            return active_client_index;
+        }
+    }
+    return INVALID_CLIENT_INDEX;
 }
 
 /**
@@ -395,6 +424,8 @@ void reset_running_configuration(uint32_t flash_client_index){
     server_send_client_state(state.clients[flash_client_index].uart_connection.pin_pair,
                             state.clients[flash_client_index].uart_connection.uart_instance,
                             &state.clients[flash_client_index].running_client_state);
+
+    send_dormant_flag_to_client(get_active_client_connections_index_from_flash_client_index(flash_client_index, state));
 
     save_server_state(&state);
 
@@ -421,6 +452,8 @@ void reset_all_client_data(uint32_t flash_client_index){
     server_send_client_state(state.clients[flash_client_index].uart_connection.pin_pair,
                             state.clients[flash_client_index].uart_connection.uart_instance,
                             &state.clients[flash_client_index].running_client_state);
+
+    send_dormant_flag_to_client(get_active_client_connections_index_from_flash_client_index(flash_client_index, state));
 
     for (uint8_t configuration_index = 0; configuration_index < NUMBER_OF_POSSIBLE_PRESETS; configuration_index++){
         server_reset_configuration(&state.clients[flash_client_index].preset_configs[configuration_index]);

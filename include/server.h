@@ -23,6 +23,7 @@
 #define SERVER_PAGE_SIZE      256
 #define SERVER_FLASH_OFFSET   (PICO_FLASH_SIZE_BYTES - SERVER_SECTOR_SIZE) ///< Offset from flash end
 #define SERVER_FLASH_ADDR     (XIP_BASE + SERVER_FLASH_OFFSET)             ///< Runtime address of flash state
+#define INVALID_CLIENT_INDEX -1
 
 #ifndef UART_SPINLOCK_ID
 #define UART_SPINLOCK_ID 0
