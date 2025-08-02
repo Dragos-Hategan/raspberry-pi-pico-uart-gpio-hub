@@ -447,10 +447,13 @@ void load_configuration_into_running_state(uint32_t flash_configuration_index, u
                             &state.clients[flash_client_index].running_client_state);
     save_server_state(&state);
 
+    
+    uint8_t active_client_index = get_active_client_connections_index_from_flash_client_index(flash_client_index, state);
     if (!client_has_active_devices(state.clients[flash_client_index])){
-        uint8_t active_client_index = get_active_client_connections_index_from_flash_client_index(flash_client_index, state);
         send_dormant_flag_to_client(active_client_index);
         active_uart_server_connections[active_client_index].is_dormant = true;
+    }else{
+        active_uart_server_connections[active_client_index].is_dormant = false;
     }
 
     char string[BUFFER_MAX_STRING_SIZE];

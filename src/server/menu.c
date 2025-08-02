@@ -207,6 +207,8 @@ static void toggle_device(void){
                     send_dormant_flag_to_client(input_client_data.client_index - 1);
                     active_uart_server_connections[input_client_data.client_index - 1].is_dormant = true;
             }
+        }else{
+            active_uart_server_connections[input_client_data.client_index - 1].is_dormant = false;
         }
     
         char string[BUFFER_MAX_STRING_SIZE];
@@ -253,6 +255,8 @@ static void set_client_device(void){
                 send_dormant_flag_to_client(input_client_data.client_index - 1);
                 active_uart_server_connections[input_client_data.client_index - 1].is_dormant = true;
             }
+        }else{
+            active_uart_server_connections[input_client_data.client_index - 1].is_dormant = false;
         }
     
         char string[BUFFER_MAX_STRING_SIZE];
