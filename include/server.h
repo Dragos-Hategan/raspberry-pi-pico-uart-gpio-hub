@@ -189,15 +189,17 @@ void reset_preset_configuration(uint32_t flash_client_index, uint32_t flash_conf
 void reset_all_client_data(uint32_t flash_client_index);
 
 /**
- * @brief Loads a preset configuration into a client's running state and applies it via UART.
+ * @brief Loads a saved preset configuration into a client's running state.
  *
- * - Loads the full persistent state from flash.
- * - Copies the selected preset configuration into the running configuration.
- * - Sends the new configuration to the client via UART.
- * - Saves the updated state back to flash.
+ * Copies the selected preset configuration into the client's current state,
+ * sends the new state to the client via UART, and updates the persistent flash.
+ * If the loaded configuration results in all devices being OFF, the client is
+ * marked as dormant.
  *
- * @param flash_configuration_index Index of the preset configuration to load (0-based).
- * @param flash_client_index Index of the client in the flash-stored structure.
+ * A confirmation message is printed to the USB CLI.
+ *
+ * @param flash_configuration_index Index of the preset configuration to load.
+ * @param flash_client_index Index of the target client in the persistent flash state.
  */
 void load_configuration_into_running_state(uint32_t flash_configuration_index, uint32_t flash_client_index);
 
