@@ -66,6 +66,44 @@ static void wake_up_client(uart_pin_pair_t pin_pair, uart_inst_t* uart){
     send_uart_message_safe(uart, pin_pair, msg);
 }
 
+/**
+ * @brief Retrieves the index of an active client connection matching a flash-stored client.
+ *
+ * Iterates through active UART server connections and compares their TX pins
+ * with the TX pin of the client at the specified index in the persistent flash state.
+ *
+ * @param flash_client_index Index of the client in the persistent flash state array.
+ * @param state The loaded persistent server state.
+ * @return Index of the matching active connection, or INVALID_CLIENT_INDEX if not found.
+ */
+static uint32_t get_active_client_connection_index_from_flash_client_index(uint32_t flash_client_index, server_persistent_state_t state){
+    for (uint8_t active_client_index = 0; active_client_index < active_server_connections_number; active_client_index++){
+        if (active_uart_server_connections[active_client_index].pin_pair.tx == state.clients[flash_client_index].uart_connection.pin_pair.tx){
+            return active_client_index;
+        }
+    }
+    return INVALID_CLIENT_INDEX;
+}
+
+/**
+ * @brief Wakes up a dormant client if needed, based on its persistent state.
+ *
+ * Checks whether the client at the specified index is dormant. If so, it
+ * sends a wake-up pulse via UART to ensure the client is active before communication.
+ *
+ * @param flash_client_index Index of the client in the persistent state table.
+ * @param state              Pointer to the global persistent state structure.
+ * @param pin_pair           UART TX/RX pins used to wake up the client.
+ * @param uart               Pointer to the UART instance used for transmission.
+ *
+ * @see wake_up_client()
+ */
+static void send_wakeup_if_dormant(uint32_t flash_client_index, server_persistent_state_t *const state, uart_pin_pair_t pin_pair, uart_inst_t *const uart){
+    uint8_t active_uart_connection_index = get_active_client_connection_index_from_flash_client_index(flash_client_index, *state);
+    if(active_uart_server_connections[active_uart_connection_index].is_dormant){
+        wake_up_client(pin_pair, uart);
+    }
+}
 
 /**
  * @brief Prints the GPIO state of a device at the given index in a client.
@@ -86,8 +124,7 @@ static void server_print_gpio_state(uint8_t gpio_index, const client_state_t *cl
         snprintf(string, sizeof(string), "%2u. GPIO_NO: %2u  Power: %s\n",
             gpio_index + 1,
             client_state->devices[gpio_index].gpio_number,
-            client_state->devices[gpio_index].is_on ? "ON" : "OFF"
-        );
+            client_state->devices[gpio_index].is_on ? "ON" : "OFF");
         printf_and_update_buffer(string);
     }
 }
@@ -122,8 +159,7 @@ void send_dormant_flag_to_client(uint8_t client_index){
     snprintf(msg, sizeof(msg), "[%d,%d]", DORMANT_FLAG_NUMBER, DORMANT_FLAG_NUMBER);
     send_uart_message_safe(active_uart_server_connections[client_index].uart_instance,
         active_uart_server_connections[client_index].pin_pair,
-        msg
-    );
+        msg);
 }
 
 /**
@@ -154,8 +190,7 @@ static void send_flag_message_to_client(const uint8_t FLAG_MESSAGE, uint8_t clie
     snprintf(msg, sizeof(msg), "[%d,%d]", FLAG_MESSAGE, FLAG_MESSAGE);
     send_uart_message_safe(active_uart_server_connections[client_index].uart_instance,
         active_uart_server_connections[client_index].pin_pair,
-        msg
-    );
+        msg);
 
     send_dormant_if_is_dormant_is_true(client_index);
 }
@@ -171,9 +206,10 @@ static void send_flag_message_to_client(const uint8_t FLAG_MESSAGE, uint8_t clie
  */
 static void send_flag_message_to_all_clients(const uint8_t FLAG_MESSAGE){
     for (uint8_t client_index = 0; client_index < active_server_connections_number; client_index++){
-        wake_up_client(active_uart_server_connections[client_index].pin_pair,
-            active_uart_server_connections[client_index].uart_instance
-        );
+        if (active_uart_server_connections[client_index].is_dormant){
+            wake_up_client(active_uart_server_connections[client_index].pin_pair,
+                active_uart_server_connections[client_index].uart_instance);
+        }
         send_flag_message_to_client(FLAG_MESSAGE, client_index);
     } 
 }
@@ -361,25 +397,6 @@ static void server_send_client_state(uart_pin_pair_t pin_pair, uart_inst_t* uart
     spin_unlock(uart_lock, irq);
 }
 
-/**
- * @brief Retrieves the index of an active client connection matching a flash-stored client.
- *
- * Iterates through active UART server connections and compares their TX pins
- * with the TX pin of the client at the specified index in the persistent flash state.
- *
- * @param flash_client_index Index of the client in the persistent flash state array.
- * @param state The loaded persistent server state.
- * @return Index of the matching active connection, or INVALID_CLIENT_INDEX if not found.
- */
-static uint32_t get_active_client_connections_index_from_flash_client_index(uint32_t flash_client_index, server_persistent_state_t state){
-    for (uint8_t active_client_index = 0; active_client_index < active_server_connections_number; active_client_index++){
-        if (active_uart_server_connections[active_client_index].pin_pair.tx == state.clients[flash_client_index].uart_connection.pin_pair.tx){
-            return active_client_index;
-        }
-    }
-    return INVALID_CLIENT_INDEX;
-}
-
 void reset_running_configuration(uint32_t flash_client_index){
     server_persistent_state_t state;
     load_server_state(&state);
@@ -390,7 +407,7 @@ void reset_running_configuration(uint32_t flash_client_index){
                             state.clients[flash_client_index].uart_connection.uart_instance,
                             &state.clients[flash_client_index].running_client_state);
 
-    uint8_t active_client_index = get_active_client_connections_index_from_flash_client_index(flash_client_index, state);
+    uint8_t active_client_index = get_active_client_connection_index_from_flash_client_index(flash_client_index, state);
     send_dormant_flag_to_client(active_client_index);
     active_uart_server_connections[active_client_index].is_dormant = true;
     
@@ -420,7 +437,7 @@ void reset_all_client_data(uint32_t flash_client_index){
                             state.clients[flash_client_index].uart_connection.uart_instance,
                             &state.clients[flash_client_index].running_client_state);
 
-    uint8_t active_client_index = get_active_client_connections_index_from_flash_client_index(flash_client_index, state);
+    uint8_t active_client_index = get_active_client_connection_index_from_flash_client_index(flash_client_index, state);
     send_dormant_flag_to_client(active_client_index);
     active_uart_server_connections[active_client_index].is_dormant = true;
 
@@ -439,8 +456,7 @@ void load_configuration_into_running_state(uint32_t flash_configuration_index, u
     memcpy(
         &state.clients[flash_client_index].running_client_state,
         &state.clients[flash_client_index].preset_configs[flash_configuration_index],
-        sizeof(client_state_t)
-    );
+        sizeof(client_state_t));
 
     server_send_client_state(state.clients[flash_client_index].uart_connection.pin_pair,
                             state.clients[flash_client_index].uart_connection.uart_instance,
@@ -448,7 +464,7 @@ void load_configuration_into_running_state(uint32_t flash_configuration_index, u
     save_server_state(&state);
 
     
-    uint8_t active_client_index = get_active_client_connections_index_from_flash_client_index(flash_client_index, state);
+    uint8_t active_client_index = get_active_client_connection_index_from_flash_client_index(flash_client_index, state);
     if (!client_has_active_devices(state.clients[flash_client_index])){
         send_dormant_flag_to_client(active_client_index);
         active_uart_server_connections[active_client_index].is_dormant = true;
@@ -468,8 +484,7 @@ void save_running_configuration_into_preset_configuration(uint32_t flash_configu
     memcpy(
         &state.clients[flash_client_index].preset_configs[flash_configuration_index],
         &state.clients[flash_client_index].running_client_state,
-        sizeof(client_state_t)
-    );
+        sizeof(client_state_t));
     
     save_server_state(&state);
 
@@ -602,8 +617,8 @@ static void server_configure_persistent_state(server_persistent_state_t *server_
  * @param server_persistent_state Pointer to loaded flash state.
  */
 static void server_load_client_state(server_uart_connection_t server_uart_connection, server_persistent_state_t *server_persistent_state) {
-    for (uint8_t i = 0; i < MAX_SERVER_CONNECTIONS; i++) {
-        client_t *saved_client = &server_persistent_state->clients[i];
+    for (uint8_t flash_client_index = 0; flash_client_index < MAX_SERVER_CONNECTIONS; flash_client_index++) {
+        client_t *saved_client = &server_persistent_state->clients[flash_client_index];
         
         if (saved_client->uart_connection.pin_pair.tx == server_uart_connection.pin_pair.tx &&
             saved_client->uart_connection.pin_pair.rx == server_uart_connection.pin_pair.rx &&
@@ -641,29 +656,32 @@ void server_load_running_states_to_active_clients(void){
  * representing the GPIO number and its current state (ON or OFF) in the format "[N,S]",
  * where `N` is the GPIO number and `S` is 1 (ON) or 0 (OFF).
  *
- * @param pin_pair     UART TX/RX pin pair used for the target client.
- * @param uart         Pointer to the UART instance used for transmission.
- * @param gpio_number  The GPIO number whose state is being sent.
- * @param is_on        The current state of the GPIO (`true` for ON, `false` for OFF).
+ * @param pin_pair            UART TX/RX pin pair used for the target client.
+ * @param uart                Pointer to the UART instance used for transmission.
+ * @param gpio_number         The GPIO number whose state is being sent.
+ * @param is_on               The current state of the GPIO (`true` for ON, `false` for OFF).
+ * @param state               Pointer to the global server persistent state (used to access client status).
+ * @param flash_client_index  Index of the client in the persistent state table.
  *
- * @note This function uses `wake_up_client()` before sending the state,
+ * @note This function uses `send_wakeup_if_dormant()` before sending the state,
  *       ensuring the client is awake before communication.
  *
- * @see wake_up_client()
+ * @see send_wakeup_if_dormant()
  * @see send_uart_message_safe()
  */
-static void server_send_device_state(uart_pin_pair_t pin_pair, uart_inst_t* uart, uint8_t gpio_number, bool is_on){
-    wake_up_client(pin_pair, uart);
+static void server_send_device_state(uart_pin_pair_t pin_pair, uart_inst_t* uart, uint8_t gpio_number, bool is_on, server_persistent_state_t *const state, uint32_t flash_client_index){
+    send_wakeup_if_dormant(flash_client_index, state, pin_pair, uart);
+
     char msg[8];
     snprintf(msg, sizeof(msg), "[%d,%d]", gpio_number, is_on);
     send_uart_message_safe(uart, pin_pair, msg);
 }
 
 void server_set_device_state_and_update_flash(uart_pin_pair_t pin_pair, uart_inst_t* uart_instance, uint8_t gpio_index, bool device_state, uint32_t flash_client_index){
-    server_send_device_state(pin_pair, uart_instance, gpio_index, device_state);
-    
     server_persistent_state_t state_copy;
     memcpy(&state_copy, (const server_persistent_state_t *)SERVER_FLASH_ADDR, sizeof(state_copy));
+
+    server_send_device_state(pin_pair, uart_instance, gpio_index, device_state, &state_copy, flash_client_index);
     state_copy.clients[flash_client_index].running_client_state.devices[gpio_index > 22 ? (gpio_index - 3) : (gpio_index)].is_on = device_state;
     save_server_state(&state_copy);
 }
