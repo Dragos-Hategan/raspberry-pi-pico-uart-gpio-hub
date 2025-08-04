@@ -3,11 +3,16 @@ cmake_minimum_required(VERSION 3.12)
 project(server C)
 
 add_executable(server
-    main.c
-    server_side_handshake.c
-    state_handling.c
+    client_communication.c
     input.c
+    main.c
     menu.c
+    server_side_handshake.c
+    state_apply.c
+    state_config.c
+    state_flash.c
+    state_handling.c
+    state_print.c
 )
 
 pico_enable_stdio_usb(server 1)

@@ -1,9 +1,20 @@
 /**
  * @file server.h
- * @brief Server-side functionality for UART-based Raspberry Pi Pico communication.
+ * @brief Central interface for server-side UART client management and GPIO state handling.
  *
- * Contains declarations for managing UART client detection, configuration, 
- * persistent state handling, and GPIO device state updates on connected clients.
+ * This header declares all server-side functions and variables used for:
+ * - Discovering UART-connected clients
+ * - Managing persistent state (running and preset configurations)
+ * - Communicating with clients via UART
+ * - Flash memory operations (load/save with CRC)
+ * - Resetting, loading, and printing client GPIO configurations
+ * - Handling dormant/active state transitions
+ *
+ * It serves as the main coordination point between UART communication,
+ * persistent memory, and user interface logic via the USB CLI.
+ *
+ * All modules (config, flash, menu, CLI, and communication) include and rely on this header.
+ *
  */
 
 #ifndef SERVER_H
@@ -44,6 +55,107 @@ extern server_uart_connection_t active_uart_server_connections[MAX_SERVER_CONNEC
 extern uint8_t active_server_connections_number;
 
 /**
+ * @brief Retrieves the index of an active client connection matching a flash-stored client.
+ *
+ * Iterates through active UART server connections and compares their TX pins
+ * with the TX pin of the client at the specified index in the persistent flash state.
+ *
+ * @param flash_client_index Index of the client in the persistent flash state array.
+ * @param state The loaded persistent server state.
+ * @return Index of the matching active connection, or INVALID_CLIENT_INDEX if not found.
+ */
+uint32_t get_active_client_connection_index_from_flash_client_index(uint32_t flash_client_index, server_persistent_state_t state);
+
+/**
+ * @brief Sends a UART message safely using spinlock protection.
+ *
+ * This function first wakes up the client by sending a pulse on its RX pin.
+ * Then it initializes the UART peripheral with the specified TX/RX pins and baudrate,
+ * sends the message, waits for the transmission to complete, and resets the GPIO pins.
+ * All UART operations are protected by a spinlock to ensure thread/core safety.
+ *
+ * @param uart Pointer to the UART instance to use (e.g., uart0 or uart1).
+ * @param pins Struct containing the TX and RX GPIO pin numbers.
+ * @param msg Null-terminated string to be sent via UART.
+ */
+void send_uart_message_safe(uart_inst_t* uart, uart_pin_pair_t pins, const char* msg);
+
+/**
+ * @brief Wakes up a dormant client if needed, based on its persistent state.
+ *
+ * Checks whether the client at the specified index is dormant. If so, it
+ * sends a wake-up pulse via UART to ensure the client is active before communication.
+ *
+ * @param flash_client_index Index of the client in the persistent state table.
+ * @param state              Pointer to the global persistent state structure.
+ * @param pin_pair           UART TX/RX pins used to wake up the client.
+ * @param uart               Pointer to the UART instance used for transmission.
+ *
+ * @see wake_up_client()
+ */
+void send_wakeup_if_dormant(uint32_t flash_client_index, server_persistent_state_t *const state, uart_pin_pair_t pin_pair, uart_inst_t *const uart);
+
+/**
+ * @brief Sends a dormant flag message to a specific client over UART.
+ *
+ * Constructs a message with the dormant flag number and sends it
+ * via the UART instance and pin pair assigned to the specified client.
+ *
+ * @param client_index Index of the client in the active server connections.
+ */
+void send_dormant_flag_to_client(uint8_t client_index);
+
+/**
+ * @brief Sends a reset trigger message to all clients.
+ *
+ * This causes each connected client to perform a full reset of its internal state.
+ */
+void signal_reset_for_all_clients();
+
+/**
+ * @brief Sends a fast onboard LED blink signal to all clients.
+ *
+ * Triggers a visual blink (e.g., heartbeat) on each client device.
+ */
+void send_fast_blink_onboard_led_to_clients();
+
+/**
+ * @brief Sends a dormant message to all clients marked as dormant.
+ *
+ * Iterates through all active UART connections and sends a predefined
+ * dormant flag message to each client with the `is_dormant` flag set.
+ */
+void send_dormant_to_standby_clients(void);
+
+/**
+ * @brief Sends the entire current client state over UART.
+ *
+ * @param pin_pair UART TX/RX pin pair to use.
+ * @param uart UART instance.
+ * @param state Pointer to the client_state_t to send.
+ */
+void server_send_client_state(uart_pin_pair_t pin_pair, uart_inst_t* uart, const client_state_t* state);
+
+/**
+ * @brief Loads the server state from flash and validates it using CRC32.
+ *
+ * @param out_state Pointer to destination structure to store loaded state.
+ * @return true if CRC is valid and data is intact, false otherwise.
+ */
+bool load_server_state(server_persistent_state_t *out_state);
+
+/**
+ * @brief Saves the persistent server state structure to flash memory.
+ *
+ * - Computes CRC
+ * - Copies the data to a buffer
+ * - Erases and programs the flash sector
+ *
+ * @param state_in Pointer to the server_persistent_state_t structure to save.
+ */
+void __not_in_flash_func(save_server_state)(const server_persistent_state_t *state_in);
+
+/**
  * @brief Finds the corresponding flash client index for a given active client.
  *
  * Compares the TX pin of the selected client with entries in the flash structure to
@@ -61,6 +173,16 @@ inline void find_corect_client_index_from_flash(uint32_t *flash_client_index, ui
         }   
     }
 }
+
+/**
+ * @brief Fills the entire persistent state structure and saves it to flash.
+ *
+ * - Called when flash is empty or invalid.
+ * - Configures all known clients.
+ *
+ * @param server_persistent_state Pointer to state struct to fill and write.
+ */
+void server_configure_persistent_state(server_persistent_state_t *server_persistent_state);
 
 /**
  * @brief Prints the state of all devices from a given client state structure.
@@ -98,30 +220,6 @@ void server_print_client_preset_configuration(const client_t * client, uint8_t c
  * @param client Pointer to the client_t structure containing the preset configurations.
  */
 void server_print_client_preset_configurations(const client_t * client);
-
-/**
- * @brief Sends a reset trigger message to all clients.
- *
- * This causes each connected client to perform a full reset of its internal state.
- */
-void signal_reset_for_all_clients();
-
-/**
- * @brief Sends a fast onboard LED blink signal to all clients.
- *
- * Triggers a visual blink (e.g., heartbeat) on each client device.
- */
-void send_fast_blink_onboard_led_to_clients();
-
-/**
- * @brief Sends a dormant flag message to a specific client over UART.
- *
- * Constructs a message with the dormant flag number and sends it
- * via the UART instance and pin pair assigned to the specified client.
- *
- * @param client_index Index of the client in the active server connections.
- */
-void send_dormant_flag_to_client(uint8_t client_index);
 
 /**
  * @brief Checks if a client has any active (ON) devices.
@@ -173,6 +271,17 @@ void reset_running_configuration(uint32_t flash_client_index);
  * @param[in] flash_configuration_index Index of the preset configuration to reset (1-based).
  */
 void reset_preset_configuration(uint32_t flash_client_index, uint32_t flash_configuration_index);
+
+/**
+ * @brief Resets the runtime GPIO configuration for a given client.
+ *
+ * This function iterates through all devices associated with the client
+ * and sets their `is_on` flag to false, effectively turning them off.
+ * Devices marked with the special UART connection flag are excluded from this reset.
+ *
+ * @param[in,out] client_state Pointer to the client's current runtime state to be modified.
+ */
+void server_reset_configuration(client_state_t *client_state);
 
 /**
  * @brief Resets all configuration data for a specified client.
