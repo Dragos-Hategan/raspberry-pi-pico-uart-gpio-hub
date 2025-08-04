@@ -40,6 +40,11 @@ if(DEFINED PERIODIC_ONBOARD_LED_BLINK_ALL_CLIENTS)
     target_compile_definitions(server PRIVATE PERIODIC_ONBOARD_LED_BLINK_ALL_CLIENTS=${PERIODIC_ONBOARD_LED_BLINK_ALL_CLIENTS})
 endif()
 
+# Optional Wi-Fi support if using CYW43 chip
+if(PICO_CYW43_SUPPORTED)
+    target_link_libraries(server pico_cyw43_arch_none)
+endif()
+
 set(FLASH_OUT_DIR ${CMAKE_BINARY_DIR}/flash/server)
 
 pico_add_extra_outputs(server)

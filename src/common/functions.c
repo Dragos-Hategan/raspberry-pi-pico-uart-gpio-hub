@@ -9,12 +9,13 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "pico/stdlib.h"
-#include "pico/status_led.h"
-
 #include "client.h"
 #include "functions.h"
 #include "config.h"
+
+#ifdef CYW43_WL_GPIO_LED_PIN
+#include "pico/cyw43_arch.h"
+#endif
 
 void uart_init_with_pins(uart_inst_t* uart, uart_pin_pair_t pin_pair, uint32_t baudrate){
     uart_deinit(uart);
@@ -74,35 +75,55 @@ void get_uart_buffer(uart_inst_t* uart, char* buf, uint8_t buffer_size, uint32_t
     printf("%s\n", buf);
 }
 
+int pico_onboard_led_init(void) {
+    #if defined(CYW43_WL_GPIO_LED_PIN)
+        return cyw43_arch_init();
+    #elif defined(PICO_DEFAULT_LED_PIN)
+        gpio_init(PICO_DEFAULT_LED_PIN);
+        gpio_set_dir(PICO_DEFAULT_LED_PIN, GPIO_OUT);
+        return PICO_OK;
+    #else
+        return -1;
+    #endif
+}
+
+void pico_set_onboard_led(bool led_on) {
+    #if defined(CYW43_WL_GPIO_LED_PIN)
+        cyw43_arch_gpio_put(CYW43_WL_GPIO_LED_PIN, led_on);
+    #elif defined(PICO_DEFAULT_LED_PIN)
+        gpio_put(PICO_DEFAULT_LED_PIN, led_on);    
+    #endif
+}
+
 void blink_onboard_led_blocking(void){
     int blink_iterations = 5;
     while (blink_iterations--){
-        status_led_set_state(false);
+        pico_set_onboard_led(false);
         sleep_ms(LED_DELAY_MS);
-        status_led_set_state(true);
+        pico_set_onboard_led(true);
         sleep_ms(LED_DELAY_MS);
     }
-    status_led_set_state(false);
+    pico_set_onboard_led(false);
 }
 
 int64_t my_alarm_cb(alarm_id_t id, void *user_data) {
-    status_led_set_state(false);
+    pico_set_onboard_led(false);
     return 0;
 }
 
 void fast_blink_onboard_led(void){
-    status_led_set_state(true);
+    pico_set_onboard_led(true);
     add_alarm_in_us(FAST_LED_DELAY_MS * 1000, my_alarm_cb, NULL, false);
 }
 
 void fast_blink_onboard_led_blocking(void){
-    status_led_set_state(true);
+    pico_set_onboard_led(true);
     sleep_ms(FAST_LED_DELAY_MS);
-    status_led_set_state(false);
+    pico_set_onboard_led(false);
 }
 
 void init_onboard_led_and_usb(void){
-    status_led_init();
-    status_led_set_state(true);  
+    pico_onboard_led_init();
+    pico_set_onboard_led(true);    
     stdio_usb_init();
 }

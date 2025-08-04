@@ -27,6 +27,11 @@ target_link_libraries(client
     common
 )
 
+# Link Wi-Fi driver if supported
+if(PICO_CYW43_SUPPORTED)
+    target_link_libraries(client pico_cyw43_arch_none)
+endif()
+
 set(FLASH_OUT_DIR ${CMAKE_BINARY_DIR}/flash/client)
 
 pico_add_extra_outputs(client)

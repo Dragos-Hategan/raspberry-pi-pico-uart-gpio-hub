@@ -116,8 +116,6 @@ static bool receive_data(void){
 }
 
 void client_listen_for_commands(void){
-    //uart_set_irq_enables(active_uart_client_connection.uart_instance, true, false);
-    
     while(true){
         receive_data();
         if (go_dormant_flag){
@@ -129,7 +127,6 @@ void client_listen_for_commands(void){
                 woke_up_from_dormant = false;
                 power_saving_config();
             }
-            //__wfi();
         }
     }
 }
