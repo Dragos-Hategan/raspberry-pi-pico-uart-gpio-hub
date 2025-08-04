@@ -118,15 +118,17 @@ static bool receive_data(void){
 void client_listen_for_commands(void){
     while(true){
         receive_data();
-        if (go_dormant_flag){
-            enter_dormant_mode();
-            wake_up();
-            woke_up_from_dormant = true;
-        }else{
-            if (woke_up_from_dormant){
-                woke_up_from_dormant = false;
-                power_saving_config();
+        #ifndef CYW43_WL_GPIO_LED_PIN
+            if (go_dormant_flag){
+                enter_dormant_mode();
+                wake_up();
+                woke_up_from_dormant = true;
+            }else{
+                if (woke_up_from_dormant){
+                    woke_up_from_dormant = false;
+                    power_saving_config();
+                }
             }
-        }
+        #endif
     }
 }

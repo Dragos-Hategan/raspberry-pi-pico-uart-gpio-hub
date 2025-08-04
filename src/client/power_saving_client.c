@@ -114,7 +114,9 @@ static void set_pin_as_input_for_dormant_wakeup(void){
 }
 
 void power_saving_config(void){
-    client_turn_off_unused_power_consumers();
+    #ifndef CYW43_WL_GPIO_LED_PIN
+        client_turn_off_unused_power_consumers();
+    #endif
 
     uart_init_with_single_pin(active_uart_client_connection.uart_instance,
         active_uart_client_connection.pin_pair.rx,
@@ -400,7 +402,10 @@ static void sleep_power_up(void)
 
 void wake_up(void){
     sleep_power_up();
-    client_turn_off_unused_power_consumers();
+
+    #ifndef CYW43_WL_GPIO_LED_PIN
+        client_turn_off_unused_power_consumers();
+    #endif
 
     uart_init_with_single_pin(active_uart_client_connection.uart_instance,
             active_uart_client_connection.pin_pair.rx,
