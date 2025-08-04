@@ -6,6 +6,7 @@ add_executable(client
     main.c
     client_side_handshake.c
     apply_commands.c
+    power_saving_client.c
 )
 
 pico_enable_stdio_usb(client 1)
@@ -21,6 +22,7 @@ target_link_libraries(client
     hardware_uart        # UART peripheral access
     hardware_gpio        # GPIO peripheral access
     hardware_watchdog
+    pico_multicore
     hardware_clocks
     common
 )
