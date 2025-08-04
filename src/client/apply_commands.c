@@ -23,36 +23,32 @@
 #endif
 
 static bool go_dormant = false;
-static bool value = true;
 
 /**
- * @brief Sets or clears a GPIO pin based on a 2-byte command.
- *
- * Interprets the provided byte pair as:
- * - Byte [0] = GPIO pin number
- * - Byte [1] = Logic level (0 = LOW, 1 = HIGH)
+ * @brief Sets or clears a GPIO pin based on a number and logic level.
  *
  * Behavior:
- * - If the logic level is `1` (HIGH):  
- *   - Initializes the specified GPIO pin  
+ * - If logic level is `1` (HIGH):
+ *   - Initializes the specified GPIO pin
  *   - Sets it as output and drives it HIGH
  *
- * - If the logic level is `0` (LOW):  
- *   - Drives the pin LOW  
- *   - Then deinitializes the pin (returns it to high-impedance input)
+ * - If logic level is `0` (LOW):
+ *   - Drives the pin LOW
+ *   - Then deinitializes the pin (returns to high-impedance input)
  *
  * This allows toggling pins **and** releasing unused ones to save power.
  *
- * @param gpio_state_pair Pointer to a 2-byte array: [GPIO number, logic level].
+ * @param gpio_number GPIO pin number (0–22 and 26-28).
+ * @param gpio_state  Logic level: 0 = LOW, 1 = HIGH.
  */
-static void change_gpio(uint8_t *gpio_state_pair){
-    if (gpio_state_pair[1]){
-        gpio_init(gpio_state_pair[0]);
-        gpio_set_dir(gpio_state_pair[0], GPIO_OUT); 
-        gpio_put(gpio_state_pair[0], gpio_state_pair[1]);
+static void change_gpio(uint8_t gpio_number, uint8_t gpio_state){
+    if (gpio_state){
+        gpio_init(gpio_number);
+        gpio_set_dir(gpio_number, GPIO_OUT); 
+        gpio_put(gpio_number, gpio_state);
     }else{
-        gpio_put(gpio_state_pair[0], gpio_state_pair[1]);
-        gpio_deinit(gpio_state_pair[0]);
+        gpio_put(gpio_number, gpio_state);
+        gpio_deinit(gpio_number);
     }
 }
 
@@ -72,7 +68,7 @@ static void change_gpio(uint8_t *gpio_state_pair){
  * @see sleep_run_from_dormant_source()
  * @see sleep_goto_dormant_until_pin()
  */
-static void enter_power_saving_mode(){
+static void enter_power_saving_mode(void){
     //reset_gpio_pins(active_uart_client_connection.pin_pair);
     sleep_run_from_dormant_source(DORMANT_SOURCE_ROSC);
     sleep_goto_dormant_until_pin(active_uart_client_connection.pin_pair.tx, false, true);
@@ -92,7 +88,7 @@ static void enter_power_saving_mode(){
  * @see sleep_power_up()
  * @see uart_init_with_pins()
  */
-static bool wake_up(){
+static bool wake_up(void){
     sleep_power_up();
 
     uart_init_with_pins(active_uart_client_connection.uart_instance,
@@ -125,17 +121,22 @@ static bool wake_up(){
  * @see fast_blink_onboard_led_blocking()
  */
 static void apply_command(uint8_t *received_number_pair){
-    switch(received_number_pair[0]){
+    uint8_t number1 = received_number_pair[0];
+    uint8_t number2 = received_number_pair[1];
+
+    switch(number1){
         case TRIGGER_RESET_FLAG_NUMBER: watchdog_reboot(0, 0, 0);
             break;
-        case BLINK_ONBOARD_LED_FLAG_NUMBER: fast_blink_onboard_led_blocking();//fast_blink_onboard_led();//
+        case BLINK_ONBOARD_LED_FLAG_NUMBER: fast_blink_onboard_led_blocking(); // go_dormant ? fast_blink_onboard_led_blocking() : fast_blink_onboard_led();
             break;
         case WAKE_UP_FLAG_NUMBER: go_dormant = false;
             break;
         case DORMANT_FLAG_NUMBER: go_dormant = true;
             break;
 
-        default: change_gpio(received_number_pair);
+        default: 
+            if ((0 <= number1 && 22 >= number1) || (26 <= number1 && 28 >= number1))
+                change_gpio(number1, number2);
             break;
     }
 }
@@ -149,7 +150,7 @@ static void apply_command(uint8_t *received_number_pair){
  *
  * @return true if a valid command was received and processed, false otherwise.
  */
-static bool receive_data(){
+static bool receive_data(void){
     char buf[8] = {0};
     uint8_t received_number_pair[2] = {0};
 

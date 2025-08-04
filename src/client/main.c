@@ -98,7 +98,7 @@ static void client_turn_off_unused_power_consumers(void){
  * and enables an internal pull-down resistor to detect incoming high signals.
  * This setup is typically used for wakeup from dormant mode.
  */
-static void set_pin_as_input_for_wakeup(){
+static void set_pin_as_input_for_wakeup(void){
     uint8_t pin = active_uart_client_connection.pin_pair.tx;
     gpio_deinit(pin);
     gpio_init(pin);
