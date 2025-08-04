@@ -34,6 +34,18 @@
 void uart_init_with_pins(uart_inst_t *uart, uart_pin_pair_t pin_pair, uint32_t baud_rate);
 
 /**
+ * @brief Initializes a UART peripheral on a specific pin.
+ *
+ * Deinitializes the UART, sets the pin function to UART, and reinitializes
+ * the UART with the given baudrate. Waits 1 ms for stability.
+ *
+ * @param uart Pointer to the UART instance (e.g., uart0 or uart1).
+ * @param pin_number GPIO pin to configure for UART.
+ * @param baudrate Baudrate for UART communication.
+ */
+void uart_init_with_single_pin(uart_inst_t* uart, uint8_t pin_number, uint32_t baudrate);
+
+/**
  * @brief Extracts a [tx,rx] pair from a UART message.
  *
  * Parses strings in the format "[tx,rx]" and stores the result in a byte array.
@@ -57,16 +69,6 @@ void get_number_pair(uint8_t *result_array, char *message);
  * @param timeout_ms Timeout duration in milliseconds.
  */
 void get_uart_buffer(uart_inst_t *uart, char *buffer, uint8_t buffer_size, uint32_t timeout_ms);
-
-/**
- * @brief Initializes the onboard LED, depending on available hardware.
- *
- * - If using CYW43 Wi-Fi chip: initializes via `cyw43_arch_init(void)`.
- * - If using default GPIO LED: configures the pin as output.
- *
- * @return int Returns `PICO_OK` on success, or `-1` if no LED config is found.
- */
-int pico_onboard_led_init(void);
 
 /**
  * @brief Turns the onboard LED on or off.

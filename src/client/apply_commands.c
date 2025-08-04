@@ -19,10 +19,6 @@
 #include "types.h"
 #include "functions.h"
 
-#ifdef CYW43_WL_GPIO_LED_PIN
-#include "pico/cyw43_arch.h"
-#endif
-
 /**
  * @brief Sets or clears a GPIO pin based on a number and logic level.
  *
@@ -125,10 +121,14 @@ void client_listen_for_commands(void){
     while(true){
         receive_data();
         if (go_dormant_flag){
-            enter_power_saving_mode();
+            enter_dormant_mode();
             wake_up();
-            //client_turn_off_unused_power_consumers();
+            woke_up_from_dormant = true;
         }else{
+            if (woke_up_from_dormant){
+                woke_up_from_dormant = false;
+                power_saving_config();
+            }
             //__wfi();
         }
     }

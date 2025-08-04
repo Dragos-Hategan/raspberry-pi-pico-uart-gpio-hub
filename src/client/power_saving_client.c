@@ -1,4 +1,27 @@
-#include "client.h"
+/**
+ * @file power_management.c
+ * @brief Power-saving configuration and dormant mode handling for UART-based clients.
+ *
+ * This file contains functions for:
+ * - Disabling unused clocks and peripherals to reduce power consumption
+ * - Setting up GPIO pins for wake-up events from dormant mode
+ * - Switching clock sources for low-power operation (ROSC, XOSC, LPOSC)
+ * - Entering and exiting dormant mode on RP2040 or RP2350
+ * - Restoring system state and UART after wake-up
+ *
+ * Supports both RP2040 and RP2350 platforms, with conditional configuration for timers,
+ * power management units, and oscillator options.
+ *
+ * @note Used by UART clients to enter low-power state and wake up safely on RX activity.
+ *
+ * @see enter_dormant_mode()
+ * @see wake_up()
+ * @see sleep_run_from_dormant_source()
+ * @see sleep_goto_dormant_until_pin()
+ * @see power_saving_config()
+ */
+
+ #include "client.h"
 #include "functions.h"
 
 #include "hardware/clocks.h"
@@ -15,6 +38,7 @@
 #endif
 
 bool go_dormant_flag = false;
+bool woke_up_from_dormant = false;
 
 typedef enum {
     DORMANT_SOURCE_NONE,
@@ -79,20 +103,8 @@ void client_turn_off_unused_power_consumers(void){
         CLOCKS_SLEEP_EN1_CLK_SYS_UART0_BITS  |
         CLOCKS_SLEEP_EN1_CLK_PERI_UART0_BITS;
     }
-
-    uart_init_with_pins(active_uart_client_connection.uart_instance,
-            active_uart_client_connection.pin_pair,
-            DEFAULT_BAUDRATE
-    );
 }
 
-/**
- * @brief Configures the TX pin as input with pull-down for wakeup detection.
- *
- * Deinitializes previous uart function on the TX pin, sets it as a GPIO input,
- * and enables an internal pull-down resistor to detect incoming high signals.
- * This setup is used for wakeup from dormant mode.
- */
 static void set_pin_as_input_for_dormant_wakeup(void){
     uint8_t pin = active_uart_client_connection.pin_pair.tx;
     gpio_deinit(pin);
@@ -102,7 +114,12 @@ static void set_pin_as_input_for_dormant_wakeup(void){
 }
 
 void power_saving_config(void){
-    //client_turn_off_unused_power_consumers();
+    client_turn_off_unused_power_consumers();
+
+    uart_init_with_single_pin(active_uart_client_connection.uart_instance,
+        active_uart_client_connection.pin_pair.rx,
+        DEFAULT_BAUDRATE);
+
     set_pin_as_input_for_dormant_wakeup();
 }
 
@@ -331,7 +348,7 @@ static void sleep_goto_dormant_until_pin(uint gpio_pin, bool edge, bool high) {
     gpio_set_input_enabled(gpio_pin, false);
 }
 
-void enter_power_saving_mode(void){
+void enter_dormant_mode(void){
     //reset_gpio_pins(active_uart_client_connection.pin_pair);
     sleep_run_from_dormant_source(DORMANT_SOURCE_ROSC);
     sleep_goto_dormant_until_pin(active_uart_client_connection.pin_pair.tx, false, true);
@@ -383,11 +400,14 @@ static void sleep_power_up(void)
 
 void wake_up(void){
     sleep_power_up();
+    client_turn_off_unused_power_consumers();
 
-    uart_init_with_pins(active_uart_client_connection.uart_instance,
-            active_uart_client_connection.pin_pair,
+    uart_init_with_single_pin(active_uart_client_connection.uart_instance,
+            active_uart_client_connection.pin_pair.rx,
             DEFAULT_BAUDRATE
     );
+
+    set_pin_as_input_for_dormant_wakeup();
 }
 
 

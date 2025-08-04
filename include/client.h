@@ -1,11 +1,21 @@
 /**
  * @file client.h
- * @brief UART client interface for establishing and listening to GPIO commands.
+ * @brief UART client interface for GPIO command handling and power control.
  *
- * This module provides:
- * - UART handshake and connection detection logic (client side)
- * - Receiving and parsing GPIO control commands from server
- * - Global access to the active UART client connection
+ * This header defines the interface for a UART-based client device that:
+ * - Scans and establishes UART connections with a server
+ * - Receives GPIO control commands (ON/OFF/TOGGLE)
+ * - Manages power-saving modes
+ * - Restores clocks and UART configuration after wake-up
+ *
+ * The client maintains a global UART connection structure used by all subsystems.
+ *
+ * @note This module is intended for RP2040-based devices operating as UART clients.
+ *
+ * @see client_detect_uart_connection()
+ * @see client_listen_for_commands()
+ * @see enter_dormant_mode()
+ * @see wake_up()
  */
 
 #ifndef CLIENT_H
@@ -25,6 +35,7 @@
 extern uart_connection_t active_uart_client_connection;
 
 extern bool go_dormant_flag;
+extern bool woke_up_from_dormant;
 
 /**
  * @brief Performs a full scan of all available UART pin pairs until a valid connection is found.
@@ -73,7 +84,7 @@ void power_saving_config(void);
  * @see sleep_run_from_dormant_source()
  * @see sleep_goto_dormant_until_pin()
  */
-void enter_power_saving_mode(void);
+void enter_dormant_mode(void);
 
 /**
  * @brief Wakes up the system from dormant mode and reinitializes UART.
@@ -100,7 +111,7 @@ void wake_up(void);
  * @warning This loop runs indefinitely. Ensure that `receive_data()` is non-blocking
  *          or times out appropriately to allow power-saving checks.
  *
- * @see enter_power_saving_mode()
+ * @see enter_dormant_mode()
  * @see wake_up()
  * @see receive_data()
  */
