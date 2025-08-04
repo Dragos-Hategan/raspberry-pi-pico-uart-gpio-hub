@@ -75,7 +75,7 @@ static void find_clients(void){
  * - Re-initializes it as a standard GPIO
  * - Sets it as output and drives it LOW
  */
-static void set_pins_as_output_for_wakeup(){
+static void set_pins_as_output_for_dormant_wakeup(){
     for (uint8_t connection_index = 0; connection_index < active_server_connections_number; connection_index++){
         uint8_t pin = active_uart_server_connections[connection_index].pin_pair.rx;
         gpio_deinit(pin);
@@ -101,7 +101,7 @@ static void last_inits_and_display_launch(){
 
     multicore_launch_core1(periodic_wakeup);
 
-    set_pins_as_output_for_wakeup();
+    set_pins_as_output_for_dormant_wakeup();
 
     while(true){
         if (stdio_usb_connected()){
