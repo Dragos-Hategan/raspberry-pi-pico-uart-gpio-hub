@@ -19,8 +19,8 @@
 #include "hardware/regs/usb.h"
 #include "hardware/structs/usb.h"
 
-#include "functions.h"
 #include "server.h"
+#include "functions.h"
 #include "menu.h"
 
 static repeating_timer_t repeating_timer;

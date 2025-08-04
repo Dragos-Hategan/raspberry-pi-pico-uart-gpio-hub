@@ -19,9 +19,9 @@
 #include "hardware/sync.h"
 #include "hardware/watchdog.h"
 
+#include "server.h"
 #include "functions.h"
 #include "input.h"
-#include "server.h"
 #include "menu.h"
 
 static bool first_display = true;

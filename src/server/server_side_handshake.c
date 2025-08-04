@@ -15,9 +15,9 @@
 #include <stdbool.h>
 #include <string.h>
 
+#include "server.h"
 #include "functions.h"
 #include "config.h"
-#include "server.h"
 
 server_uart_connection_t active_uart_server_connections[MAX_SERVER_CONNECTIONS];
 uint8_t active_server_connections_number = 0;
