@@ -19,8 +19,12 @@ target_link_libraries(common
     pico_stdlib          # Base I/O functions
     pico_stdio_usb
     hardware_clocks
-    hardware_powman #used only for RP2350
 )
+
+# Add powman only for RP2350
+if(PICO_TARGET_DEVICE STREQUAL "rp2350")
+    target_link_libraries(common hardware_powman)
+endif()
 
 # Link Wi-Fi driver if supported
 if(PICO_CYW43_SUPPORTED)
