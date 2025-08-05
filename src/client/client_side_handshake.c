@@ -82,7 +82,7 @@ static bool client_test_uart_pair(uart_pin_pair_t pin_pair, uart_inst_t * uart_i
 /**
  * @brief Stores the working UART connection in the global state.
  *
- * @param pin_pair The successful TX/RX pin pair.
+ * @param pin_pair The TX/RX pin pair used for communication to server.
  * @param uart_instance Pointer to the UART peripheral used.
  */
 static inline void client_add_connection(uart_pin_pair_t pin_pair, uart_inst_t * uart_instance){

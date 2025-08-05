@@ -28,7 +28,6 @@ int main(void){
     while(!client_detect_uart_connection()) tight_loop_contents();
 
     power_saving_config();
-    
     client_listen_for_commands();
 }
 

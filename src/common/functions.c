@@ -71,11 +71,10 @@ void get_uart_buffer(uart_inst_t* uart, char* buf, uint8_t buffer_size, uint32_t
         }
     }
 
-    buf[idx] = '\0';  
-    printf("%s\n", buf);
+    buf[idx] = '\0';
 }
 
-int pico_onboard_led_init(void) {
+static int pico_onboard_led_init(void) {
     #if defined(CYW43_WL_GPIO_LED_PIN)
         return cyw43_arch_init();
     #elif defined(PICO_DEFAULT_LED_PIN)
@@ -106,14 +105,14 @@ void blink_onboard_led_blocking(void){
     pico_set_onboard_led(false);
 }
 
-int64_t my_alarm_cb(alarm_id_t id, void *user_data) {
+static int64_t turn_off_led_alarm(alarm_id_t id, void *user_data) {
     pico_set_onboard_led(false);
     return 0;
 }
 
 void fast_blink_onboard_led(void){
     pico_set_onboard_led(true);
-    add_alarm_in_us(FAST_LED_DELAY_MS * 1000, my_alarm_cb, NULL, false);
+    add_alarm_in_us(FAST_LED_DELAY_MS * 1000, turn_off_led_alarm, NULL, false);
 }
 
 void fast_blink_onboard_led_blocking(void){

@@ -38,6 +38,25 @@ extern bool go_dormant_flag;
 extern bool woke_up_from_dormant;
 
 /**
+ * @brief Main loop that listens for UART commands and manages power-saving state.
+ *
+ * Continuously receives data over UART and checks if the client is in a wake-up state.
+ * If not, the system enters low-power mode (`dormant`) and waits to be woken up.
+ * Low-power mode is currently supported only on boards without Wi-Fi. (CYW43).
+ * After waking up, it resumes listening for commands.
+ *
+ * @note The `go_dormant_flag` should be managed externally to reflect the wake-up status.
+ *
+ * @warning This loop runs indefinitely. Ensure that `receive_data()` is non-blocking
+ *          or times out appropriately to allow power-saving checks.
+ *
+ * @see enter_dormant_mode()
+ * @see wake_up()
+ * @see receive_data()
+ */
+void client_listen_for_commands(void);
+
+/**
  * @brief Performs a full scan of all available UART pin pairs until a valid connection is found.
  *
  * Tries all UART0 and UART1 pin pair combinations. Once a working connection is found,
@@ -53,8 +72,6 @@ bool client_detect_uart_connection(void);
  * This function turns off unnecessary peripherals and clock outputs (e.g., ADC, RTC, GPOUT),
  * switches to lower-frequency XOSC-based system clocks (12 MHz), disables the system PLL,
  * and enables only essential clock domains for sleep mode operation.
- *
- * It also reinitializes the active UART interface with the appropriate pins and baudrate.
  */
 void client_turn_off_unused_power_consumers(void);
 
@@ -62,6 +79,7 @@ void client_turn_off_unused_power_consumers(void);
  * @brief Prepares the system for power saving.
  *
  * Turns off unused components and sets up the wake-up pin for dormant mode.
+ * Currently supported only on boards without Wi-Fi. (CYW43).
  *
  * @see client_turn_off_unused_power_consumers()
  * @see set_pin_as_input_for_dormant_wakeup()
@@ -98,23 +116,5 @@ void enter_dormant_mode(void);
  * @see uart_init_with_pins()
  */
 void wake_up(void);
-
-/**
- * @brief Main loop that listens for UART commands and manages power-saving state.
- *
- * Continuously receives data over UART and checks if the client is in a wake-up state.
- * If not, the system enters low-power mode (`dormant`) and waits to be woken up.
- * After waking up, it resumes listening for commands.
- *
- * @note The `go_dormant_flag` should be managed externally to reflect the wake-up status.
- *
- * @warning This loop runs indefinitely. Ensure that `receive_data()` is non-blocking
- *          or times out appropriately to allow power-saving checks.
- *
- * @see enter_dormant_mode()
- * @see wake_up()
- * @see receive_data()
- */
-void client_listen_for_commands(void);
 
 #endif

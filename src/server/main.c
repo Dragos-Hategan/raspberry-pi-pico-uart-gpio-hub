@@ -49,12 +49,38 @@ static void setup_repeating_timer_for_periodic_onboard_led_blink(){
     add_repeating_timer_ms(PERIODIC_ONBOARD_LED_BLINK_TIME_MS, short_onboard_led_blink, NULL, &repeating_timer);
 }
 
+void periodic_wakeup(void){
+    multicore_fifo_drain();
+    while (true) {
+        __wfe();
+        if (multicore_fifo_rvalid()) {
+            uint32_t cmd = multicore_fifo_pop_blocking();
+
+            if (cmd == DUMP_BUFFER_WAKEUP_MESSAGE) {
+                for (uint8_t index = 0; index < reconnection_buffer_index; index++) {
+                    printf("%s", reconnection_buffer[index]);
+                    sleep_ms(2); 
+                }
+            } 
+            else if (cmd == BLINK_LED_WAKEUP_MESSAGE){
+                #if PERIODIC_ONBOARD_LED_BLINK_SERVER
+                    fast_blink_onboard_led();
+                #endif
+                
+                #if PERIODIC_ONBOARD_LED_BLINK_ALL_CLIENTS
+                    send_fast_blink_onboard_led_to_clients();
+                #endif
+            }
+        }
+    }
+}
+
 /**
  * @brief Detects UART clients and loads their saved GPIO states.
  *
  * Loops until at least one UART connection is detected. After that:
- * - Loads the last saved GPIO states for each client.
  * - Performs a confirmation blink.
+ * - Loads the last saved GPIO states for each client.
  */
 static void find_clients(void){
     while(!server_find_connections()) tight_loop_contents();

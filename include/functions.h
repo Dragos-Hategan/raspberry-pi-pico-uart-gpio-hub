@@ -26,6 +26,7 @@
  * - Deinitializes the UART first to reset state.
  * - Assigns UART function to the specified TX and RX pins.
  * - Initializes the UART with the provided baud rate.
+ * - Waits 1 ms for stability.
  *
  * @param uart UART instance (e.g., uart0 or uart1).
  * @param pin_pair The TX/RX pin pair to configure.
@@ -56,7 +57,7 @@ void uart_init_with_single_pin(uart_inst_t* uart, uint8_t pin_number, uint32_t b
 void get_number_pair(uint8_t *result_array, char *message);
 
 /**
- * @brief Reads UART data into a buffer until ']' or timeout.
+ * @brief Reads UART data into a buffer until ']', buffer size reached or timeout.
  *
  * This function reads characters from the UART until:
  * - The buffer is full,
@@ -99,6 +100,13 @@ void fast_blink_onboard_led(void);
 void fast_blink_onboard_led_blocking(void);
 
 /**
+ * @brief Initializes onboard LED and USB stdio interface.
+ *
+ * Turns on the onboard LED and sets up the USB serial connection.
+ */
+void init_onboard_led_and_usb(void);
+
+/**
  * @brief Resets the TX and RX pins to default SIO mode.
  *
  * Used to return the pins to GPIO after UART communication is used.
@@ -109,12 +117,5 @@ static inline void reset_gpio_pins(uart_pin_pair_t pin_pair){
     gpio_set_function(pin_pair.tx, GPIO_FUNC_SIO);
     gpio_set_function(pin_pair.rx, GPIO_FUNC_SIO);
 }
-
-/**
- * @brief Initializes onboard LED and USB stdio interface.
- *
- * Turns on the onboard LED and sets up the USB serial connection.
- */
-void init_onboard_led_and_usb(void);
 
 #endif

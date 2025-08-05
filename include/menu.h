@@ -18,11 +18,7 @@
 #endif
 
 #ifndef PERIODIC_CONSOLE_CHECK_TIME_MS
-#define PERIODIC_CONSOLE_CHECK_TIME_MS 2000
-#endif
-
-#ifndef PERIODIC_ONBOARD_LED_BLINK_TIME_MS
-#define PERIODIC_ONBOARD_LED_BLINK_TIME_MS 2500
+#define PERIODIC_CONSOLE_CHECK_TIME_MS 1500
 #endif
 
 #ifndef DUMP_BUFFER_WAKEUP_MESSAGE
@@ -37,17 +33,6 @@ extern volatile char reconnection_buffer[BUFFER_MAX_NUMBER_OF_STRINGS][BUFFER_MA
 extern volatile uint32_t reconnection_buffer_len;
 extern volatile uint32_t reconnection_buffer_index;
 
-/**
- * @brief Displays the UART server's command-line interface menu.
- *
- * This function handles interaction with the user over USB stdio. It prints
- * options, receives commands, and updates the server state accordingly.
- * It is typically called in a loop after UART client connections are established.
- */
-void server_display_menu(void);
-
-void periodic_wakeup();
-
 void printf_and_update_buffer(const char *string);
 
 inline void print_cancel_message(void){
@@ -61,5 +46,14 @@ inline void print_input_error(void){
 inline void print_delimitor(void){
     printf_and_update_buffer("\n****************************************************\n\n");
 }
+
+/**
+ * @brief Displays the UART server's command-line interface menu.
+ *
+ * This function handles interaction with the user over USB stdio. It prints
+ * options, receives commands, and updates the server state accordingly.
+ * It is typically called in a loop after UART client connections are established.
+ */
+void server_display_menu(void);
 
 #endif
