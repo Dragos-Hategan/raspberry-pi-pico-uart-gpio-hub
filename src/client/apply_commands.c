@@ -77,7 +77,7 @@ static void apply_command(const uint8_t *received_number_pair){
     switch(number1){
         case TRIGGER_RESET_FLAG_NUMBER: watchdog_reboot(0, 0, 0);
             break;
-        case BLINK_ONBOARD_LED_FLAG_NUMBER: fast_blink_onboard_led_blocking(); // go_dormant_flag ? fast_blink_onboard_led_blocking() : fast_blink_onboard_led();
+        case BLINK_ONBOARD_LED_FLAG_NUMBER: fast_blink_onboard_led_blocking();
             break;
         case WAKE_UP_FLAG_NUMBER: go_dormant_flag = false;
             break;
