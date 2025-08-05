@@ -21,8 +21,9 @@ target_link_libraries(common
     hardware_clocks
 )
 
-# Add powman only for RP2350
-if(PICO_TARGET_DEVICE STREQUAL "rp2350")
+# Enable RP2350-specific powman only when building for RP2350 boards
+if(PICO_BOARD MATCHES "pico2(_w)?|pimoroni_.*rp2350|.*_rp2350")
+    target_compile_definitions(common PRIVATE PICO_RP2350=1)
     target_link_libraries(common hardware_powman)
 endif()
 
