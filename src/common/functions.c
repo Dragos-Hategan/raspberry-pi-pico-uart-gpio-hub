@@ -106,14 +106,14 @@ void blink_onboard_led_blocking(void){
     pico_set_onboard_led(false);
 }
 
-int64_t my_alarm_cb(alarm_id_t id, void *user_data) {
+int64_t turn_off_led_alarm(alarm_id_t id, void *user_data) {
     pico_set_onboard_led(false);
     return 0;
 }
 
 void fast_blink_onboard_led(void){
     pico_set_onboard_led(true);
-    add_alarm_in_us(FAST_LED_DELAY_MS * 1000, my_alarm_cb, NULL, false);
+    add_alarm_in_us(FAST_LED_DELAY_MS * 1000, turn_off_led_alarm, NULL, false);
 }
 
 void fast_blink_onboard_led_blocking(void){

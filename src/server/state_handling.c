@@ -50,6 +50,7 @@ static void set_dormant_flag_to_standby_clients(server_persistent_state_t *serve
         for (uint8_t persistent_state_client_index = 0; persistent_state_client_index < MAX_SERVER_CONNECTIONS; persistent_state_client_index++){
             if (active_uart_server_connections[active_client_index].pin_pair.tx == server_persistent_state->clients[persistent_state_client_index].uart_connection.pin_pair.tx){
                 active_uart_server_connections[active_client_index].is_dormant = !client_has_active_devices(server_persistent_state->clients[persistent_state_client_index]);
+                return;
             }
         }
     }

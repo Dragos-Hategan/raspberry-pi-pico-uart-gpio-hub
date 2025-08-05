@@ -28,6 +28,7 @@ static void configure_preset_configs_uart_connection_pins(uint8_t client_list_in
         if (active_uart_server_connections[index].pin_pair.tx == client->uart_connection.pin_pair.tx){
             client->preset_configs[config_index].devices[active_uart_server_connections[index].uart_pin_pair_from_client_to_server.tx].gpio_number = UART_CONNECTION_FLAG_NUMBER;
             client->preset_configs[config_index].devices[active_uart_server_connections[index].uart_pin_pair_from_client_to_server.rx].gpio_number = UART_CONNECTION_FLAG_NUMBER;
+            return;
         }
     }
 }
@@ -66,6 +67,7 @@ static void configure_running_state_uart_connection_pins(uint8_t client_list_ind
         if (active_uart_server_connections[index].pin_pair.tx == client->uart_connection.pin_pair.tx){
             client->running_client_state.devices[active_uart_server_connections[index].uart_pin_pair_from_client_to_server.tx].gpio_number = UART_CONNECTION_FLAG_NUMBER;
             client->running_client_state.devices[active_uart_server_connections[index].uart_pin_pair_from_client_to_server.rx].gpio_number = UART_CONNECTION_FLAG_NUMBER;
+            return;
         }
     }
 }

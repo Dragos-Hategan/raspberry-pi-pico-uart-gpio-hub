@@ -88,7 +88,7 @@ void client_turn_off_unused_power_consumers(void){
         #endif
 
     #if PICO_RP2040
-        clocks_hw->sleep_en1 = CLOCKS_SLEEP_EN1_CLK_SYS_TIMER_BITS;
+        clocks_hw->sleep_en1 = CLOCKS_SLEEP_EN1_CLK_SYS_TIMER_BITS | CLOCKS_ENABLED1_CLK_SYS_TIMER_BITS;
     #endif 
     #if PICO_RP2350
         clocks_hw->sleep_en1 = CLOCKS_SLEEP_EN1_CLK_SYS_TIMER0_BITS | CLOCKS_SLEEP_EN1_CLK_SYS_TIMER1_BITS;
