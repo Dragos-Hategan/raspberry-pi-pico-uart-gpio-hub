@@ -177,11 +177,18 @@ static void save_running_state(void){
 }
 
 /**
- * @brief Toggles the state of a selected GPIO device for a selected client.
+ * @brief Toggles the ON/OFF state of a selected GPIO device for a client.
  *
- * Prompts the user to select a client and one of its devices, then reads the current
- * state of the device from flash and flips it (ON → OFF, OFF → ON).
- * Sends the updated state to the corresponding client via UART, and updates the flash accordingly.
+ * This function performs the following:
+ * - Prompts the user to select a client and one of its devices (via USB CLI).
+ * - Reads the device's current ON/OFF state from the flash-based client state.
+ * - Toggles the state: ON → OFF or OFF → ON.
+ * - Sends the updated state to the client via UART.
+ * - Updates the persistent flash memory with the new state.
+ * - If all devices become OFF after toggling, the client is marked as dormant.
+ *
+ * The function ensures the runtime state and flash state stay in sync,
+ * and keeps track of dormant/active status for power management.
  */
 static void toggle_device(void){
     input_client_data_t input_client_data = {0};
@@ -226,7 +233,7 @@ static void toggle_device(void){
  * - Choose a desired state (ON or OFF)
  *
  * Then:
- * - Sends the new state to the client over UART
+ * - Sends the new device state to the client over UART
  * - Updates the persistent flash state
  * - If all devices are OFF after the update, marks the client as dormant
  * - Prints a confirmation message to the USB CLI
@@ -372,39 +379,6 @@ static bool check_console_state(repeating_timer_t *repeating_timer){
 static void setup_repeating_timer_for_console_activity(){
     console_connected = true;
     add_repeating_timer_ms(PERIODIC_CONSOLE_CHECK_TIME_MS, check_console_state, NULL, &repeating_timer);
-}
-
-/**
- * @brief Core1 wakeup handler triggered by inter-core messages.
- *
- * Handles two commands:
- * - `DUMP_BUFFER_WAKEUP_MESSAGE`: Reprints stored output to CLI.
- * - `BLINK_LED_WAKEUP_MESSAGE`: Triggers fast onboard LED blink and mirrors to clients.
- */
-void periodic_wakeup(){
-    multicore_fifo_drain();
-    while (true) {
-        __wfe();
-        if (multicore_fifo_rvalid()) {
-            uint32_t cmd = multicore_fifo_pop_blocking();
-
-            if (cmd == DUMP_BUFFER_WAKEUP_MESSAGE) {
-                for (uint8_t index = 0; index < reconnection_buffer_index; index++) {
-                    printf("%s", reconnection_buffer[index]);
-                    sleep_ms(2); 
-                }
-            } 
-            else if (cmd == BLINK_LED_WAKEUP_MESSAGE){
-                #if PERIODIC_ONBOARD_LED_BLINK_SERVER
-                    fast_blink_onboard_led();
-                #endif
-                
-                #if PERIODIC_ONBOARD_LED_BLINK_ALL_CLIENTS
-                    send_fast_blink_onboard_led_to_clients();
-                #endif
-            }
-        }
-    }
 }
 
 /**

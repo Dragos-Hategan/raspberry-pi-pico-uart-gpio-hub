@@ -97,10 +97,8 @@ static void apply_command(const uint8_t *received_number_pair){
  * This function attempts to read a UART message into a buffer and parse it
  * into a numeric command. If the buffer is not empty, it applies the
  * corresponding command using the parsed number pair.
- *
- * @return true if a valid command was received and processed, false otherwise.
  */
-static bool receive_data(void){
+static void receive_data(void){
     char buf[8] = {0};
     uint8_t received_number_pair[2] = {0};
 
@@ -109,10 +107,7 @@ static bool receive_data(void){
 
     if (buf[0] != '\0'){
         apply_command(received_number_pair);
-        return 1;
     }
-    
-    return 0;
 }
 
 void client_listen_for_commands(void){

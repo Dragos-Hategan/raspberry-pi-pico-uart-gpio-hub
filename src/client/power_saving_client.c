@@ -105,6 +105,17 @@ void client_turn_off_unused_power_consumers(void){
     }
 }
 
+/**
+ * @brief Configures the TX pin as input with pull-down for dormant wakeup.
+ *
+ * This function:
+ * - Deinitializes the TX pin used in the current UART client connection.
+ * - Reinitializes it as a GPIO input.
+ * - Enables pull-down resistor to detect future wakeup pulses.
+ *
+ * Used before entering dormant mode so that the client can wake up
+ * when receiving a pulse on its TX pin from the server.
+ */
 static void set_pin_as_input_for_dormant_wakeup(void){
     uint8_t pin = active_uart_client_connection.pin_pair.tx;
     gpio_deinit(pin);
@@ -351,7 +362,6 @@ static void sleep_goto_dormant_until_pin(uint gpio_pin, bool edge, bool high) {
 }
 
 void enter_dormant_mode(void){
-    //reset_gpio_pins(active_uart_client_connection.pin_pair);
     sleep_run_from_dormant_source(DORMANT_SOURCE_ROSC);
     sleep_goto_dormant_until_pin(active_uart_client_connection.pin_pair.tx, false, true);
 }
