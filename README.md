@@ -21,14 +21,15 @@ This project enables a central **Pico-based server** to detect and communicate w
 * Remote GPIO control
 * Server tracks all client states, supports:
 
-  * ON / OFF
-  * TOGGLE
+  * ON / OFF Device
+  * TOGGLE Device
   * SAVE active config
   * BUILD preset config
   * LOAD preset into active config
   * 5 PRESET configurations per client
 * Persistent flash memory with CRC32 protection
 * Menu-based USB CLI interface for live control
+* Power Saving For Clients
 
 ---
 
@@ -41,7 +42,7 @@ This project enables a central **Pico-based server** to detect and communicate w
    * Server saves connection
    * Server can control client GPIOs
 4. States saved to Flash with CRC32.
-5. On reboot, states are restored automatically.
+5. On reboot, handshake runs again and states are restored automatically.
 
 ---
 
@@ -60,40 +61,50 @@ Client → Server : "[Connection Accepted]"
 ```
 Server → Client : "[gpio_number,value]"
 Example: "[2,1]" → turn GPIO 2 ON
+OR
+Server → Client : "[FLAG,FLAG]"
+Example: "[WAKE_UP_FLAG_NUMBER,WAKE_UP_FLAG_NUMBER]" → confirm dormant wakeup
 ```
 
 ---
 
 ## Requirements
 
-* Any Raspberry Pi Pico boards (1 server, 1+ clients)
+* Any Raspberry Pi Pico boards (1 server, 1-5 clients)
 * [Pico SDK](https://github.com/raspberrypi/pico-sdk)
-* CMake + Arm GCC toolchain
+* CMake
+* Arm GCC toolchain
+* Make/Ninja or `nmake` (depending on platform)
 
 ---
 
 ## Toolchain & SDK Setup Guide
 
+Follow these steps once to set up your environment for all Pico C/C++ projects.
+
 ### Windows
 
 #### 1. Install ARM GCC
 
-* Download from: [https://developer.arm.com/downloads/-/arm-gnu-toolchain-downloads](https://developer.arm.com/downloads/-/arm-gnu-toolchain-downloads)
-* Install (e.g., `C:\arm-gcc`) and add `C:\arm-gcc\bin` to your PATH
+- Download from: [Arm GNU Toolchain Downloads](https://developer.arm.com/downloads/-/arm-gnu-toolchain-downloads)
+- Install to: `C:\arm-gcc` (for example)
+* Add to PATH during installation or after
 
 #### 2. Install CMake
 
 * [https://cmake.org/download/](https://cmake.org/download/)
-* Add to PATH during installation
+* Add to PATH during installation or after
 
-#### 3. Install MinGW Make (via MSYS2)
+#### 3. Install Make tool (**recommended: NMake via Visual Studio**)
 
-* [https://www.msys2.org](https://www.msys2.org)
-* Then in MSYS2 terminal:
+> Best option: use **NMake**, included with **Visual Studio Developer Command Prompt**  
+> You don’t need to install anything else if you build from this environment.
 
+> Optional alternative (MinGW):
+- Install **MSYS2**: [https://www.msys2.org](https://www.msys2.org)
+- Then in MSYS2 terminal:
   ```bash
   pacman -S mingw-w64-x86_64-make
-  ```
 
 #### 4. Clone Pico SDK
 
@@ -155,31 +166,25 @@ export PICO_SDK_PATH=/full/path/to/pico-sdk
 
 ## How to Build (Multiple Environments)
 
-This project supports multiple build systems using CMake. The `-DPICO_BOARD=pico` flag is used to select the board version. The `CMakeLists.txt` files are configured so that the build outputs flash files for both the server and the client separately, each in its own folder.
+This project supports multiple build systems using CMake. The `-DPICO_BOARD=pico` flag is used to select the board version. The `CMakeLists.txt` files in this project are configured so that the build outputs flash files for both the server and the client separately, each in its own folder.
 
-### Build with **MinGW Makefiles** (recommended for Windows)
-
-```bash
-mkdir build
-cd build
-cmake -G "MinGW Makefiles" .. -DPICO_BOARD=pico
-mingw32-make
-```
-
-For multiple board types:
+### Build with **NMake Makefiles** (recommended for Windows + Visual Studio)
 
 ```bash
 mkdir build
 cd build
-mkdir build_pico
-cd build_pico
-cmake -G "MinGW Makefiles" ../.. -DPICO_BOARD=pico
-mingw32-make
-cd ..
+
+# Create separate folders for each board type
 mkdir build_pico2_w
 cd build_pico2_w
-cmake -G "MinGW Makefiles" ../.. -DPICO_BOARD=pico2_w
-mingw32-make
+cmake -G "NMake Makefiles" ../.. -DPICO_BOARD=pico2_w
+nmake
+cd..
+
+mkdir build_pico
+cd build_pico
+cmake -G "NMake Makefiles" ../.. -DPICO_BOARD=pico
+nmake
 ```
 
 Each board type now has its own build folder, containing both the client and server firmware ready to be flashed.
@@ -189,7 +194,9 @@ Each board type now has its own build folder, containing both the client and ser
 ```bash
 mkdir build
 cd build
-cmake -G "Ninja" .. -DPICO_BOARD=pico
+mkdir build_pico
+cd build_pico
+cmake -G "Ninja" ../.. -DPICO_BOARD=pico
 ninja
 ```
 
@@ -198,17 +205,21 @@ ninja
 ```bash
 mkdir build
 cd build
-cmake -G "Unix Makefiles" .. -DPICO_BOARD=pico
+mkdir build_pico
+cd build_pico
+cmake -G "Unix Makefiles" ../.. -DPICO_BOARD=pico
 make
 ```
 
-### Build with **Visual Studio 2022** (Windows)
+### Build with **MinGW Makefiles** (Windows)
 
-```powershell
+```bash
 mkdir build
 cd build
-cmake -G "Visual Studio 17 2022" .. -DPICO_BOARD=pico
-cmake --build . --config Debug
+mkdir build_pico
+cd build_pico
+cmake -G "MinGW Makefiles" ../.. -DPICO_BOARD=pico
+mingw32-make
 ```
 
 ---
@@ -224,7 +235,7 @@ cmake --build . --config Debug
 ### Option 2: Use `picotool`
 
 ```bash
-picotool load firmware.uf2
+picotool load client.uf2/server.uf2
 ```
 
 Requires:
@@ -236,12 +247,16 @@ Requires:
 
 ## Configuration
 
-Edit `types.c` and `config.h` to customize:
+Edit `types.c` and `config.h` to customize settings like:
 
-* UART pin pairs and instances
-* Handshake timeout
+* UART pin pairs and instances enabled for handshake
+* UART baudrate and messages
+* Client & Server handshake timeout
 * Max GPIOs per client
+* Enable / Disable periodic onboard led blink
+* Onboard led blink periods
 * Flash memory layout
+* etc...
 
 ---
 
