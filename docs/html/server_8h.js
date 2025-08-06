@@ -1,10 +1,5 @@
 var server_8h =
 [
-    [ "INVALID_CLIENT_INDEX", "server_8h.html#a71ad6a7374741505baeeaff097f1670d", null ],
-    [ "SERVER_FLASH_ADDR", "server_8h.html#a73b1425ae492654c7d6163cb3cbc110f", null ],
-    [ "SERVER_FLASH_OFFSET", "server_8h.html#ac72e32f3b39e0490e824c89cb75e82ed", null ],
-    [ "SERVER_PAGE_SIZE", "server_8h.html#a41ee6c79ce0dc05aaaeb11a7713a949c", null ],
-    [ "SERVER_SECTOR_SIZE", "server_8h.html#ad4922c360558e6c25ccc0f55fd4b95e4", null ],
     [ "UART_SPINLOCK_ID", "server_8h.html#ae0cb76c73e0b10cd0a339a3d50189a6c", null ],
     [ "client_has_active_devices", "server_8h.html#abf00606cee7fb1a66191388be08ac24b", null ],
     [ "find_corect_client_index_from_flash", "server_8h.html#a53e73d8096b04a30d2349aca5910e7e0", null ],

@@ -89,8 +89,9 @@
 #define UART_CONNECTION_FLAG_NUMBER 99
 #endif
 
+#ifndef NUMBER_OF_POSSIBLE_PRESETS
 #define NUMBER_OF_POSSIBLE_PRESETS 5
-
+#endif
 
 // === Messages ===
 #ifndef TRIGGER_RESET_FLAG_NUMBER
@@ -107,6 +108,27 @@
 
 #ifndef DORMANT_FLAG_NUMBER
 #define DORMANT_FLAG_NUMBER 44
+#endif
+
+// === Flash Memory Layout === 
+#ifndef SERVER_SECTOR_SIZE
+#define SERVER_SECTOR_SIZE    4096
+#endif
+
+#ifndef SERVER_PAGE_SIZE
+#define SERVER_PAGE_SIZE      256
+#endif
+
+#ifndef SERVER_FLASH_OFFSET
+#define SERVER_FLASH_OFFSET   (PICO_FLASH_SIZE_BYTES - SERVER_SECTOR_SIZE) ///< Offset from flash end
+#endif
+
+#ifndef SERVER_FLASH_ADDR
+#define SERVER_FLASH_ADDR     (XIP_BASE + SERVER_FLASH_OFFSET)             ///< Runtime address of flash state
+#endif
+
+#ifndef INVALID_CLIENT_INDEX
+#define INVALID_CLIENT_INDEX -1
 #endif
 
 #endif

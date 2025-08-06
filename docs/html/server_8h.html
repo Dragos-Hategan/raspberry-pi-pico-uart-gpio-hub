@@ -105,14 +105,6 @@ $(function(){initNavTree('server_8h.html','',''); });
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 id="header-define-members" class="groupheader"><a id="define-members" name="define-members"></a>
 Macros</h2></td></tr>
-<tr class="memitem:ad4922c360558e6c25ccc0f55fd4b95e4" id="r_ad4922c360558e6c25ccc0f55fd4b95e4"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ad4922c360558e6c25ccc0f55fd4b95e4">SERVER_SECTOR_SIZE</a>&#160;&#160;&#160;4096</td></tr>
-<tr class="memdesc:ad4922c360558e6c25ccc0f55fd4b95e4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Flash memory layout constants used for saving/loading persistent server state.  <br /></td></tr>
-<tr class="memitem:a41ee6c79ce0dc05aaaeb11a7713a949c" id="r_a41ee6c79ce0dc05aaaeb11a7713a949c"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a41ee6c79ce0dc05aaaeb11a7713a949c">SERVER_PAGE_SIZE</a>&#160;&#160;&#160;256</td></tr>
-<tr class="memitem:ac72e32f3b39e0490e824c89cb75e82ed" id="r_ac72e32f3b39e0490e824c89cb75e82ed"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ac72e32f3b39e0490e824c89cb75e82ed">SERVER_FLASH_OFFSET</a>&#160;&#160;&#160;(PICO_FLASH_SIZE_BYTES - <a class="el" href="#ad4922c360558e6c25ccc0f55fd4b95e4">SERVER_SECTOR_SIZE</a>)</td></tr>
-<tr class="memdesc:ac72e32f3b39e0490e824c89cb75e82ed"><td class="mdescLeft">&#160;</td><td class="mdescRight">Offset from flash end.  <br /></td></tr>
-<tr class="memitem:a73b1425ae492654c7d6163cb3cbc110f" id="r_a73b1425ae492654c7d6163cb3cbc110f"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a73b1425ae492654c7d6163cb3cbc110f">SERVER_FLASH_ADDR</a>&#160;&#160;&#160;(XIP_BASE + <a class="el" href="#ac72e32f3b39e0490e824c89cb75e82ed">SERVER_FLASH_OFFSET</a>)</td></tr>
-<tr class="memdesc:a73b1425ae492654c7d6163cb3cbc110f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Runtime address of flash state.  <br /></td></tr>
-<tr class="memitem:a71ad6a7374741505baeeaff097f1670d" id="r_a71ad6a7374741505baeeaff097f1670d"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a71ad6a7374741505baeeaff097f1670d">INVALID_CLIENT_INDEX</a>&#160;&#160;&#160;-1</td></tr>
 <tr class="memitem:ae0cb76c73e0b10cd0a339a3d50189a6c" id="r_ae0cb76c73e0b10cd0a339a3d50189a6c"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ae0cb76c73e0b10cd0a339a3d50189a6c">UART_SPINLOCK_ID</a>&#160;&#160;&#160;0</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 id="header-func-members" class="groupheader"><a id="func-members" name="func-members"></a>
@@ -195,82 +187,6 @@ Variables</h2></td></tr>
 <p>It serves as the main coordination point between UART communication, persistent memory, and user interface logic via the USB CLI.</p>
 <p>All modules (config, flash, menu, CLI, and communication) include and rely on this header. </p>
 </div><a name="doc-define-members" id="doc-define-members"></a><h2 id="header-doc-define-members" class="groupheader">Macro Definition Documentation</h2>
-<a id="a71ad6a7374741505baeeaff097f1670d" name="a71ad6a7374741505baeeaff097f1670d"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a71ad6a7374741505baeeaff097f1670d">&#9670;&#160;</a></span>INVALID_CLIENT_INDEX</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">#define INVALID_CLIENT_INDEX&#160;&#160;&#160;-1</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-</div>
-</div>
-<a id="a73b1425ae492654c7d6163cb3cbc110f" name="a73b1425ae492654c7d6163cb3cbc110f"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a73b1425ae492654c7d6163cb3cbc110f">&#9670;&#160;</a></span>SERVER_FLASH_ADDR</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">#define SERVER_FLASH_ADDR&#160;&#160;&#160;(XIP_BASE + <a class="el" href="#ac72e32f3b39e0490e824c89cb75e82ed">SERVER_FLASH_OFFSET</a>)</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Runtime address of flash state. </p>
-
-</div>
-</div>
-<a id="ac72e32f3b39e0490e824c89cb75e82ed" name="ac72e32f3b39e0490e824c89cb75e82ed"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ac72e32f3b39e0490e824c89cb75e82ed">&#9670;&#160;</a></span>SERVER_FLASH_OFFSET</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">#define SERVER_FLASH_OFFSET&#160;&#160;&#160;(PICO_FLASH_SIZE_BYTES - <a class="el" href="#ad4922c360558e6c25ccc0f55fd4b95e4">SERVER_SECTOR_SIZE</a>)</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Offset from flash end. </p>
-
-</div>
-</div>
-<a id="a41ee6c79ce0dc05aaaeb11a7713a949c" name="a41ee6c79ce0dc05aaaeb11a7713a949c"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a41ee6c79ce0dc05aaaeb11a7713a949c">&#9670;&#160;</a></span>SERVER_PAGE_SIZE</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">#define SERVER_PAGE_SIZE&#160;&#160;&#160;256</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-</div>
-</div>
-<a id="ad4922c360558e6c25ccc0f55fd4b95e4" name="ad4922c360558e6c25ccc0f55fd4b95e4"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ad4922c360558e6c25ccc0f55fd4b95e4">&#9670;&#160;</a></span>SERVER_SECTOR_SIZE</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">#define SERVER_SECTOR_SIZE&#160;&#160;&#160;4096</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Flash memory layout constants used for saving/loading persistent server state. </p>
-
-</div>
-</div>
 <a id="ae0cb76c73e0b10cd0a339a3d50189a6c" name="ae0cb76c73e0b10cd0a339a3d50189a6c"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#ae0cb76c73e0b10cd0a339a3d50189a6c">&#9670;&#160;</a></span>UART_SPINLOCK_ID</h2>
 
