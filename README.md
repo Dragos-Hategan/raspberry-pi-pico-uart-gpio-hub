@@ -247,7 +247,7 @@ Requires:
 
 ## Configuration
 
-Edit `types.c` and `config.h` to customize settings like:
+Edit `types.c`, `config.h` and `menu.h` to customize settings like:
 
 * UART pin pairs and instances enabled for handshake
 * UART baudrate and messages
@@ -256,6 +256,7 @@ Edit `types.c` and `config.h` to customize settings like:
 * Enable / Disable periodic onboard led blink
 * Onboard led blink periods
 * Flash memory layout
+* Console buffer size limit at reconnection
 * etc...
 
 ---
