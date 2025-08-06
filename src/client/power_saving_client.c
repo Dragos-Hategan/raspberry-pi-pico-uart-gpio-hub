@@ -1,5 +1,5 @@
 /**
- * @file power_management.c
+ * @file power_saving_client.c
  * @brief Power-saving configuration and dormant mode handling for UART-based clients.
  *
  * This file contains functions for:

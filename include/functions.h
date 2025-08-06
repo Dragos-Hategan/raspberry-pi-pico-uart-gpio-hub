@@ -30,7 +30,7 @@
  *
  * @param uart UART instance (e.g., uart0 or uart1).
  * @param pin_pair The TX/RX pin pair to configure.
- * @param baudrate UART baud rate (e.g., 9600, 115200).
+ * @param baud_rate UART baud rate (e.g., 9600, 115200).
  */
 void uart_init_with_pins(uart_inst_t *uart, uart_pin_pair_t pin_pair, uint32_t baud_rate);
 
@@ -65,7 +65,7 @@ void get_number_pair(uint8_t *result_array, char *message);
  * - Or the timeout expires.
  *
  * @param uart UART instance to read from.
- * @param buf Pointer to the buffer to store the received characters.
+ * @param buffer Pointer to the buffer to store the received characters.
  * @param buffer_size Size of the buffer (must include space for null terminator).
  * @param timeout_ms Timeout duration in milliseconds.
  */
@@ -74,7 +74,7 @@ void get_uart_buffer(uart_inst_t *uart, char *buffer, uint8_t buffer_size, uint3
 /**
  * @brief Turns the onboard LED on or off.
  * 
- * @param led_on true to turn on the LED, false to turn it off
+ * @param state true to turn on the LED, false to turn it off
  */
 void pico_set_onboard_led(bool state);
 

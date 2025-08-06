@@ -197,7 +197,7 @@ void load_configuration_into_running_state(uint32_t flash_configuration_index, u
  *
  * @param flash_client_index Index of the client in flash memory (persistent state).
  * @param flash_configuration_index Index of the preset configuration to modify.
- * @param input_client_data Pointer to a structure used for passing user input data.
+ * @param client_data Pointer to a structure used for passing user input data.
  */
 void set_configuration_devices(uint32_t flash_client_index, uint32_t flash_configuration_index, input_client_data_t *client_data);
 
