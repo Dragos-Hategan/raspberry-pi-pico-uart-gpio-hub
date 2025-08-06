@@ -10,6 +10,7 @@
 #define CONFIG_H
 
 
+// === Enable Periodic Blink ===
 #ifndef PERIODIC_ONBOARD_LED_BLINK_SERVER
 #define PERIODIC_ONBOARD_LED_BLINK_SERVER 1
 #endif
@@ -56,7 +57,7 @@
 #endif
 
 /// Timeout in milliseconds for receiving a UART connection request.
-/// Minimum effective value is ~300ms. 500ms provides more robustness.
+/// Minimum effective value is ~350ms. 500ms provides more robustness.
 #ifndef SERVER_TIMEOUT_MS
 #define SERVER_TIMEOUT_MS 500
 #endif
@@ -68,6 +69,10 @@
 
 #ifndef PERIODIC_ONBOARD_LED_BLINK_TIME_MS
 #define PERIODIC_ONBOARD_LED_BLINK_TIME_MS 2500
+#endif
+
+#ifndef PERIODIC_CONSOLE_CHECK_TIME_MS
+#define PERIODIC_CONSOLE_CHECK_TIME_MS 1500
 #endif
 
 #ifndef MS_TO_US_MULTIPLIER
@@ -88,10 +93,6 @@
 
 
 // === Messages ===
-#ifndef EMPTY_MEMORY_MESSAGE
-#define EMPTY_MEMORY_MESSAGE "Empty"
-#endif
-
 #ifndef TRIGGER_RESET_FLAG_NUMBER
 #define TRIGGER_RESET_FLAG_NUMBER 77
 #endif
