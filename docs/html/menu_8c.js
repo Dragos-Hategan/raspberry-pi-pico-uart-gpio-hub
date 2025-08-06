@@ -1,0 +1,26 @@
+var menu_8c =
+[
+    [ "build_preset_configuration", "menu_8c.html#a0d7a17829517d5d9e0ef459788200753", null ],
+    [ "check_console_state", "menu_8c.html#a601211cd38d72e8ebfc2df952b45cd6f", null ],
+    [ "clear_screen", "menu_8c.html#a32c298519216b1383a988fa054dc3793", null ],
+    [ "display_active_clients", "menu_8c.html#a1b5868977ff84d5f181bb7f1ac36afa3", null ],
+    [ "display_menu_options", "menu_8c.html#addcf6ae560e66abf29587c9ae5ca19cd", null ],
+    [ "load_configuration", "menu_8c.html#acccb77ddf48fb4ddea44e4b8898dca94", null ],
+    [ "printf_and_update_buffer", "menu_8c.html#a1fc1611fccaba8b2f3964428b5dbe8d8", null ],
+    [ "read_menu_option", "menu_8c.html#a229105eb88c08c4611062ed77a52692c", null ],
+    [ "reset_configuration", "menu_8c.html#a29390229ce2e1f414ef0aac010d81f25", null ],
+    [ "restart_application", "menu_8c.html#aae8ff65381c56bcdacb553140a309514", null ],
+    [ "save_running_state", "menu_8c.html#a0ed199605b44956e79c643587a931d72", null ],
+    [ "select_action", "menu_8c.html#abb4a6bde5743b1c92ed49e27260a5be8", null ],
+    [ "server_display_menu", "menu_8c.html#a3931f7105aebfe3e69b259cbaff91480", null ],
+    [ "set_client_device", "menu_8c.html#a70dea7471d6bf1cb7662ff03c1670679", null ],
+    [ "setup_repeating_timer_for_console_activity", "menu_8c.html#ab608b16e3f060f40b5e591e91ad424ca", null ],
+    [ "toggle_device", "menu_8c.html#a6b49fc857107f4590e506e8c1b039a22", null ],
+    [ "console_connected", "menu_8c.html#aa8f11284c0028b3b1ca29377b108e846", null ],
+    [ "console_disconnected", "menu_8c.html#ace78896c6db119629f2ede375a94e710", null ],
+    [ "first_display", "menu_8c.html#abf849d6fe8c8ac6c01c61454835372f2", null ],
+    [ "reconnection_buffer", "menu_8c.html#a380ea352404b99c7d0b1ead90b999472", null ],
+    [ "reconnection_buffer_index", "menu_8c.html#aea3daa6ffba94a57246ef61481df3595", null ],
+    [ "reconnection_buffer_len", "menu_8c.html#a8779e4b42995e6bc4599391ba59fccd9", null ],
+    [ "repeating_timer", "menu_8c.html#afb79dd757f16663811507573f39782b6", null ]
+];

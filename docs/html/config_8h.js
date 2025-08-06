@@ -1,0 +1,25 @@
+var config_8h =
+[
+    [ "BLINK_ONBOARD_LED_FLAG_NUMBER", "config_8h.html#adfbff3eaed9e7b783f482d3abf3f866a", null ],
+    [ "CLIENT_TIMEOUT_MS", "config_8h.html#af9605848e6debbb6af21576a00d4b9f5", null ],
+    [ "CONNECTION_ACCEPTED_MESSAGE", "config_8h.html#a2a2aec171ba95027f03cf0979bb92ebb", null ],
+    [ "CONNECTION_REQUEST_MESSAGE", "config_8h.html#a5e2abdbe080394ea98f85da6a68a954a", null ],
+    [ "DEFAULT_BAUDRATE", "config_8h.html#affa2c3ad646ea14cf1a034c341caf19c", null ],
+    [ "DORMANT_FLAG_NUMBER", "config_8h.html#a0f805b43897c50d99d62b123413679f4", null ],
+    [ "FAST_LED_DELAY_MS", "config_8h.html#a34d4a4c93f954ab76f5216a754200623", null ],
+    [ "LED_DELAY_MS", "config_8h.html#ae89a64708a9f72dd2d40c74a8c8d4e56", null ],
+    [ "MAX_NUMBER_OF_GPIOS", "config_8h.html#a42d2c3a5a3cd4d9c5a77461693547816", null ],
+    [ "MAX_SERVER_CONNECTIONS", "config_8h.html#a2af0f36093c4b4dfb77395b7216135e1", null ],
+    [ "MS_TO_US_MULTIPLIER", "config_8h.html#ab3ddfbb66896c95782eeac93b786239a", null ],
+    [ "NUMBER_OF_POSSIBLE_PRESETS", "config_8h.html#a55c373f0cd7aec2b803f6dbd671b2ce5", null ],
+    [ "PERIODIC_CONSOLE_CHECK_TIME_MS", "config_8h.html#a11d86c2370297a9aec852e9b9c1c1e7c", null ],
+    [ "PERIODIC_ONBOARD_LED_BLINK_ALL_CLIENTS", "config_8h.html#a53a01206803a29e7621a99f8054b220a", null ],
+    [ "PERIODIC_ONBOARD_LED_BLINK_SERVER", "config_8h.html#ac995614043cfc523748429a372acb446", null ],
+    [ "PERIODIC_ONBOARD_LED_BLINK_TIME_MS", "config_8h.html#a9082368229baba8ef21ea62fab2272db", null ],
+    [ "PIN_PAIRS_UART0_LEN", "config_8h.html#a0cfaf44254366b080ed4c3c01ecc3392", null ],
+    [ "PIN_PAIRS_UART1_LEN", "config_8h.html#a25fbf7ee518a09b2be4bd835e647bdb9", null ],
+    [ "SERVER_TIMEOUT_MS", "config_8h.html#af3053e6582b6a22046f1505a6d872766", null ],
+    [ "TRIGGER_RESET_FLAG_NUMBER", "config_8h.html#a2fb153537f429ff34c15d9bec79553e2", null ],
+    [ "UART_CONNECTION_FLAG_NUMBER", "config_8h.html#a377e673b94c5b93a0a60ed47a93eff3e", null ],
+    [ "WAKE_UP_FLAG_NUMBER", "config_8h.html#a941c9218d8930f53682c0b01832e3520", null ]
+];

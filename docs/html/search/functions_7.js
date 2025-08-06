@@ -1,0 +1,7 @@
+var searchData=
+[
+  ['get_5factive_5fclient_5fconnection_5findex_5ffrom_5fflash_5fclient_5findex_0',['get_active_client_connection_index_from_flash_client_index',['../state__handling_8c.html#a42c8df3599e5bf75f043b1d59e83e730',1,'get_active_client_connection_index_from_flash_client_index(uint32_t flash_client_index, server_persistent_state_t state):&#160;state_handling.c'],['../server_8h.html#a42c8df3599e5bf75f043b1d59e83e730',1,'get_active_client_connection_index_from_flash_client_index(uint32_t flash_client_index, server_persistent_state_t state):&#160;state_handling.c']]],
+  ['get_5fnumber_5fpair_1',['get_number_pair',['../functions_8c.html#ad3564135557851f7967d6bfac2f2dda7',1,'get_number_pair(uint8_t *received_number_pair, char *buf):&#160;functions.c'],['../functions_8h.html#a26dd594f488f425a413910798e14c0c4',1,'get_number_pair(uint8_t *result_array, char *message):&#160;functions.c']]],
+  ['get_5fuart_5fbuffer_2',['get_uart_buffer',['../functions_8c.html#a7113fadd5ddc3454f19f47348dc76f77',1,'get_uart_buffer(uart_inst_t *uart, char *buf, uint8_t buffer_size, uint32_t timeout_ms):&#160;functions.c'],['../functions_8h.html#aa9d7f6e22e03d38a6ad8a9763251cbaa',1,'get_uart_buffer(uart_inst_t *uart, char *buffer, uint8_t buffer_size, uint32_t timeout_ms):&#160;functions.c']]],
+  ['go_5fdormant_3',['go_dormant',['../power__saving__client_8c.html#af2d5d3568fc2b3667d178e97afbe40d1',1,'power_saving_client.c']]]
+];
