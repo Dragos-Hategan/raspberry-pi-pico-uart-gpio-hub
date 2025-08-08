@@ -1,4 +1,4 @@
-# pico-uart-gpio-hub
+# Raspberry Pi Pico: UART GPIO Hub
 
 > **Multi-client UART-based GPIO control system** for Raspberry Pi Pico, with persistent flash state and automatic UART connection detection.
 
