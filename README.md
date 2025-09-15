@@ -4,6 +4,8 @@
 
 This project enables a central **Pico-based server** to detect and communicate with multiple **Pico-based clients** over UART. Clients expose GPIOs that can be remotely controlled (ON/OFF/TOGGLE) by the server via UART messages. The server saves the state of all connected devices in its internal Flash memory, allowing full device state restoration after power cycles.
 
+Video DEMO here: https://youtu.be/Ub3jZuVrXoA
+
 ---
 
 ## System Overview
